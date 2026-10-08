@@ -107,15 +107,15 @@
     ],
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        "dmg"
       ],
       "icon": "build/icon.png",
       "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "notarize": true,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "identity": "Chuan Zhi (Chengdu) Information Technology Co., Ltd. (92696T726U)"
     }
   }
 }
