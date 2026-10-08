@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Hardened Runtime 的开口。公证要求开 hardened runtime,而 hardened runtime 默认
+  把下面这几件事全禁掉 —— 少一条,签完的应用就起不来或跑不动:
+
+  allow-jit / allow-unsigned-executable-memory
+      V8 要即时编译。Electron 应用没有它直接启动即崩。
+  allow-dyld-environment-variables
+      内核是壳用自己的二进制加 ELECTRON_RUN_AS_NODE 起的子进程,应用后端再继承一层;
+      这条放开子进程的环境变量注入。
+  disable-library-validation
+      随产品签入的 esbuild 来自第三方,和宿主不是同一个签名团队。
+
+  这些是**运行需要**,不是安全边界 —— 边界在 AGENTS.md 写的那些(只听 127.0.0.1、
+  密钥不出内核)。
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>

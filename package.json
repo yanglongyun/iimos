@@ -1,0 +1,121 @@
+{
+  "name": "iimos",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "iimos —— 出厂只有一个对话,其余都在对话里长出来的桌面 Agent",
+  "author": "woodchange",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanglongyun/iimos.git"
+  },
+  "homepage": "https://github.com/yanglongyun/iimos#readme",
+  "bugs": {
+    "url": "https://github.com/yanglongyun/iimos/issues"
+  },
+  "main": "launcher/main.js",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "app": "npm run build:ui && electron launcher/main.js",
+    "app:direct": "npm run build:ui && electron app/desktop/main.js",
+    "build:ui": "node launcher/cli-build.js",
+    "typecheck": "tsc -p app/ui/tsconfig.json",
+    "test": "npm run build:ui && node --test \"launcher/**/*.test.js\" \"app/test/*.test.js\"",
+    "build:app": "npm run build:ui && node scripts/pack.mjs",
+    "release:mac": "npm run build:ui && electron-builder",
+    "ship:mac": "node scripts/release-mac.mjs"
+  },
+  "dependencies": {
+    "isomorphic-git": "^1.43.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^7.0.2"
+  },
+  "build": {
+    "appId": "ai.iimos.desktop",
+    "productName": "iimos",
+    "directories": {
+      "app": ".",
+      "output": "dist"
+    },
+    "files": [
+      "launcher/**/*",
+      "!launcher/**/*.test.js"
+    ],
+    "extraResources": [
+      {
+        "from": "app",
+        "to": "seed",
+        "filter": [
+          "**/*",
+          "!test/**",
+          "!.data/**"
+        ]
+      },
+      {
+        "from": "node_modules/esbuild",
+        "to": "toolchain/node_modules/esbuild",
+        "filter": [
+          "**/*",
+          "!bin/**"
+        ]
+      },
+      {
+        "from": "node_modules/@esbuild",
+        "to": "toolchain/node_modules/@esbuild"
+      },
+      {
+        "from": "node_modules/react",
+        "to": "toolchain/node_modules/react",
+        "filter": [
+          "**/*",
+          "!cjs/*.development.js",
+          "!cjs/*server*",
+          "!*server*",
+          "!cjs/*test-utils*"
+        ]
+      },
+      {
+        "from": "node_modules/react-dom",
+        "to": "toolchain/node_modules/react-dom",
+        "filter": [
+          "**/*",
+          "!cjs/*.development.js",
+          "!cjs/*server*",
+          "!*server*",
+          "!cjs/*test-utils*"
+        ]
+      },
+      {
+        "from": "node_modules/scheduler",
+        "to": "toolchain/node_modules/scheduler",
+        "filter": [
+          "**/*",
+          "!cjs/*.development.js"
+        ]
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "notarize": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    }
+  }
+}

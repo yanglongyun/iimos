@@ -1,0 +1,7 @@
+{
+  "name": "iimos-app",
+  "version": "0.5.5",
+  "private": true,
+  "type": "module",
+  "description": "iimos 的应用本身。出厂只有一个对话,其余都由 agent 在对话里长出来。"
+}

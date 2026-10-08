@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>iimos 救援</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1b1e23; --line: #2a2e35; --text: #e6e8eb; --dim: #8b929c;
+    --accent: #e0a458; --good: #6cc08b; --bad: #e07a6e; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  body { display: grid; grid-template-columns: 380px 1fr; height: 100vh; }
+  aside { border-right: 1px solid var(--line); overflow: auto; padding: 20px 18px 28px; }
+  main { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+  h1 { font-size: 15px; margin: 0 0 4px; letter-spacing: .02em; }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 22px 0 8px; font-weight: 600; }
+  .sub { color: var(--dim); font-size: 12px; }
+  .reason { margin-top: 12px; padding: 10px 12px; background: #2a1f1d; border: 1px solid #4a2c27; border-radius: 6px;
+    font: 11.5px/1.45 var(--mono); color: #f0c4bd; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 160px; overflow: auto; }
+  .reason.ok { background: var(--panel); border-color: var(--line); color: var(--dim); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 7px 10px; cursor: pointer; text-align: left; }
+  button:hover { border-color: #3c424b; background: #21252b; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--accent); color: #1a1408; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover { background: #eab26a; }
+  button.armed { border-color: var(--bad); color: var(--bad); }
+  button.small { padding: 2px 8px; font-size: 11.5px; }
+  .versions { list-style: none; margin: 0; padding: 0; }
+  .versions li { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .versions .msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .versions .meta { color: var(--dim); font: 11px var(--mono); }
+  .tag { display: inline-block; font: 10.5px var(--mono); padding: 0 5px; border-radius: 3px; margin-left: 6px; vertical-align: 1px; }
+  .tag.good { color: var(--good); border: 1px solid #335a42; }
+  .tag.head { color: var(--accent); border: 1px solid #5c4626; }
+  .note { color: var(--dim); font-size: 12px; margin: 6px 0 0; }
+  details { margin-top: 18px; }
+  summary { cursor: pointer; color: var(--dim); font-size: 12px; }
+  pre.log { font: 11px/1.45 var(--mono); color: var(--dim); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; margin: 8px 0 0; }
+  header { padding: 18px 22px 12px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; }
+  #chat { overflow: auto; padding: 18px 22px; }
+  .bubble { max-width: 760px; margin: 0 0 14px; white-space: pre-wrap; }
+  .bubble.user { color: var(--accent); }
+  .bubble.user::before { content: "你  "; color: var(--dim); }
+  .tool { font: 11.5px/1.45 var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 10px; margin: 0 0 6px; color: #b9c2cc; white-space: pre-wrap; max-height: 220px; overflow: auto; }
+  .tool.cmd::before { content: "$ "; color: var(--accent); }
+  .tool.out { color: var(--dim); }
+  .err { color: var(--bad); }
+  form { display: flex; gap: 8px; padding: 12px 22px 18px; border-top: 1px solid var(--line); }
+  textarea { flex: 1; resize: none; height: 64px; font: inherit; color: var(--text); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  textarea:focus { outline: none; border-color: #4a515b; }
+  .empty { color: var(--dim); max-width: 560px; }
+</style>
+</head>
+<body>
+<aside>
+  <h1>iimos 救援</h1>
+  <div class="sub" id="where"></div>
+  <div class="reason" id="reason"></div>
+
+  <h2>操作</h2>
+  <div class="actions">
+    <button class="primary" id="restart">重启应用</button>
+    <button id="toGood">回到稳定版本</button>
+    <button id="folder">打开工作区</button>
+    <button id="factory">恢复出厂</button>
+  </div>
+  <p class="note">回滚和恢复出厂都会先把当前样子存成一个分支,不会丢东西。改完记得点「重启应用」。</p>
+
+  <h2>版本</h2>
+  <ul class="versions" id="versions"></ul>
+
+  <h2 id="branchesTitle" hidden>留存的版本</h2>
+  <p class="note" id="branchesNote" hidden>回滚、恢复出厂之前的样子都留在这里。想把被回滚掉的改动拿回来接着修,点「取回」。</p>
+  <ul class="versions" id="branches"></ul>
+
+  <details>
+    <summary>launcher 日志</summary>
+    <pre class="log" id="log"></pre>
+  </details>
+</aside>
+
+<main>
+  <header>
+    <div><strong>救援对话</strong> <span class="sub">—— 独立于应用本身的 agent,直接在工作区里干活</span></div>
+    <button class="small" id="newChat">新对话</button>
+  </header>
+  <div id="chat"><p class="empty" id="empty">告诉它出了什么问题,比如「我刚让它改了侧栏,之后就打不开了」。它会看日志和改动记录,修好或者帮你回滚。</p></div>
+  <form id="form">
+    <textarea id="input" placeholder="描述问题……(⌘/Ctrl + Enter 发送)"></textarea>
+    <button class="primary" id="send" type="submit">发送</button>
+  </form>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const short = (oid) => (oid || '').slice(0, 8);
+let state = null;
+let busy = false;
+
+function armed(button, label, action) {
+  button.addEventListener('click', async () => {
+    if (!button.classList.contains('armed')) {
+      button.dataset.label = button.textContent;
+      button.textContent = label;
+      button.classList.add('armed');
+      setTimeout(() => { button.classList.remove('armed'); button.textContent = button.dataset.label; }, 3500);
+      return;
+    }
+    button.classList.remove('armed');
+    button.textContent = button.dataset.label;
+    await run(action);
+  });
+}
+
+async function run(action) {
+  try { state = await action(); render(); } catch (error) { note(String(error.message || error), true); }
+}
+
+function note(text, bad) {
+  const p = document.createElement('div');
+  p.className = 'bubble' + (bad ? ' err' : '');
+  p.textContent = text;
+  $('chat').append(p);
+  $('chat').scrollTop = $('chat').scrollHeight;
+}
+
+function render() {
+  if (!state) return;
+  $('where').textContent = `v${state.version} · ${state.workspace}`;
+  const reason = state.reason || (state.lastRollback ? `上次回滚:${state.lastRollback.reason}` : '应用当前没有报错。');
+  $('reason').textContent = reason;
+  $('reason').classList.toggle('ok', !state.reason);
+  $('toGood').disabled = !state.good || state.good === state.head;
+  const list = $('versions');
+  list.replaceChildren();
+  for (const entry of state.log) {
+    const li = document.createElement('li');
+    const info = document.createElement('div');
+    const msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.textContent = entry.message.split('\n')[0];
+    if (entry.oid === state.good) msg.insertAdjacentHTML('beforeend', '<span class="tag good">good</span>');
+    if (entry.oid === state.head) msg.insertAdjacentHTML('beforeend', '<span class="tag head">当前</span>');
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = `${short(entry.oid)} · ${entry.at.slice(0, 16).replace('T', ' ')}`;
+    info.append(msg, meta);
+    li.append(info);
+    if (entry.oid !== state.head) {
+      const b = document.createElement('button');
+      b.className = 'small';
+      b.textContent = '回到这里';
+      armed(b, '确认?', () => window.recovery.rollback(entry.oid));
+      li.append(b);
+    }
+    list.append(li);
+  }
+  $('branchesTitle').hidden = $('branchesNote').hidden = !state.branches.length;
+  const branches = $('branches');
+  branches.replaceChildren();
+  for (const branch of state.branches) {
+    const li = document.createElement('li');
+    const info = document.createElement('div');
+    info.innerHTML = '<div class="msg"></div><div class="meta"></div>';
+    info.firstChild.textContent = branch.name;
+    info.lastChild.textContent = short(branch.oid);
+    li.append(info);
+    if (branch.oid !== state.head) {
+      const b = document.createElement('button');
+      b.className = 'small';
+      b.textContent = '取回';
+      armed(b, '确认?', () => window.recovery.rollback(branch.oid));
+      li.append(b);
+    }
+    branches.append(li);
+  }
+  $('log').textContent = state.launcherLog || '(空)';
+  if (!state.hasCreds) {
+    $('input').placeholder = '没找到模型配置,救援对话用不了。可以先用左边的回滚。';
+  }
+}
+
+$('restart').addEventListener('click', () => window.recovery.restart());
+$('folder').addEventListener('click', () => window.recovery.openFolder());
+armed($('toGood'), '确认回到稳定版本?', () => window.recovery.rollback(state.good));
+armed($('factory'), '确认恢复出厂?', () => window.recovery.factory());
+$('newChat').addEventListener('click', async () => {
+  await window.recovery.resetChat();
+  $('chat').replaceChildren($('empty') || document.createElement('div'));
+});
+
+let current = null;
+window.recovery.onEvent(({ type, data }) => {
+  if (type === 'refresh') return void window.recovery.status().then((s) => { state = s; render(); });
+  if (type === 'text') {
+    if (!current) { current = document.createElement('div'); current.className = 'bubble'; $('chat').append(current); }
+    current.textContent += data;
+  } else if (type === 'tool') {
+    current = null;
+    const d = document.createElement('div'); d.className = 'tool cmd'; d.textContent = data; $('chat').append(d);
+  } else if (type === 'result') {
+    const d = document.createElement('div'); d.className = 'tool out'; d.textContent = data; $('chat').append(d);
+  } else if (type === 'error') {
+    current = null; note(data, true);
+  } else if (type === 'done') {
+    current = null;
+  }
+  $('chat').scrollTop = $('chat').scrollHeight;
+});
+
+$('form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (busy) { await window.recovery.stop(); return; }
+  const text = $('input').value.trim();
+  if (!text) return;
+  $('empty')?.remove();
+  const b = document.createElement('div'); b.className = 'bubble user'; b.textContent = text; $('chat').append(b);
+  $('input').value = '';
+  busy = true; $('send').textContent = '停止';
+  current = null;
+  try { await window.recovery.chat(text); } catch (error) { note(String(error.message || error), true); }
+  busy = false; $('send').textContent = '发送';
+  state = await window.recovery.status(); render();
+});
+$('input').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) $('form').requestSubmit();
+});
+
+window.recovery.status().then((s) => { state = s; render(); });
+</script>
+</body>
+</html>
