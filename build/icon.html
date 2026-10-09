@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0}html,body{width:1024px;height:1024px;background:transparent;overflow:hidden}
+.sq{position:absolute;left:100px;top:100px;width:824px;height:824px;border-radius:186px;background:linear-gradient(160deg,#0f1412,#050605 60%);box-shadow:inset 0 2px 0 rgba(255,255,255,.08)}
+.sq::after{content:"";position:absolute;inset:0;border-radius:186px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 3px,transparent 3px 9px)}
+.glow{position:absolute;left:50%;top:50%;width:640px;height:640px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(124,255,155,.22),transparent 62%)}
+.px{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;gap:7px;filter:drop-shadow(0 0 22px rgba(124,255,155,.75)) drop-shadow(0 0 70px rgba(124,255,155,.35))}
+.px i{display:block;width:58px;height:58px;background:#7cff9b;border-radius:8px}
+.px i.o{background:transparent}
+</style></head><body><div class="sq"><div class="glow"></div><div class="px" id="g"></div></div>
+<script>const rows=["..xxxxx..",".xx...xx.","xx.....xx","xx.....xx","xx.....xx","xx.....xx","xx.....xx",".xx...xx.","..xxxxx..",];const g=document.getElementById('g');g.style.gridTemplateColumns='repeat('+rows[0].length+',58px)';
+for(const r of rows)for(const ch of r){const i=document.createElement('i');if(ch==='.')i.className='o';g.appendChild(i)}</script></body></html>

@@ -182,6 +182,8 @@ async function main() {
 
     app.whenReady().then(() => {
         try { globalShortcut.register(RECOVERY_SHORTCUT, () => void showRecovery('快捷键打开')); } catch { /* 被占用就算了 */ }
+        // 从源码跑时 Dock 里是 Electron 的默认图标,换成我们自己的;打包后由安装包里的 icns 负责
+        if (dev && process.platform === 'darwin') app.dock?.setIcon(path.resolve(import.meta.dirname, '..', 'build', 'icon.png'));
     });
     app.on('will-quit', () => globalShortcut.unregisterAll());
 
