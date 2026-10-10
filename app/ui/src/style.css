@@ -31,7 +31,7 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 
 /* 窗口钮:无框窗口的最小化/最大化/关闭,画在顶栏最右(macOS 用原生红绿灯,不渲染这排) */
 .winbtns { display: flex; align-items: center; gap: 2px; margin-left: 10px; -webkit-app-region: no-drag; }
-.winbtns button { width: 32px; height: 24px; display: grid; place-items: center; border-radius: 4px; color: var(--dim); font-size: 12px; line-height: 1; padding: 0; }
+.winbtns button { width: 32px; height: 24px; display: grid; place-items: center; border-radius: 4px; color: var(--dim); font-size: 12px; line-height: 1; padding: 0; -webkit-app-region: no-drag; }
 .winbtns button:hover { color: var(--ink); background: var(--bg-2); }
 .winbtns button.close:hover { color: var(--bad); background: var(--bad-soft); }
 
