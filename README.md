@@ -43,7 +43,7 @@ It edits its own code, reloads, and tells you what's new and how to use it. It a
 ## Install
 
 macOS (Apple Silicon): download the dmg from [Releases](https://github.com/yanglongyun/iimos/releases).
-On first launch it asks, in the chat, for your model settings: endpoint URL, API key, model name, context window size.
+On first launch it asks, in the chat, for your model settings: endpoint URL, API key, model name, context window size. The URL is the full Responses endpoint, usually ending in `/responses` (for example `https://api.deepseek.com/v1/responses`).
 
 The API key is stored only in a local `config.json` (mode 600) and sent only to the endpoint you entered. A stronger model does noticeably better; everything above ran on DeepSeek V4 Flash.
 
@@ -77,7 +77,7 @@ Recovery window: ⌘⌥⇧R (Windows/Linux: Ctrl+Alt+Shift+R), or the `--recover
 
 ## Run from source
 
-Node 22.5+.
+Node 22.5+. Windows also needs Git Bash (found automatically in the usual locations, or set `IIMOS_BASH`; the shell tool falls back to cmd.exe when none is found).
 
 ```bash
 npm install
