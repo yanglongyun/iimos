@@ -1,7 +1,7 @@
 /* iimos —— 终端。黑底、等宽、一种绿。整个对话就是一份执行日志。 */
 :root {
   --bg: #050505; --bg-2: #0d0d0c; --ink: #e8e8e3; --ink-2: #b9b9b2; --dim: #6b6b66; --faint: #232321;
-  --acc: #7cff9b; --cyan: #9fdcff; --warn: #ffcf6b; --bad: #ff6b6b;
+  --acc: #7cff9b; --cyan: #9fdcff; --warn: #ffcf6b; --bad: #ff6b6b; --bad-soft: rgba(255, 107, 107, .12);
   --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, "PingFang SC", monospace;
   color-scheme: dark;
 }
@@ -28,6 +28,12 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .model:hover { color: var(--ink); background: var(--bg-2); }
 .model::before { content: "●"; margin-right: 6px; color: var(--warn); }
 .model.on::before { color: var(--acc); text-shadow: 0 0 8px var(--acc); }
+
+/* 窗口钮:无框窗口的最小化/最大化/关闭,画在顶栏最右(macOS 用原生红绿灯,不渲染这排) */
+.winbtns { display: flex; align-items: center; gap: 2px; margin-left: 10px; -webkit-app-region: no-drag; }
+.winbtns button { width: 32px; height: 24px; display: grid; place-items: center; border-radius: 4px; color: var(--dim); font-size: 12px; line-height: 1; padding: 0; }
+.winbtns button:hover { color: var(--ink); background: var(--bg-2); }
+.winbtns button.close:hover { color: var(--bad); background: var(--bad-soft); }
 
 .scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: var(--faint) transparent; }
 
