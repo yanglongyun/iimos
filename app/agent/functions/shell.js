@@ -1,7 +1,7 @@
 // 在 workspace 里执行终端命令。超时或被停下时连同子进程整组杀掉。
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 export default function shell(args, config, signal) {
     if (typeof args.command !== 'string' || !args.command) throw new Error('缺少 command 参数');
@@ -10,8 +10,31 @@ export default function shell(args, config, signal) {
     // launcher 的 node / iimos 垫片放在 PATH 最前面;Electron 主进程的 ELECTRON_RUN_AS_NODE 不能漏给子进程
     const env = { ...process.env, PATH: `${config.bin ? `${config.bin}${path.delimiter}` : ''}${process.env.PATH || '/usr/bin:/bin'}` };
     delete env.ELECTRON_RUN_AS_NODE;
+    // Windows 没有 /bin/sh:按顺序找 Git Bash(可用环境变量 IIMOS_BASH 指定),找不到退回 cmd.exe。
+    // System32 下的 bash 是 WSL 的,环境不一样,不认。
+    const bashCandidates = [
+        process.env.IIMOS_BASH,
+        process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'Git', 'bin', 'bash.exe'),
+        process.env['ProgramFiles(x86)'] && path.join(process.env['ProgramFiles(x86)'], 'Git', 'bin', 'bash.exe'),
+        process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Programs', 'Git', 'bin', 'bash.exe'),
+    ].filter((candidate) => candidate && existsSync(candidate));
+    if (process.platform === 'win32') {
+        try {
+            const onPath = spawnSync('where', ['bash'], { encoding: 'utf8' }).stdout?.split(/\r?\n/) ?? [];
+            bashCandidates.push(...onPath.map((line) => line.trim()).filter((line) => {
+                const lower = line.toLowerCase();
+                return line && !lower.includes('system32') && !lower.includes('windowsapps');
+            }));
+        } catch { /* 没有 where 就算了 */ }
+    }
+    const bash = bashCandidates[0];
+    const useBash = process.platform !== 'win32' || Boolean(bash);
+    const shellProgram = process.platform !== 'win32'
+        ? (existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh')
+        : (bash || process.env.ComSpec || 'cmd.exe');
+
     return new Promise((resolve, reject) => {
-        const child = spawn(existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh', ['-c', args.command], {
+        const child = spawn(shellProgram, [...(useBash ? ['-c'] : ['/d', '/s', '/c']), args.command], {
             cwd: path.resolve(config.workdir, args.workdir || '.'),
             env,
             detached: true,
