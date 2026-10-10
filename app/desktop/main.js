@@ -39,11 +39,15 @@ function openWindow() {
         // macOS 留原生红绿灯;Windows/Linux 用无框窗口 —— 标题栏和菜单那排没用的东西不要,
         // 拖拽、双击最大化靠顶栏的拖拽区,三个窗口钮画在顶栏最右
         ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' } : { frame: false }),
-        // 窗口钮在页面里,这个小小的桥是唯一通道
-        preload: path.join(import.meta.dirname, 'preload.cjs'),
         // 和 ui/style.css 的 --bg 一致,开窗时不闪一下
         backgroundColor: '#050505',
-        webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+        // 窗口钮在页面里,这个小小的桥是唯一通道 —— 注意 preload 必须在 webPreferences 里
+        webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            preload: path.join(import.meta.dirname, 'preload.cjs'),
+        },
     });
     // 页面里的外链交给系统浏览器,不在应用窗口里跳走
     win.webContents.setWindowOpenHandler(({ url }) => { void shell.openExternal(url); return { action: 'deny' }; });
