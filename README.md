@@ -4,7 +4,9 @@
 
 **An agent that can fully modify itself.** It ships as a single chat box. The UI, the server, its tools, its own system prompt — all of it is its own source code, and it can rewrite any of it. Ask for something and it changes itself, rather than handing you a separate artifact.
 
-![iimos at factory state: a terminal-style chat prompt](docs/screenshot.png)
+**"Turn yourself into a Windows XP desktop."** Real recording, from the factory state, middle fast-forwarded:
+
+![](docs/xp.gif)
 
 - **Everything stays local.** The agent, its code and your data live on your machine. No account, no cloud.
 - **Bring your own model.** Any endpoint compatible with the OpenAI Responses API: URL, API key, model name.
@@ -12,11 +14,7 @@
 
 ## What it did, starting from the factory state
 
-Real recordings, nothing edited by hand. The middle of each clip is fast-forwarded; the moment it reloads is real time.
-
-**"Turn yourself into a Windows XP desktop."** It rewrote its React and CSS, rebuilt, reloaded. The chat became a window on the desktop; the panel it had grown earlier became another one.
-
-![](docs/xp.gif)
+Real recordings, nothing edited by hand. The middle of each clip is fast-forwarded; the moment it reloads is real time. Above: it rewrote its React and CSS, rebuilt, reloaded — the chat became a window on the XP desktop, the panel it had grown earlier became another one.
 
 **"Become a crypto price desk, with real data."** It couldn't read the web at all. It wrote itself a tool that pulls OKX quotes, added a scheduler that refreshes every minute, and built price alerts that fire a system notification.
 
