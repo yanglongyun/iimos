@@ -37,7 +37,7 @@ export function Setup({ config, onSave, onClose }: {
                     <span>connect — 模型</span>
                     {closable && <button type="button" className="x" aria-label="关闭" onClick={onClose}>esc</button>}
                 </div>
-                <p className="hint">任何兼容 OpenAI Responses 协议的服务都行。key 只存在这台电脑上。</p>
+                <p className="hint">任何兼容 OpenAI Responses 协议的服务都行,地址要填完整的端点(通常以 /responses 结尾)。key 只存在这台电脑上。</p>
                 <label><span>服务地址 ›</span>
                     <input ref={first} type="url" required autoComplete="off" spellCheck={false} placeholder="https://api.openai.com/v1/responses" value={url} onChange={(e) => setUrl(e.target.value)} />
                 </label>

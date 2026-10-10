@@ -31,7 +31,7 @@
 ## 安装
 
 macOS:从 [Releases](https://github.com/yanglongyun/iimos/releases) 下载 dmg。
-第一次打开时在对话里填模型配置(服务地址、API Key、模型名、上下文窗口大小)。
+第一次打开时在对话里填模型配置(服务地址、API Key、模型名、上下文窗口大小)。服务地址填完整的 Responses 端点,通常以 `/responses` 结尾,比如 `https://api.deepseek.com/v1/responses`。
 
 API Key 只存在本机 `config.json`(权限 600),只发往你填的那个地址。
 
@@ -63,7 +63,7 @@ app 唯一要守的契约(详见 [launcher/CONTRACT.md](launcher/CONTRACT.md)):�
 
 ## 从源码跑
 
-需要 Node 22.5+。
+需要 Node 22.5+。Windows 还需要 Git Bash(会自动在常见位置查找,也可用环境变量 `IIMOS_BASH` 指定;找不到时 shell 工具会退回 cmd.exe)。
 
 ```bash
 npm install
