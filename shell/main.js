@@ -1,6 +1,6 @@
 // 桌面壳:Electron 主进程。只做宿主该做的事 —— 窗口、菜单栏、快捷键、开机自启、手 ——
 // 其余交给 launcher/core.js(纯 Node,服务器形态用的也是它)。
-import { app, globalShortcut, Menu, nativeImage, powerSaveBlocker, shell, Tray } from 'electron';
+import { app, dialog, globalShortcut, Menu, nativeImage, powerSaveBlocker, shell, Tray } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -10,6 +10,7 @@ import { createLauncher, createLog } from '../launcher/core.js';
 import { createSurfaces } from './surface.js';
 import { startLocalHands } from '../hands/index.js';
 import { linkHands } from '../hands/link.js';
+import { linkCli, linkedAt, unlinkCli } from './cli-link.js';
 
 const RECOVERY_SHORTCUT = 'CommandOrControl+Alt+Shift+R';
 const STOP_HANDS_SHORTCUT = 'CommandOrControl+Shift+Escape';
@@ -152,6 +153,24 @@ function setupTray({ core, surfaces, hands }) {
                 },
                 { label: '停下所有电脑操作  ⌘⇧⎋', click: () => hands.stopAll('菜单栏') },
             ] : []),
+            { type: 'separator' },
+            {
+                label: '在终端里使用 iimos 命令', type: 'checkbox', checked: Boolean(linkedAt(path.join(paths.bin, 'iimos'))),
+                click: (item) => {
+                    const shim = path.join(paths.bin, 'iimos');
+                    try {
+                        if (!item.checked) { unlinkCli(shim); render(); return; }
+                        const { file, inPath } = linkCli(shim);
+                        void dialog.showMessageBox({
+                            message: '终端里可以用 iimos 了',
+                            detail: `链接在 ${file}。\n\n打开一个新的终端窗口试试:\niimos help\niimos adopt <形态 id>${inPath === false ? `\n\n这个目录可能不在你的 PATH 里,在 ~/.zshrc 加一行:\nexport PATH="${path.dirname(file)}:$PATH"` : ''}`,
+                        });
+                    } catch (error) {
+                        void dialog.showMessageBox({ type: 'warning', message: '没装上', detail: error.message });
+                    }
+                    render();
+                },
+            },
             { type: 'separator' },
             { label: '退出 iimos', role: 'quit' },
         ]));
