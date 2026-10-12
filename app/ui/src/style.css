@@ -98,6 +98,7 @@ body.fresh .log { display: none; }
 .t summary { list-style: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t summary::-webkit-details-marker { display: none; }
 .t summary b { color: var(--cyan); font-weight: 500; margin-right: 8px; }
+.t summary .n { color: var(--dim); margin-left: 8px; }
 .t summary:hover { color: var(--ink-2); }
 .t.pending { border-left-color: var(--acc); }
 .t.pending summary b::after { content: "⠋"; color: var(--acc); margin-left: 6px; animation: spin .8s steps(1) infinite; }
