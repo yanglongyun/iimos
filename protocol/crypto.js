@@ -60,9 +60,12 @@ export function pairLink({ relay, instance, device, secret }) {
 }
 
 export function parsePairLink(link) {
-    const url = new URL(link);
+    // 复制粘贴时常带上引号、括号、空白,去掉再认
+    const clean = String(link || '').trim().replace(/^[\s'"<(\[]+|[\s'"<>)\].,;]+$/g, '');
+    let url;
+    try { url = new URL(clean); } catch { throw new Error('不是 iimos 的配对链接'); }
     const match = url.pathname.match(/^\/m\/([\w-]+)\/?$/);
     const [device, secret] = url.hash.slice(1).split('.');
-    if (!match || !device || !secret) throw new Error('不是 iimos 的配对链接');
+    if (!match || !/^[\w-]+$/.test(device || '') || !/^[\w-]{40,}$/.test(secret || '')) throw new Error('不是 iimos 的配对链接(可能没复制完整)');
     return { relay: url.origin, instance: match[1], device, secret };
 }

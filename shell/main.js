@@ -42,13 +42,11 @@ const readLink = () => { try { return JSON.parse(fs.readFileSync(linkFile, 'utf8
 function relinkHands(link, { save = true } = {}) {
     handsLink?.stop();
     handsLink = null;
-    if (save) {
-        if (link) fs.writeFileSync(linkFile, JSON.stringify({ link }, null, 2), { mode: 0o600 });
-        else fs.rmSync(linkFile, { force: true });
-    }
-    if (!link) return { linked: false };
+    if (!link) { if (save) fs.rmSync(linkFile, { force: true }); return { linked: false }; }
     if (!localHands) throw new Error('这台电脑的手还没起来');
+    // 链接不对会在这里抛出,不存坏链接
     handsLink = linkHands({ link, hand: localHands.hand, log: console.log });
+    if (save) fs.writeFileSync(linkFile, JSON.stringify({ link }, null, 2), { mode: 0o600 });
     return { linked: true, instance: handsLink.instance };
 }
 
