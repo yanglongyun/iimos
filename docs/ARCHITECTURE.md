@@ -25,31 +25,36 @@ launcher/    不变层核心,纯 Node。两种形态都用它。
   recovery/      救援:一个不加载应用代码的网页 + 一个独立的小 Agent。本机窗口和手机都打开它
   remote.js      远程连接器:主动连中继,端到端加密,把手机的请求转给应用、把远处的手接进来
   hands-hub.js   手的总线:本机的手、远处连进来的手,对应用只露一个 call(tool, args)
-  share.js       分享与长成同款:打包 workspace、上传、下载、导入
+  share.js       分享与换上:打包 workspace、扫密钥、截封面、上传;下载、预览、换上
   serve.js       服务器形态的入口:守护进程,子进程退出码 75 就重启它(相当于桌面的 relaunch)
   cli.js         `iimos` 命令
 
 shell/       桌面壳,Electron。只有桌面形态有。
   main.js        Electron 主进程:创建 launcher core,提供「窗口」「重启」「救援窗口」这些宿主能力
-  surface.js     打开应用界面的窗口、截图、重载
-  permissions.js 辅助功能、屏幕录制权限的检查与引导
+  surface.js     打开应用界面的窗口(按应用给的窗口偏好)、截图、重载
+                 菜单栏:开机自启、保持唤醒、「允许它操作这台电脑」、停下所有电脑操作
 
 app/         出厂种子 = Agent 能改的身体。纯 Node + 网页,不碰 Electron。
   main.js        应用入口:起本地服务,iimos.ready({ url }) 报到
-  server/        本地服务(127.0.0.1 + 令牌)、对话、定时任务、看板
+  server/        本地服务(127.0.0.1 + 令牌)、对话、定时任务(scheduler.js)、面板用的接口
   ai/  agent/    模型请求、Agent 循环、工具(shell/read/write/edit/computer/browser/notify/schedule)
-  ui/            React + TSX,iimos reload 时编译
+                 截图存成文件,只有最近一张以原图给模型看(agent/images.js)
+  ui/            React + TSX,iimos reload 时编译。一个对话 + 面板(定时任务、手、配对手机)
 
 hands/       手。跑在要被操作的那台电脑上。
-  computer.js    截屏、点击、键盘、滚动、应用列表与切换(macOS)
-  browser.js     浏览器插件的本地宿主:插件连进来,命令转过去
-  notify.js      系统通知
-  index.js       把上面这些包成 { tools, call(tool, args) };可以本机直接挂到 hub,也可以经中继连远处的大脑
+  computer/      Swift 小程序源码(ScreenCaptureKit 截屏、CGEvent 键鼠、辅助功能树),build.js 编译
+  computer.js    跟小程序说话(JSON 行协议);没勾「允许它操作这台电脑」时一律拒绝
+  browser.js     浏览器插件的本地宿主(127.0.0.1:47231):插件连进来,命令转过去
+  index.js       把电脑、浏览器、通知包成一只手 { tools, call(tool, args) },挂到 hub
+  link.js        把这只手经中继借给远处的 iimos
 
 extension/   Chrome 插件。连本机 hands 的浏览器宿主,在你登着账号的浏览器里看页面、点、填。
 
 relay/       中继,Cloudflare Worker + Durable Object。每个 iimos 一个 DO。
-             官方部署在 relay.iimos.ai,开源,可以自己部。
+             官方部署在 relay.iimos.ai,开源,可以自己部。test/ 是端到端测试(launcher ↔ 中继 ↔ 脚本扮演的手机)
+
+community/   形态社区,Cloudflare Worker + D1 + R2。部署在 shapes.iimos.ai。
+             形态墙、详情页、发布 / 下载 / 删除接口;页面在 Worker 里直接拼 HTML
 
 protocol/    共享约定,只有代码里的常量、编解码和文档:
   crypto.js      配对密钥、AES-GCM 帧(Node 和浏览器同一份,都用 WebCrypto)
@@ -57,7 +62,7 @@ protocol/    共享约定,只有代码里的常量、编解码和文档:
   shape.js       分享包(形态)的格式
 ```
 
-社区网站(形态广场)不在这个仓库,在 iimos-mono 的 `site/`,和官网一起。它和这里只通过 `protocol/shape.js` 说话。
+社区站和 launcher 用同一份 `protocol/shape.js` 打包、检查形态。官网(iimos-mono 的 `site/`)只放入口链接。
 
 ## 启动:core 与宿主
 
@@ -66,15 +71,16 @@ protocol/    共享约定,只有代码里的常量、编解码和文档:
 | 宿主能力 | 桌面(shell) | 服务器(serve) |
 | --- | --- | --- |
 | `whenReady()` | `app.whenReady()` | 立即 |
-| `openSurface(url)` | 开窗口加载 url,加载完算界面活着 | GET url 返回 200 算界面活着 |
+| `openSurface(url, window)` | 按窗口偏好开窗口加载 url,加载完算界面活着 | GET url 返回 200 算界面活着 |
 | `reloadSurfaces()` | 重载所有应用窗口 | 无 |
 | `relaunch()` | `app.relaunch()` 后退出 | 以退出码 75 退出,守护进程重新拉起 |
 | `showRecovery(url)` | 开救援窗口加载救援页 | 打日志;救援页照样能从手机打开 |
 | `capture()` | 截应用窗口 | 无 |
 | `hands` | 本机的手(电脑操作、浏览器、通知) | 无,等远处的手连进来 |
 
-**应用怎么报到**:workspace 根目录的 `main.js` 起服务后调用 `globalThis.iimos.ready({ url })`。
-launcher 交给宿主打开这个 url,确认界面真的能加载,才记为启动成功。
+**应用怎么报到**:workspace 根目录的 `main.js` 起服务后调用 `globalThis.iimos.ready({ url, window })`。
+launcher 交给宿主打开这个 url,确认界面真的能加载,才记为启动成功。`window` 是桌面窗口的偏好
+(大小、标题、开窗底色),应用换了风格可以跟着改;服务器上忽略。
 老版本的 `desktop/main.js`(直接用 Electron)在桌面形态下仍然能加载,升级时由 Agent 合并。
 
 ## 远程:中继与端到端加密
@@ -107,30 +113,39 @@ await hands.call('computer', { action: 'screenshot' });
 
 桌面形态里手就在本机进程里;服务器形态里要等一台电脑连进来。没有手时 call 返回明确的错误,Agent 照实告诉用户。
 
-电脑操作需要 macOS 的「辅助功能」和「屏幕录制」授权,绑在签过名的 iimos.app 上,由 `shell/permissions.js`
-引导用户打开。浏览器插件经本机 WebSocket(127.0.0.1 + 一次性配对码)连到 hands。
+电脑操作要两道门:用户在菜单栏勾上「允许它操作这台电脑」(存在 `$IIMOS_DATA/hands.json`),
+以及 macOS 的「辅助功能」和「屏幕录制」授权(绑在签过名的 iimos.app 上)。⌘⇧Esc 随时停下所有电脑操作。
+浏览器插件经本机 WebSocket(127.0.0.1 + 5 分钟有效的一次性配对码,之后是长期令牌,本机只存哈希)连到 hands,
+只能动用户共享给 iimos 的标签页和 iimos 自己开的标签页。
+
+把手借给服务器:服务器上 `iimos pair --hands`,电脑上 `iimos hands link <链接>`(存在 `$IIMOS_DATA/hands-link.json`,开机自动连)。
 
 ## 一直醒着、主动来找你
 
-- 定时任务在应用的服务端(出厂自带),到点就开一轮对话,结果写进对话,需要时发通知和推送。
-- 服务器形态是常驻进程;桌面形态下,`iimos` 可以设为开机自启、合盖不退出(仍受系统睡眠影响)。
-- Agent 被鼓励第一次见面就主动提议建立连接(装插件、给权限、配对手机),并在 `$IIMOS_DATA/memory.md`
-  记下对用户的观察。它可以自己长出新东西,改动已有的东西要用户点头。
+- 定时任务在应用的服务端(`app/server/scheduler.js`,任务存 `$IIMOS_DATA/tasks.json`),Agent 用 `schedule` 工具增删改。
+  到点了在唯一的那个对话里替用户开口跑一轮;对话正忙就等;电脑睡着错过的 12 小时内补跑一次。
+- 通知:`notify` 工具弹本机通知,同时让中继给开了通知的手机发一条不带内容的推送。
+- 服务器形态是常驻进程;桌面形态关掉窗口不退出,菜单栏可以设开机自启、保持唤醒(仍受合盖睡眠影响)。
+- 每轮的系统指令里有「此刻」(时间、跑在哪、有哪些手、手机连没连)和 `$IIMOS_DATA/memory.md`。
+  提示词鼓励它记住用户、按时醒来、主动提议 —— 是指导,不是硬规矩;它可以自己长出新东西,改动已有的东西要用户点头。
 
 ## 分享:形态
 
-一份形态 = workspace 某个版本的全部文件(不含 `.git`、`.iimos/`),外加 `shape.json`:
-标题、一句话、「让它长成这样的那几句话」、作者、父形态。用户数据在 `$IIMOS_DATA`,天然不在里面。
+一份形态 = workspace 当前版本里的全部文件(不含 `.git`、`.iimos/`、依赖、日志),打成 gzip 的 JSON,
+带名字、「让它长成这样的话」、作者、出厂版本、谱系和封面。用户数据在 `$IIMOS_DATA`,天然不在里面。
 
-- `iimos share`:检查(密钥模式、本机绝对路径、AGENT.md 里的私人内容)→ 打包 → 截图 → 上传到 iimos.ai
-- `iimos adopt <形态>`:下载 → 列出将要换进来的文件 → 用户同意 → 快照当前样子 → 换身体 → 重启
-- 谱系:`shape.json` 记着父形态,网站画成树
+- `iimos share "名字" --story "…"`:快照 → 打包 → 扫密钥(有就拒绝)→ 截界面当封面 → 发到 shapes.iimos.ai。
+  删除令牌只存在本机 `$IIMOS_DATA/shares.json`。`--dry-run` 只看不发,`--out 文件` 只存本地。
+- `iimos adopt <id | 链接 | 文件>`:下载 → 列出名字、来历、新增 / 改动 / 去掉多少文件 → 加 `--yes` 才换 →
+  当前样子留成 `before-shape-*` 分支 → 换身体、写 `shape.json`(来源与谱系)→ 重启。换上的起不来,照常回滚到 good。
+- 谱系:再分享时把 `shape.json` 里的来源接到谱系末尾;社区站的详情页列出「从它长出来的」。
 
 ## 发出去的东西
 
 | 产物 | 组成 | 给谁 |
 | --- | --- | --- |
 | Mac 安装包 | shell + launcher + app(种子)+ hands | 普通用户 |
-| 服务器版 `npx iimos-server` / Docker | launcher + app(种子) | 想 7×24 的人 |
+| 服务器版 `npm run serve` / Docker | launcher + app(种子) | 想 7×24 的人 |
 | Chrome 插件 | extension | 想让它用浏览器的人 |
-| 中继 | relay | 官方部署一份,也可自部署 |
+| 中继 | relay | 官方部署在 relay.iimos.ai,也可自部署 |
+| 形态社区 | community | 官方部署在 shapes.iimos.ai,也可自部署 |

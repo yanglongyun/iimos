@@ -81,6 +81,22 @@ async function work() {
     process.on('uncaughtException', (error) => log('未捕获异常', error));
     process.on('unhandledRejection', (error) => log('未处理的 Promise 拒绝', error));
     await core.start();
+    await firstPair(core, log);
+}
+
+/** 服务器没有窗口:一台设备都没配过时,直接在终端打出配对二维码,扫了就能打开界面、配模型。 */
+async function firstPair(core, log) {
+    if (process.env.IIMOS_NO_PAIR === '1') return;
+    const status = core.remote.api.status();
+    if (status.devices.some((d) => d.kind === 'device')) return;
+    try {
+        const { link } = await core.remote.api.pair({ name: '第一台设备' });
+        let qr = '';
+        try { const { default: QR } = await import('qrcode'); qr = await QR.toString(link, { type: 'terminal', small: true }); } catch { /* 没有 qrcode */ }
+        console.log(`\n${qr}\n还没有设备连着这台 iimos。用手机扫上面的码,或者在任何浏览器打开:\n${link}\n(这个链接就是钥匙,别发给别人。之后再配别的设备:iimos pair)\n`);
+    } catch (error) {
+        log('自动配对失败(中继连不上?)', error);
+    }
 }
 
 if (process.argv.includes('--child')) await work();

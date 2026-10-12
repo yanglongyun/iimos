@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+docs
+relay
+community
+extension
+shell
+hands/runtime
+hands/computer
+app/.data
+.git
+*.log
