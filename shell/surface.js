@@ -26,8 +26,20 @@ export function createSurfaces({ log }) {
     let appWin = null;
     let recoveryWin = null;
 
+    let prefs = {};
+    /** 应用在 ready({ window }) 里给的偏好,只认这几项、只认合理的值。 */
+    function windowOptions() {
+        const out = { ...WINDOW };
+        const num = (v, min, max) => (Number.isFinite(v) && v >= min && v <= max ? Math.round(v) : undefined);
+        const size = { width: num(prefs.width, 320, 4000), height: num(prefs.height, 240, 3000), minWidth: num(prefs.minWidth, 200, 2000), minHeight: num(prefs.minHeight, 200, 2000) };
+        for (const [k, v] of Object.entries(size)) if (v !== undefined) out[k] = v;
+        if (typeof prefs.title === 'string' && prefs.title) out.title = prefs.title.slice(0, 60);
+        if (typeof prefs.background === 'string' && /^#[0-9a-f]{6}$/i.test(prefs.background)) out.backgroundColor = prefs.background;
+        return out;
+    }
+
     function load(url) {
-        const win = new BrowserWindow(WINDOW);
+        const win = new BrowserWindow(windowOptions());
         guard(win, `${new URL(url).origin}/`);
         win.on('closed', () => { if (appWin === win) appWin = null; });
         appWin = win;
@@ -48,7 +60,7 @@ export function createSurfaces({ log }) {
 
     return {
         /** 打开应用界面,真的加载出来才 resolve。 */
-        open(url) { appUrl = url; return load(url); },
+        open(url, window = {}) { appUrl = url; prefs = window || {}; return load(url); },
         /** 点 Dock 图标、菜单栏「打开」、再开一次 App:有窗口就拿到前面,没有就重开。 */
         show() {
             if (appWin && !appWin.isDestroyed()) { if (appWin.isMinimized()) appWin.restore(); appWin.show(); appWin.focus(); return; }

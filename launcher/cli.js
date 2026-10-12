@@ -24,7 +24,7 @@ const HELP = `iimos —— 和 launcher 说话
   iimos add <包>[@版本]        从 esm.sh 装一个前端库到 ui/vendor/,之后照常 import(没有 npm 也能用)
   iimos build                  编译界面 ui/src → ui/dist(失败时 dist 不动,错误打出来)
   iimos reload                 先编译界面,成功了再重载窗口(只改了 ui/ 时用)
-  iimos restart                先编译界面,再整个应用重启(改了 desktop/ server/ agent/ 时用)
+  iimos restart                先编译界面,再整个应用重启(改了 main.js server/ agent/ 时用)
   iimos recovery               打开救援窗口
   iimos upgrade                看新出厂版本的情况;iimos upgrade apply 直接换成新出厂版
   iimos paths                  launcher 用到的各个目录
@@ -43,24 +43,29 @@ const HELP = `iimos —— 和 launcher 说话
   iimos hands call <工具> '<json>'   直接让手做一件事,比如 iimos hands call notify '{"title":"hi"}'
 
 分享(形态):
-  iimos share "标题" [--story "让它长成这样的话"] [--dry-run]   把现在的样子分享到 iimos.ai
-  iimos adopt <形态 id 或链接> [--yes]                         长成别人分享的样子(先看清楚要换进来什么)
+  iimos share "标题" [--story "让它长成这样的话"] [--dry-run] [--out 文件]   把现在的样子分享到社区(shapes.iimos.ai)
+  iimos adopt <形态 id | 链接 | 文件> [--yes]                  换上别人分享的样子(先看清楚要换进来什么)
 `;
 
 const out = (value) => process.stdout.write(typeof value === 'string' ? `${value}\n` : `${JSON.stringify(value, null, 2)}\n`);
 const fail = (message) => { process.stderr.write(`${message}\n`); process.exit(1); };
 const short = (oid) => (oid ? oid.slice(0, 8) : '-');
 
-async function control(route, body, method = 'POST') {
+/** 和正在跑的 launcher 说话。soft:launcher 不在或拒绝时抛错,而不是直接退出(可有可无的事用)。 */
+async function control(route, body, method = 'POST', soft = false) {
+    const stop = soft ? (message) => { throw new Error(message); } : fail;
     let info;
-    try { info = JSON.parse(fs.readFileSync(paths.control, 'utf8')); } catch { fail('launcher 没在运行(找不到 control.json)'); }
-    const response = await fetch(`http://127.0.0.1:${info.port}${route}`, {
-        method,
-        headers: { authorization: `Bearer ${info.token}`, ...(body ? { 'content-type': 'application/json' } : {}) },
-        body: body ? JSON.stringify(body) : undefined,
-    }).catch((error) => fail(`连不上 launcher:${error.message}`));
+    try { info = JSON.parse(fs.readFileSync(paths.control, 'utf8')); } catch { return stop('launcher 没在运行(找不到 control.json)'); }
+    let response;
+    try {
+        response = await fetch(`http://127.0.0.1:${info.port}${route}`, {
+            method,
+            headers: { authorization: `Bearer ${info.token}`, ...(body ? { 'content-type': 'application/json' } : {}) },
+            body: body ? JSON.stringify(body) : undefined,
+        });
+    } catch (error) { return stop(`连不上 launcher:${error.message}`); }
     const value = await response.json().catch(() => ({}));
-    if (!response.ok) fail(value.error || `launcher 拒绝了:${response.status}`);
+    if (!response.ok) return stop(value.error || `launcher 拒绝了:${response.status}`);
     return value;
 }
 

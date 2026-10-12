@@ -15,7 +15,7 @@ import * as snap from './snapshot.js';
  */
 const SKIP = /^(\.data|test)([\\/]|$)|(^|[\\/])(\.git|\.DS_Store|node_modules|[^\\/]+\.db(-wal|-shm)?|[^\\/]+\.log)$/;
 
-const GITIGNORE = `# 由 launcher 写入,可以改。
+export const GITIGNORE = `# 由 launcher 写入,可以改。
 .iimos/
 node_modules
 .DS_Store

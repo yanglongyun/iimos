@@ -65,7 +65,7 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 
 | 成员 | 用途 |
 | --- | --- |
-| `ready({ url })` / `failed(err)` | 报到 / 自己知道起不来了 |
+| `ready({ url, window? })` / `failed(err)` | 报到 / 自己知道起不来了。`window` 是桌面窗口的偏好:`{ width, height, minWidth, minHeight, title, background }`(background 是开窗时的底色,和界面底色一致就不闪)|
 | `onShutdown(fn)` | 重启或退出前的收尾,`fn({ restarting })` |
 | `restart()` / `reload()` / `recovery()` | 同名命令 |
 | `hands.list()` | 现在有哪些手:`[{ id, name, tools, remote }]`。本机的叫 local,借来的叫 remote:… |

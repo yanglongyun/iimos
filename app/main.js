@@ -16,5 +16,6 @@ const server = await startServer({ workspace, data, bin: iimos?.bin });
 // 收尾:重启时告诉服务「这是重启」,正在跑的那一轮新进程起来后会接着跑
 iimos?.onShutdown(({ restarting } = {}) => server.close({ restarting }));
 
-if (iimos) iimos.ready({ url: server.url });
+// window 是给桌面窗口的偏好(大小、标题、开窗时的底色),换了风格时跟着改;服务器上没有窗口,忽略
+if (iimos) iimos.ready({ url: server.url, window: { width: 980, height: 760, minWidth: 520, minHeight: 480, title: 'iimos', background: '#050505' } });
 else console.log(server.url);

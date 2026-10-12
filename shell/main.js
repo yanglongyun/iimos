@@ -60,7 +60,7 @@ function main() {
     const host = {
         kind: 'desktop',
         whenReady: () => app.whenReady(),
-        openSurface: (url) => surfaces.open(url),
+        openSurface: (url, window) => surfaces.open(url, window),
         reloadSurfaces: () => surfaces.reload(),
         relaunch: () => {
             app.relaunch({ args: process.argv.slice(1).filter((arg) => arg !== '--recovery') });

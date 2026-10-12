@@ -116,3 +116,8 @@ function removeEmptyDirs(dir, root = dir) {
         if (child !== root && fs.readdirSync(child).length === 0) fs.rmdirSync(child);
     }
 }
+
+/** HEAD 里有哪些文件(相对路径)。 */
+export async function listFiles(dir) {
+    return git.listFiles({ fs, dir, ref: 'HEAD' });
+}

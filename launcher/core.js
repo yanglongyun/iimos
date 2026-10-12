@@ -8,7 +8,7 @@
 // 跟环境有关的事交给宿主(host),见 docs/ARCHITECTURE.md「启动:core 与宿主」:
 //   host.kind                 'desktop' | 'server'
 //   host.whenReady()          宿主准备好了(Electron 的 app.whenReady)
-//   host.openSurface(url)     打开应用界面,界面真的加载出来才 resolve
+//   host.openSurface(url, w)  打开应用界面(w 是窗口偏好),界面真的加载出来才 resolve
 //   host.reloadSurfaces()     重载应用界面
 //   host.relaunch()           整个进程重启
 //   host.showRecovery(url)    给用户看救援页
@@ -75,7 +75,8 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         /** 远程:配对手机、给手机推送。 */
         remote: remote.api,
         /**
-         * 应用起来了。传 { url }:launcher 让宿主打开这个界面,真的加载出来才算报到成功。
+         * 应用起来了。传 { url, window? }:launcher 让宿主打开这个界面,真的加载出来才算报到成功。
+         * window 是给桌面窗口的偏好:{ width, height, minWidth, minHeight, title, background },服务器上忽略。
          * 不传(老版本应用自己开了窗口):直接算报到。
          */
         ready(info) {
@@ -83,7 +84,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
             if (info?.url) {
                 appUrl = info.url;
                 state = 'opening';
-                Promise.resolve(host.openSurface(info.url))
+                Promise.resolve(host.openSurface(info.url, info.window || {}))
                     .then(() => markReady())
                     .catch((error) => void fail(error));
                 return;
