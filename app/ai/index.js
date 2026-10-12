@@ -140,6 +140,8 @@ export async function callModel(instructions, messages, model, config, tools = [
                 const raw = (await boundedBody(response, 16 * 1024 * 1024)).toString();
                 let text;
                 try { text = JSON.parse(raw).error?.message; } catch { /* 代理可能返回纯文本错误 */ }
+                // 最常见的 404 是 responsesUrl 填了 base_url 而不是完整端点,给出可行动的提示
+                if (response.status === 404) text = `${text || raw.slice(0, 300)} —— responsesUrl 需要填完整的 Responses 端点地址,通常以 /responses 结尾`;
                 const error = new Error(`模型服务 HTTP ${response.status}:${text || raw.slice(0, 300)}`);
                 error.code = `http_${response.status}`;
                 throw error;

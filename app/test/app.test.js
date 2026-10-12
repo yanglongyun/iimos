@@ -97,7 +97,7 @@ test('模型配置:没配发不出去;key 不回显;上下文窗口填错了不�
     await call('POST', '/api/config', { contextWindow: '200000' });
     const config = JSON.parse(fs.readFileSync(path.join(data, 'config.json'), 'utf8'));
     assert.deepEqual([config.apiKey, config.model, config.contextWindow], ['sk-secret-abcd1234', 'm2', 200000]);
-    assert.equal((fs.statSync(path.join(data, 'config.json')).mode & 0o777), 0o600);
+    if (process.platform !== 'win32') assert.equal((fs.statSync(path.join(data, 'config.json')).mode & 0o777), 0o600);   // Windows 的 stat 不反映 POSIX 权限位
 });
 
 // ── 对话 ────────────────────────────────────────────────

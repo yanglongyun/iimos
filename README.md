@@ -47,7 +47,7 @@ It edits its own code, reloads, and tells you what's new and how to use it. It a
 ## Install
 
 **Mac (Apple Silicon):** download the dmg from [Releases](https://github.com/yanglongyun/iimos/releases).
-On first launch it asks, in the chat, for your model settings: endpoint URL, API key, model name, context window size.
+On first launch it asks, in the chat, for your model settings: endpoint URL, API key, model name, context window size. The URL is the full Responses endpoint, usually ending in `/responses` (for example `https://api.deepseek.com/v1/responses`).
 It keeps running in the menu bar after you close the window. Open the panel (≡, top right) to pair your phone, see scheduled tasks, and see which hands it has.
 
 **Server (always on):** the brain without a window, on any machine that stays up. On first start it prints a QR code; scan it to open the UI on your phone and configure the model.
@@ -107,7 +107,7 @@ Recovery: ⌘⌥⇧R (Windows/Linux: Ctrl+Alt+Shift+R), the menu bar, the `--rec
 
 ## Run from source
 
-Node 22.5+.
+Node 22.5+. Windows also needs Git Bash (found automatically in the usual locations, or set `IIMOS_BASH`; the shell tool falls back to cmd.exe when none is found).
 
 ```bash
 npm install
