@@ -100,6 +100,42 @@
 </main>
 
 <script>
+// 和救援服务说话。本机窗口和手机(经远程隧道)都走这几个接口;令牌在地址的 ?token= 里,远程时由隧道补上。
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
+const api = async (name, body) => {
+  const res = await fetch(`${BASE}/api/${name}`, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers: { 'x-iimos-token': TOKEN, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const value = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(value.error || `请求失败 ${res.status}`);
+  return value;
+};
+let chatDone = null;
+window.recovery = {
+  status: () => api('status'),
+  rollback: (ref) => api('rollback', { ref }),
+  factory: () => api('factory', {}),
+  snapshot: (message) => api('snapshot', { message }),
+  restart: () => api('restart', {}),
+  openFolder: () => api('open-folder', {}),
+  stop: () => api('stop', {}),
+  resetChat: () => api('reset-chat', {}),
+  // 一句话说完(done / error)才 resolve,和原来 IPC 的行为一致
+  chat: (text) => new Promise((resolve, reject) => { chatDone = { resolve, reject }; api('chat', { text }).catch((e) => { chatDone = null; reject(e); }); }),
+  onEvent: (fn) => {
+    const events = new EventSource(`${BASE}/api/events?token=${encodeURIComponent(TOKEN)}`);
+    events.onmessage = (message) => {
+      const payload = JSON.parse(message.data);
+      fn(payload);
+      if (chatDone && (payload.type === 'done' || payload.type === 'error')) { chatDone.resolve(); chatDone = null; }
+    };
+  },
+};
+</script>
+<script>
 const $ = (id) => document.getElementById(id);
 const short = (oid) => (oid || '').slice(0, 8);
 let state = null;
@@ -183,13 +219,14 @@ function render() {
     branches.append(li);
   }
   $('log').textContent = state.launcherLog || '(空)';
+  $('folder').hidden = !state.canOpenFolder;
   if (!state.hasCreds) {
     $('input').placeholder = '没找到模型配置,救援对话用不了。可以先用左边的回滚。';
   }
 }
 
 $('restart').addEventListener('click', () => window.recovery.restart());
-$('folder').addEventListener('click', () => window.recovery.openFolder());
+$('folder').addEventListener('click', () => window.recovery.openFolder().catch((e) => note(String(e.message || e), true)));
 armed($('toGood'), '确认回到稳定版本?', () => window.recovery.rollback(state.good));
 armed($('factory'), '确认恢复出厂?', () => window.recovery.factory());
 $('newChat').addEventListener('click', async () => {

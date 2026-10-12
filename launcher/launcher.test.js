@@ -13,7 +13,7 @@ function fakeSeed(version, extra = {}) {
     const files = {
         'package.json': JSON.stringify({ version }),
         'AGENT.md': '# agent\n',
-        'desktop/main.js': `globalThis.iimos?.ready(); // v${version}\n`,
+        'main.js': `globalThis.iimos?.ready(); // v${version}\n`,
         'server/index.js': 'export {};\n',
         'ui/index.html': '<p>ui</p>\n',
         'node_modules/dep/index.js': 'module.exports = 1;\n',
@@ -39,7 +39,7 @@ test('播种:整份拷进来、打 good;依赖目录、系统垃圾不进 worksp
     const oid = await seed.plant({ seedDir, workspace, version: '1.0.0' });
     assert.ok(oid);
     assert.equal(await snap.resolve(workspace, 'refs/tags/good'), oid);
-    assert.ok(fs.existsSync(path.join(workspace, 'desktop/main.js')));
+    assert.ok(fs.existsSync(path.join(workspace, 'main.js')));
     assert.ok(fs.existsSync(path.join(workspace, 'ui/index.html')));
     assert.ok(!fs.existsSync(path.join(workspace, 'node_modules')));
     assert.ok(!fs.existsSync(path.join(workspace, 'ui/.DS_Store')));
@@ -54,7 +54,7 @@ test('真实的出厂 app/ 能播种,入口在', async () => {
     const workspace = path.join(root, 'workspace');
     const appDir = path.resolve(import.meta.dirname, '..', 'app');
     await seed.plant({ seedDir: appDir, workspace, version: seed.readSeedVersion(appDir, '0') });
-    for (const file of ['desktop/main.js', 'server/index.js', 'agent/index.js', 'ui/index.html', 'ui/src/main.tsx', 'ui/dist/main.js', 'AGENT.md']) {
+    for (const file of ['main.js', 'server/index.js', 'agent/index.js', 'ui/index.html', 'ui/src/main.tsx', 'ui/dist/main.js', 'AGENT.md']) {
         assert.ok(fs.existsSync(path.join(workspace, file)), `缺 ${file}`);
     }
 });
@@ -67,7 +67,7 @@ test('连续两次没报到 → 回滚到 good,坏版本留成分支,新文件�
     guardian.markReady(ctx);
 
     // agent 改坏了:改一个文件、加一个新文件
-    fs.writeFileSync(path.join(ctx.workspace, 'desktop/main.js'), 'throw new Error("坏了")\n');
+    fs.writeFileSync(path.join(ctx.workspace, 'main.js'), 'throw new Error("坏了")\n');
     fs.mkdirSync(path.join(ctx.workspace, 'notes'), { recursive: true });
     fs.writeFileSync(path.join(ctx.workspace, 'notes/x.js'), 'x');
 
@@ -85,7 +85,7 @@ test('连续两次没报到 → 回滚到 good,坏版本留成分支,新文件�
     assert.equal(d.action, 'run');
     assert.ok(d.rolledBack);
     assert.equal(d.commit, good);
-    assert.match(fs.readFileSync(path.join(ctx.workspace, 'desktop/main.js'), 'utf8'), /ready/);
+    assert.match(fs.readFileSync(path.join(ctx.workspace, 'main.js'), 'utf8'), /ready/);
     assert.ok(!fs.existsSync(path.join(ctx.workspace, 'notes')));
     assert.ok(await snap.resolve(ctx.workspace, `refs/heads/${d.rolledBack.branch}`));
     assert.ok(guardian.readNotice(ctx.workspace));

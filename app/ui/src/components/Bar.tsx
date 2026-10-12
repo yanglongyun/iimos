@@ -1,7 +1,7 @@
-// 顶栏:macOS 上标题栏隐藏,整条可拖窗口。右边是上下文用量和当前模型(点开模型配置)。
+// 顶栏:macOS 上标题栏隐藏,整条可拖窗口。右边是上下文用量、当前模型(点开模型配置)、面板(≡)。
 import type { Config } from '../types';
 
-export function Bar({ config, tokens, onModel }: { config: Config | null; tokens: number; onModel: () => void }) {
+export function Bar({ config, tokens, onModel, onPanel }: { config: Config | null; tokens: number; onModel: () => void; onPanel: () => void }) {
     const pct = config?.contextWindow ? Math.round((tokens / config.contextWindow) * 100) : 0;
     return (
         <header className="bar">
@@ -12,6 +12,7 @@ export function Bar({ config, tokens, onModel }: { config: Config | null; tokens
                 <button className={`model${config?.ready ? ' on' : ''}`} type="button" title="模型设置" onClick={onModel}>
                     {config?.ready ? config.model : '未连接'}
                 </button>
+                <button className="model menu" type="button" title="面板:定时任务、手、手机" onClick={onPanel}>≡</button>
             </span>
         </header>
     );

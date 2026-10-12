@@ -1,8 +1,11 @@
-// 接收一次工具调用,执行对应工具,返回 { text, failed? }。出错不抛,作为失败结果交回模型。
+// 接收一次工具调用,执行对应工具,返回 { text, image?, failed? }(image 是截图文件路径)。出错不抛,作为失败结果交回模型。
 import shell from './functions/shell.js';
 import read from './functions/read.js';
 import write from './functions/write.js';
 import edit from './functions/edit.js';
+import hands from './functions/hands.js';
+import notify from './functions/notify.js';
+import schedule from './functions/schedule.js';
 
 export default async function runTool(call, config, signal) {
     signal?.throwIfAborted();
@@ -15,6 +18,10 @@ export default async function runTool(call, config, signal) {
             case 'read': return await read(args, config, signal);
             case 'write': return await write(args, config, signal);
             case 'edit': return await edit(args, config, signal);
+            case 'computer': return await hands('computer', args, config, signal);
+            case 'browser': return await hands('browser', args, config, signal);
+            case 'notify': return await notify(args, config, signal);
+            case 'schedule': return await schedule(args, config, signal);
             default: throw new Error(`没有这个工具:${call.name}`);
         }
     } catch (error) {

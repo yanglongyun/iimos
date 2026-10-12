@@ -1,6 +1,7 @@
 // 对话就是一份执行日志:用户一行「› …」、工具一行缩进(点开看输出)、回复一段。
 import type { Item } from '../types';
 import { markdown } from '../markdown';
+import { token } from '../api';
 
 const textOf = (item: { content: { text?: string }[] }) => item.content.map((part) => part.text || '').join('');
 
@@ -9,6 +10,8 @@ function summarize(name: string, raw: string) {
     try { args = JSON.parse(raw || '{}'); } catch { /* 原样显示 */ }
     if (name === 'shell') return String(args.command || '');
     if (name === 'read' || name === 'write' || name === 'edit') return String(args.path || '');
+    if (name === 'computer' || name === 'browser') return [args.action, args.bundleId || args.url || args.text || args.key || args.element || ''].filter(Boolean).join(' ');
+    if (name === 'notify') return String(args.title || '');
     return raw;
 }
 
@@ -42,6 +45,13 @@ export function Log({ items, partial, running }: { items: Item[]; partial: strin
                 {items.map((item, i) => {
                     switch (item.type) {
                         case 'message':
+                            if (item.hidden) {
+                                const file = item.content.find((part) => part.type === 'input_image')?.file;
+                                if (!file) return null;
+                                const name = file.split(/[\\/]/).pop() || '';
+                                return <img key={i} className="shot" alt="截图" src={`/api/shots/${encodeURIComponent(name)}?token=${encodeURIComponent(token)}`} />;
+                            }
+                            if (item.role === 'user' && item.task) return <p key={i} className="tick">⏰ {item.task.title} · 到点了</p>;
                             if (item.role === 'user') return <p key={i} className="u">{textOf(item)}</p>;
                             return textOf(item).trim() ? <div key={i} className="a" dangerouslySetInnerHTML={{ __html: markdown(textOf(item)) }} /> : null;
                         case 'function_call':

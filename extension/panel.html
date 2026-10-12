@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iimos 浏览器连接</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <img src="icon.png" alt="" /><strong>iimos</strong><span class="badge">浏览器连接</span>
+      </div>
+    </header>
+    <main>
+      <section class="composer">
+        <div class="section-title">
+          <h2>连接客户端</h2>
+          <span id="status">未连接</span>
+        </div>
+        <p class="hint">在 iimos 里说「连接浏览器插件」,或者在终端运行 <code>iimos hands browser</code>,拿到配对码后填在这里。连上之后,把要给它用的网页共享出去。</p>
+        <form id="connection-form">
+          <label
+            >本机地址<input id="address" type="url" value="http://127.0.0.1:47231" required
+          /></label>
+          <label
+            >配对码<input id="code" autocomplete="off" placeholder="首次连接或解除配对后填写"
+          /></label>
+          <div class="composer-actions">
+            <button id="connect" class="primary" type="submit">连接 iimos</button
+            ><button id="disconnect" type="button" hidden>断开</button>
+          </div>
+        </form>
+        <p id="notice" role="status" hidden></p>
+      </section>
+      <section class="composer">
+        <div class="section-title">
+          <h2>共享给对话</h2>
+          <button id="refresh" class="text-button">刷新</button>
+        </div>
+        <label class="sr-only" for="session">选择对话</label
+        ><select id="session">
+          <option value="">请先连接</option>
+        </select>
+        <div class="composer-actions">
+          <button id="share" class="primary">共享当前网页</button
+          ><button id="open-client" class="text-button">打开 iimos</button>
+        </div>
+        <p class="hint">
+          任务在 iimos 的对话里说。它只能操作你共享的网页和它自己新开的网页。
+        </p>
+        <div id="shared"></div>
+        <button id="stop" class="danger">停止本轮控制</button>
+      </section>
+      <section class="activity">
+        <div class="section-title">
+          <h2>操作日志</h2>
+          <div>
+            <button id="export" class="text-button">导出</button
+            ><button id="clear" class="text-button">清空</button>
+          </div>
+        </div>
+        <p id="empty" class="empty">连接后，这里会显示 Agent 的网页操作与结果。</p>
+        <div id="logs" aria-live="polite"></div>
+      </section>
+    </main>
+    <footer>手动操作目标网页会停止任务 · 断线不会重放操作</footer>
+    <script type="module" src="panel.js"></script>
+  </body>
+</html>

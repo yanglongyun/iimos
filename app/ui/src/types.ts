@@ -1,8 +1,9 @@
 // 对话条目:服务端存的就是 Responses 协议的 input items,外加几种只给界面看的标记。
-export type Part = { type: string; text?: string };
+export type Part = { type: string; text?: string; file?: string };
 
 export type Item =
-    | { type: 'message'; role: 'user' | 'assistant'; content: Part[] }
+    // hidden:不是用户说的话(比如手截的图,跟在工具调用后面给模型看)
+    | { type: 'message'; role: 'user' | 'assistant'; content: Part[]; hidden?: boolean; task?: { id: string; title: string } }
     | { type: 'function_call'; call_id: string; name: string; arguments: string }
     | { type: 'function_call_output'; call_id: string; output: string }
     | { type: 'reasoning' }

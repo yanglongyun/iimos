@@ -20,3 +20,8 @@ app/.data/
 # App Store Connect API 密钥(公证用)—— 私钥,绝不进仓库
 build/appstore.json
 build/AuthKey_*.p8
+
+# 编译产物
+hands/runtime/
+extension/dist/
+relay/dist/

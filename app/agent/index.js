@@ -18,6 +18,7 @@ import { callModel, outputText } from '../ai/index.js';
 import tools from './tools.js';
 import runTool from './runner.js';
 import compact from './compact.js';
+import { forModel, hasImage, imageNote, isVisionError } from './images.js';
 
 export async function run({ instructions, messages, model, config, usage = null, signal, onEvent = () => {} }) {
     let tokens = null;
@@ -26,6 +27,7 @@ export async function run({ instructions, messages, model, config, usage = null,
     let stopReason;
     let stage = 'model';
     let failure;
+    let vision = config.vision !== false;
     try {
         while (true) {
             signal?.throwIfAborted();
@@ -42,7 +44,15 @@ export async function run({ instructions, messages, model, config, usage = null,
             }
 
             stage = 'model';
-            const response = await callModel(instructions, messages, model, config, tools, onEvent, signal);
+            let response;
+            try {
+                response = await callModel(instructions, forModel(messages, { vision }), model, config, tools, onEvent, signal);
+            } catch (error) {
+                // 模型看不了图:这一轮剩下的请求都把图换成文字说明,再试一次
+                if (!vision || signal?.aborted || !isVisionError(error) || !messages.some(hasImage)) throw error;
+                vision = false;
+                response = await callModel(instructions, forModel(messages, { vision }), model, config, tools, onEvent, signal);
+            }
             signal?.throwIfAborted();
             // 先确认整份输出有效,再交付完整块、执行工具
             for (const item of response.output) {
@@ -75,6 +85,12 @@ export async function run({ instructions, messages, model, config, usage = null,
                 };
                 messages.push(item);
                 await onEvent({ type: 'function_call_output', item });
+                // 截图:工具结果只能是文字,图作为紧跟着的一条用户消息给模型看(只在最近的请求里带上原图)
+                if (output.image) {
+                    const shot = imageNote(call.name, output.image);
+                    messages.push(shot);
+                    await onEvent({ type: 'message', item: shot });
+                }
             }
         }
     } catch (error) {

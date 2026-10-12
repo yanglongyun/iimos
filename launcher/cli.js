@@ -28,21 +28,40 @@ const HELP = `iimos —— 和 launcher 说话
   iimos recovery               打开救援窗口
   iimos upgrade                看新出厂版本的情况;iimos upgrade apply 直接换成新出厂版
   iimos paths                  launcher 用到的各个目录
+
+远程(手机、别的电脑经中继连进来,端到端加密):
+  iimos pair [名字]            配对一台手机,打出二维码和链接(第一次会顺便打开远程)
+  iimos pair --hands [名字]    配对一台电脑的「手」:大脑在这里,借那台电脑操作电脑和浏览器
+  iimos devices                配对过的设备,谁在线
+  iimos revoke <设备 id>       吊销一台设备
+  iimos remote [on [中继地址]|off]   远程开关,默认中继 https://relay.iimos.ai
+
+手(电脑操作、浏览器、通知):
+  iimos hands                  连着的手和它们会的事
+  iimos hands browser          拿浏览器插件的配对码
+  iimos hands link <配对链接>  把这台电脑的手借给远处的 iimos;iimos hands unlink 断开
+  iimos hands call <工具> '<json>'   直接让手做一件事,比如 iimos hands call notify '{"title":"hi"}'
+
+分享(形态):
+  iimos share "标题" [--story "让它长成这样的话"] [--dry-run]   把现在的样子分享到 iimos.ai
+  iimos adopt <形态 id 或链接> [--yes]                         长成别人分享的样子(先看清楚要换进来什么)
 `;
 
 const out = (value) => process.stdout.write(typeof value === 'string' ? `${value}\n` : `${JSON.stringify(value, null, 2)}\n`);
 const fail = (message) => { process.stderr.write(`${message}\n`); process.exit(1); };
 const short = (oid) => (oid ? oid.slice(0, 8) : '-');
 
-async function control(route) {
+async function control(route, body, method = 'POST') {
     let info;
     try { info = JSON.parse(fs.readFileSync(paths.control, 'utf8')); } catch { fail('launcher 没在运行(找不到 control.json)'); }
     const response = await fetch(`http://127.0.0.1:${info.port}${route}`, {
-        method: 'POST', headers: { authorization: `Bearer ${info.token}` },
+        method,
+        headers: { authorization: `Bearer ${info.token}`, ...(body ? { 'content-type': 'application/json' } : {}) },
+        body: body ? JSON.stringify(body) : undefined,
     }).catch((error) => fail(`连不上 launcher:${error.message}`));
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) fail(body.error || `launcher 拒绝了:${response.status}`);
-    return body;
+    const value = await response.json().catch(() => ({}));
+    if (!response.ok) fail(value.error || `launcher 拒绝了:${response.status}`);
+    return value;
 }
 
 const commands = {
@@ -136,6 +155,66 @@ const commands = {
         out(await control('/restart'));
     },
     recovery: async () => out(await control('/recovery')),
+
+    async pair() {
+        const hands = args.includes('--hands');
+        const name = args.filter((a) => !a.startsWith('--')).join(' ') || undefined;
+        const result = await control('/remote/pair', { name, kind: hands ? 'hands' : 'device' });
+        try {
+            const { default: QR } = await import('qrcode');
+            out(await QR.toString(result.link, { type: 'terminal', small: true }));
+        } catch { /* 没有 qrcode 就只打链接 */ }
+        out(hands
+            ? `在那台电脑上运行:iimos hands link '${result.link}'\n(这个链接就是钥匙,别发给别人)`
+            : `手机扫码,或在手机浏览器打开:\n${result.link}\n(这个链接就是钥匙,别发给别人;不要了用 iimos revoke ${result.device.id})`);
+    },
+    async devices() {
+        const status = await control('/remote', null, 'GET');
+        out(status.enabled ? `远程:${status.connected ? '已连上' : '没连上'} ${status.relay} · 实例 ${status.instance}` : '远程没打开(iimos pair 会顺便打开)');
+        out(status.devices.length
+            ? status.devices.map((d) => `${d.online ? '●' : '○'} ${d.id}  ${d.kind === 'hands' ? '手' : '设备'}  ${d.name}  ${d.lastSeen ? `上次 ${d.lastSeen.slice(0, 16).replace('T', ' ')}` : '还没连过'}`).join('\n')
+            : '还没有配对过的设备');
+    },
+    async revoke() {
+        if (!args[0]) fail('要吊销哪台?iimos devices 里看 id');
+        const result = await control('/remote/revoke', { id: args[0] });
+        out(result.removed ? '已吊销,它立刻断开了' : '没有这台设备');
+    },
+    async remote() {
+        if (args[0] === 'off') return out(await control('/remote/disable', {}));
+        if (args[0] === 'on') return out(await control('/remote/enable', { relay: args[1] }));
+        return out(await control('/remote', null, 'GET'));
+    },
+    async hands() {
+        const [sub, ...rest] = args;
+        if (!sub || sub === 'list') {
+            const { hands } = await control('/hands', null, 'GET');
+            return out(hands.length ? hands.map((h) => `${h.remote ? '远处' : '本机'}  ${h.name}  会:${h.tools.join('、')}`).join('\n') : '没有手连着');
+        }
+        if (sub === 'browser') {
+            const { result } = await control('/hands/call', { tool: 'browser', args: { action: 'pair' } });
+            return out(`在 Chrome 的 iimos 插件里填:\n  本机地址 ${result.address}\n  配对码   ${result.code}(${result.expiresIn}内有效,只能用一次)`);
+        }
+        if (sub === 'link') {
+            if (!rest[0]) fail('把远处 iimos 上 iimos pair --hands 给的链接贴在后面');
+            return out(await control('/hands/link', { link: rest[0] }));
+        }
+        if (sub === 'unlink') return out(await control('/hands/link', { link: null }));
+        if (sub === 'call') {
+            let callArgs = {};
+            try { callArgs = rest[1] ? JSON.parse(rest[1]) : {}; } catch { fail('参数要是 JSON'); }
+            return out((await control('/hands/call', { tool: rest[0], args: callArgs })).result);
+        }
+        return fail(`不认识:iimos hands ${sub}`);
+    },
+    async share() {
+        const { share } = await import('./share.js');
+        await share({ paths, args, out, fail, control });
+    },
+    async adopt() {
+        const { adopt } = await import('./share.js');
+        await adopt({ paths, args, out, fail, control });
+    },
 
     async upgrade() {
         const pending = seed.readPending(ws);

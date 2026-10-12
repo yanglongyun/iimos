@@ -16,6 +16,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { Conversation } from './conversation.js';
+import { createScheduler } from './scheduler.js';
 import { readConfig, writeConfig, publicConfig } from './config.js';
 
 const UI_DIR = path.resolve(import.meta.dirname, '..', 'ui');
@@ -87,6 +88,8 @@ export async function startServer({ workspace, data, port = 0, token = crypto.ra
         for (const res of subscribers) res.write(line);
     };
     const conversation = new Conversation({ workspace, data, bin, emit: broadcast });
+    const scheduler = createScheduler({ data, fire: (task) => conversation.wake(task), emit: broadcast });
+    conversation.scheduler = scheduler;
 
     const server = http.createServer(async (req, res) => {
         const url = new URL(req.url, 'http://127.0.0.1');
@@ -113,6 +116,45 @@ export async function startServer({ workspace, data, port = 0, token = crypto.ra
                 conversation.send(String(text || ''));
                 return sendJson(res, 202, { ok: true });
             }
+            if (req.method === 'GET' && url.pathname.startsWith('/api/shots/')) {
+                // 手截的图(agent/functions/hands.js 存的),界面里显示用。只给文件名,不许越出 shots/
+                const name = path.basename(decodeURIComponent(url.pathname.slice('/api/shots/'.length)));
+                const file = path.join(data, 'shots', name);
+                if (!name.endsWith('.png') || !fs.existsSync(file)) return sendJson(res, 404, { error: 'not found' });
+                res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'private, max-age=86400' });
+                return void fs.createReadStream(file).pipe(res);
+            }
+            if (route === 'GET /api/tasks') return sendJson(res, 200, { tasks: scheduler.list() });
+            if (route === 'POST /api/tasks/update') {
+                const { id, ...patch } = await readBody(req);
+                return sendJson(res, 200, { task: scheduler.update(String(id), patch) });
+            }
+            if (route === 'POST /api/tasks/remove') return sendJson(res, 200, { ok: scheduler.remove(String((await readBody(req)).id)) });
+            if (route === 'POST /api/tasks/run') return sendJson(res, 200, { ok: scheduler.runNow(String((await readBody(req)).id)) });
+            if (route === 'GET /api/hub') {
+                // 面板用:有哪些手、远程访问和配对过的设备。没有 launcher(单独跑)时都是空的
+                const iimos = globalThis.iimos;
+                return sendJson(res, 200, {
+                    host: iimos?.host || null,
+                    hands: iimos?.hands?.list() || [],
+                    remote: iimos?.remote?.status() || null,
+                });
+            }
+            if (route === 'POST /api/remote/pair') {
+                const iimos = globalThis.iimos;
+                if (!iimos?.remote) throw Object.assign(new Error('没有 launcher,配不了手机'), { status: 400 });
+                const { name } = await readBody(req);
+                return sendJson(res, 200, await iimos.remote.pair({ name: String(name || '手机') }));
+            }
+            if (route === 'POST /api/remote/revoke') {
+                const { id } = await readBody(req);
+                return sendJson(res, 200, { removed: globalThis.iimos?.remote?.revoke(String(id)) || 0 });
+            }
+            if (route === 'POST /api/remote/enable') {
+                const iimos = globalThis.iimos;
+                if (!iimos?.remote) throw Object.assign(new Error('没有 launcher'), { status: 400 });
+                return sendJson(res, 200, await iimos.remote.enable({}));
+            }
             if (route === 'POST /api/stop') {
                 conversation.stop();
                 return sendJson(res, 200, { ok: true });
@@ -138,12 +180,14 @@ export async function startServer({ workspace, data, port = 0, token = crypto.ra
     const actual = server.address().port;
     // 上一轮如果是被 launcher 的重启打断的,接着跑完(界面连上来时会从 /api/state 看到它在跑)
     conversation.resumeIfInterrupted();
+    scheduler.start();
     return {
         port: actual,
         token,
         url: `http://127.0.0.1:${actual}/?token=${token}`,
         /** restarting:launcher 要重启应用 —— 正在跑的这一轮记下来,新进程起来后接着跑。 */
         async close({ restarting = false } = {}) {
+            scheduler.stop();
             if (restarting) conversation.shutdown(); else conversation.stop();
             for (const res of subscribers) res.end();
             await new Promise((resolve) => server.close(resolve));

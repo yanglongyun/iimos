@@ -1,0 +1,20 @@
+// 应用的入口,由 launcher 加载。起本地服务 → 报到 iimos.ready({ url })。
+//
+// 纯 Node,不碰 Electron:同一份应用既能跑在桌面(launcher 开窗口加载这个地址),
+// 也能跑在服务器上(没有窗口,手机经中继打开这个地址)。窗口、菜单栏这些归宿主管。
+//
+// 不经 launcher 也能跑(node main.js):那时没有快照和回滚,数据放 IIMOS_DATA 或 ./.data,地址打在终端里。
+import path from 'node:path';
+
+import { startServer } from './server/index.js';
+
+const iimos = globalThis.iimos;
+const workspace = iimos?.workspace || process.env.IIMOS_WORKSPACE || import.meta.dirname;
+const data = iimos?.data || process.env.IIMOS_DATA || path.join(workspace, '.data');
+
+const server = await startServer({ workspace, data, bin: iimos?.bin });
+// 收尾:重启时告诉服务「这是重启」,正在跑的那一轮新进程起来后会接着跑
+iimos?.onShutdown(({ restarting } = {}) => server.close({ restarting }));
+
+if (iimos) iimos.ready({ url: server.url });
+else console.log(server.url);
