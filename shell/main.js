@@ -1,6 +1,6 @@
 // 桌面壳:Electron 主进程。只做宿主该做的事 —— 窗口、菜单栏、快捷键、开机自启、手 ——
 // 其余交给 launcher/core.js(纯 Node,服务器形态用的也是它)。
-import { app, dialog, globalShortcut, Menu, nativeImage, powerSaveBlocker, shell, Tray } from 'electron';
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, powerSaveBlocker, shell, Tray } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -100,6 +100,15 @@ function main() {
     app.whenReady().then(async () => {
         try { globalShortcut.register(RECOVERY_SHORTCUT, () => void core.showRecovery('快捷键打开')); } catch { /* 被占用就算了 */ }
         if (dev && process.platform === 'darwin') app.dock?.setIcon(path.join(root, 'build', 'icon.png'));
+        // Windows/Linux:默认菜单(File/Edit/View/Window)没用,无框窗口上也没处放,去掉;macOS 的菜单在屏幕顶上,
+        // Cmd+C/V/Q 靠它,不动(#3)。窗口钮经 preload.cjs 发来这三个动作
+        if (process.platform !== 'darwin') Menu.setApplicationMenu(null);
+        ipcMain.on('win:minimize', (event) => BrowserWindow.fromWebContents(event.sender)?.minimize());
+        ipcMain.on('win:toggle-maximize', (event) => {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win) { if (win.isMaximized()) win.unmaximize(); else win.maximize(); }
+        });
+        ipcMain.on('win:close', (event) => BrowserWindow.fromWebContents(event.sender)?.close());
 
         // 本机的手:电脑操作、浏览器、通知。挂到手的总线上,应用经 iimos.hands 调用
         const hands = await startLocalHands({ paths, log, root, packaged: !dev, resourcesPath: process.resourcesPath }).catch((error) => { log('本机的手没起来', error); return null; });

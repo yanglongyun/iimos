@@ -1,5 +1,11 @@
 // 桌面上的「界面」:应用窗口和救援窗口。应用自己不再碰 Electron,窗口由这里开。
 import { BrowserWindow, shell } from 'electron';
+import path from 'node:path';
+
+// 应用窗口:macOS 留原生红绿灯;Windows/Linux 无框 —— 标题栏和默认菜单那排没用,
+// 拖拽、双击最大化靠应用顶栏的拖拽区,三个窗口钮由应用画在顶栏里,经 preload.cjs 回到这里(#3)
+const APP_FRAME = process.platform === 'darwin' ? {} : { frame: false };
+const PRELOAD = path.join(import.meta.dirname, 'preload.cjs');
 
 const WINDOW = {
     width: 980,
@@ -29,7 +35,7 @@ export function createSurfaces({ log }) {
     let prefs = {};
     /** 应用在 ready({ window }) 里给的偏好,只认这几项、只认合理的值。 */
     function windowOptions() {
-        const out = { ...WINDOW };
+        const out = { ...WINDOW, ...APP_FRAME, webPreferences: { ...WINDOW.webPreferences, preload: PRELOAD } };
         const num = (v, min, max) => (Number.isFinite(v) && v >= min && v <= max ? Math.round(v) : undefined);
         const size = { width: num(prefs.width, 320, 4000), height: num(prefs.height, 240, 3000), minWidth: num(prefs.minWidth, 200, 2000), minHeight: num(prefs.minHeight, 200, 2000) };
         for (const [k, v] of Object.entries(size)) if (v !== undefined) out[k] = v;
