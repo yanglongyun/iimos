@@ -129,11 +129,26 @@ function main() {
     void core.start();
 }
 
+/**
+ * 菜单栏图标。macOS 用模板图(黑 + 透明,系统按深浅色上色),1x 和 2x 都显式加进去:
+ * 打包后图在 asar 里,createFromPath 不会自己去找 @2x,只拿 1x 放大,又粗又糊。别的平台用应用图标缩到 18px。
+ */
+function trayIcon() {
+    const file = (name) => path.join(root, 'build', name);
+    if (process.platform !== 'darwin') {
+        const icon = nativeImage.createFromPath(file('icon.png'));
+        return icon.isEmpty() ? nativeImage.createEmpty() : icon.resize({ width: 18, height: 18 });
+    }
+    const icon = nativeImage.createEmpty();
+    for (const [name, scaleFactor] of [['trayTemplate.png', 1], ['trayTemplate@2x.png', 2]]) {
+        try { icon.addRepresentation({ scaleFactor, buffer: fs.readFileSync(file(name)) }); } catch { /* 缺一张就用另一张 */ }
+    }
+    icon.setTemplateImage(true);
+    return icon;
+}
+
 function setupTray({ core, surfaces, hands }) {
-    const icon = nativeImage.createFromPath(path.join(root, 'build', process.platform === 'darwin' ? 'trayTemplate.png' : 'icon.png'));
-    // macOS 用模板图(黑 + 透明,系统按深浅色自己上色;@2x 自动带上),别的平台缩成 18px
-    if (process.platform === 'darwin') icon.setTemplateImage(true);
-    tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : process.platform === 'darwin' ? icon : icon.resize({ width: 18, height: 18 }));
+    tray = new Tray(trayIcon());
     tray.setToolTip('iimos');
     const render = () => {
         const prefs = readPrefs();
