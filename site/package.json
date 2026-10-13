@@ -1,0 +1,19 @@
+{
+  "name": "iimos-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "iimos.ai:项目介绍、发布页,和大家的 iimos 长成的样子(形态社区)。",
+  "license": "MIT",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "deploy": "vite build && cf deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.63.1",
+    "cf": "1.0.0-beta.14",
+    "vite": "8.1.5",
+    "wrangler": "4.149.0"
+  }
+}

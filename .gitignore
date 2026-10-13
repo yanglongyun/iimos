@@ -11,20 +11,19 @@ node_modules/
 *.db-shm
 *.db-wal
 *.log
-# 单独跑 app/server 时的数据目录
-app/.data/
+# 单独跑 client/app/server 时的数据目录
+client/app/.data/
 
 # 打包产物
-/dist/
+/client/dist/
 
 # App Store Connect API 密钥(公证用)—— 私钥,绝不进仓库
-build/appstore.json
-build/AuthKey_*.p8
+client/build/appstore.json
+client/build/AuthKey_*.p8
 
 # 编译产物
-hands/runtime/
+client/hands/runtime/
 extension/dist/
-relay/dist/
 
 # Cloudflare:部署配置含账号和资源 ID,只留在本机;仓库里放 cloudflare.config.example.ts
 **/cloudflare.config.ts
