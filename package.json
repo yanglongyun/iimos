@@ -1,6 +1,6 @@
 {
   "name": "iimos",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "iimos —— 住在你自己机器上、一直醒着、会长出自己身体的个人 Agent",
