@@ -105,16 +105,17 @@ async function publish(request, env) {
 
 // 最新发布:读 GitHub Releases,边缘缓存一小时;拿不到就只给 releases 页的链接
 async function latestRelease(ctx) {
-    const fallback = { version: '', dmg: `https://github.com/${REPO}/releases/latest`, page: `https://github.com/${REPO}/releases/latest` };
-    const key = new Request(`https://iimos.ai/__release`);
+    const latest = `https://github.com/${REPO}/releases/latest`;
+    const fallback = { version: '', dmg: latest, exe: latest, page: latest };
+    const key = new Request(`https://iimos.ai/__release/2`);
     const cached = await caches.default.match(key);
     if (cached) return cached.json();
     try {
         const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'user-agent': 'iimos.ai', accept: 'application/vnd.github+json' } });
         if (!res.ok) return fallback;
         const data = await res.json();
-        const dmg = (data.assets || []).find((a) => a.name.endsWith('.dmg'));
-        const release = { version: String(data.tag_name || '').replace(/^v/, ''), date: String(data.published_at || '').slice(0, 10), dmg: dmg?.browser_download_url || data.html_url, page: data.html_url };
+        const asset = (ext) => (data.assets || []).find((a) => a.name.endsWith(ext))?.browser_download_url || data.html_url;
+        const release = { version: String(data.tag_name || '').replace(/^v/, ''), date: String(data.published_at || '').slice(0, 10), dmg: asset('.dmg'), exe: asset('.exe'), page: data.html_url };
         ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify(release), { headers: { 'cache-control': 'public, max-age=3600' } })));
         return release;
     } catch {

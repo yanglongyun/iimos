@@ -135,7 +135,7 @@ export function homePage({ shapes, release, origin }) {
 <p>出厂只有一个对话框。界面、服务、工具,甚至它自己的提示词,都是它自己的源码 —— 你要什么,它就把自己改成什么。所以世上没有两份一样的 iimos,每一份都是它主人的形状。</p>
 </div><div class="get">
 <a class="btn" href="${esc(release.dmg)}">下载 Mac 版${release.version ? ` · v${esc(release.version)}` : ''}</a>
-<small>Apple 芯片${release.date ? ` · ${esc(release.date)} 发布` : ''} · MIT 开源 · <a href="https://github.com/yanglongyun/iimos/releases/latest">Windows 版</a><br><a href="${esc(release.page)}">更新说明</a> · <a href="https://github.com/yanglongyun/iimos">源码</a></small>
+<small>Apple 芯片${release.date ? ` · ${esc(release.date)} 发布` : ''} · MIT 开源 · <a href="${esc(release.exe || release.page)}">Windows 版</a><br><a href="${esc(release.page)}">更新说明</a> · <a href="https://github.com/yanglongyun/iimos">源码</a></small>
 </div></section>
 <div class="demo"><img src="/media/xp.gif" alt="iimos 把自己改成 Windows XP 桌面的录屏"></div>
 <p class="cap"><b>「把自己改成 Windows XP 桌面」</b> —— 真实录屏,从出厂状态开始,中间快进。</p>
@@ -157,7 +157,7 @@ ${cmd('iimos share "给你的形态起个名字" --story "你是怎么让它长�
 <h2 class="h" id="install"><span>安装</span></h2>
 <div class="install">
 <div><b>Mac(Apple 芯片)</b><p>下载 dmg,第一次打开时在对话里填模型配置。关掉窗口它还在菜单栏醒着。</p><pre><a href="${esc(release.dmg)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.dmg</a></pre></div>
-<div><b>Windows(x64)</b><p>下载 exe 安装包。还没有代码签名,第一次运行时 SmartScreen 会拦一下,点「更多信息 → 仍要运行」。关掉窗口它还在右下角托盘里。</p><pre><a href="https://github.com/yanglongyun/iimos/releases/latest">从 Releases 下载 .exe</a></pre></div>
+<div><b>Windows(x64)</b><p>下载 exe 安装包。还没有代码签名,第一次运行时 SmartScreen 会拦一下,点「更多信息 → 仍要运行」。关掉窗口它还在右下角托盘里。</p><pre><a href="${esc(release.exe || release.page)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.exe</a></pre></div>
 </div>`;
     return layout({
         title: 'iimos —— 一个可以完全修改自己的 Agent',
