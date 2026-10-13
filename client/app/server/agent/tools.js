@@ -60,10 +60,10 @@ const tools = [
     {
         type: 'function',
         name: 'computer',
-        description: '操作用户的这台电脑(macOS):看屏幕、点、打字、按键、滚动、拖动、开关应用。'
+        description: '操作用户的这台电脑(macOS 或 Windows):看屏幕、点、打字、按键、滚动、拖动、开关应用。'
             + '用户要在菜单栏勾上「允许它操作这台电脑」才能用,没勾会报错,照实告诉用户。'
             + '先 state(看某个应用的界面结构,优先用它定位)或 screenshot(看一眼),再动手;动完再看一眼确认。'
-            + '坐标用屏幕逻辑坐标(screenshot 结果里说了怎么换算)。用户按 ⌘⇧Esc 会立刻停下。',
+            + '坐标用屏幕坐标(screenshot 结果里说了怎么换算)。用户按 ⌘⇧Esc(Windows 上 Ctrl+Alt+Shift+Esc)会立刻停下。',
         parameters: {
             type: 'object',
             properties: {
@@ -74,14 +74,14 @@ const tools = [
                         + 'screenshot 截屏;click 点坐标或元素;ax_action 对元素做动作(name 如 AXPress);set_value 给输入框赋值;'
                         + 'type 打字;press 按键(如 "cmd+c"、"return");scroll 滚动;drag 拖动',
                 },
-                bundleId: { type: 'string', description: '目标应用的 bundleId(apps 里有)。除 apps/displays/permissions 外都要;screenshot 不填就截整个屏幕' },
+                bundleId: { type: 'string', description: '目标应用的 bundleId(apps 里有;Windows 上是 exe 名,如 notepad.exe)。除 apps/displays/permissions 外都要;screenshot 不填就截整个屏幕' },
                 element: { type: 'string', description: 'state 返回的元素 id(click/ax_action/set_value 可用);state 之后界面变了要重新 state' },
                 x: { type: 'number' }, y: { type: 'number' },
                 text: { type: 'string', description: 'type 的文字' },
                 value: { type: 'string', description: 'set_value 的值' },
                 kind: { type: 'string', enum: ['accessibility', 'screen'], description: 'request_permission 要的权限' },
                 displayId: { type: 'integer', description: 'screenshot 截哪块屏幕(displays 里有),默认主屏' },
-                key: { type: 'string', description: 'press 的按键,如 "cmd+shift+4"' },
+                key: { type: 'string', description: 'press 的按键,如 "cmd+shift+4";Windows 上 cmd 当 Ctrl,另有 win' },
                 name: { type: 'string', description: 'ax_action 的动作名' },
                 dx: { type: 'number' }, dy: { type: 'number' },
                 fromX: { type: 'number' }, fromY: { type: 'number' }, toX: { type: 'number' }, toY: { type: 'number' },

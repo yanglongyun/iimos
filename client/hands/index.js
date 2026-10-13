@@ -12,8 +12,9 @@ import path from 'node:path';
 import { createComputer } from './computer.js';
 import { createBrowserHost } from './browser.js';
 
+const COMPUTER_EXE = process.platform === 'win32' ? 'iimos-computer.exe' : 'iimos-computer';
 export function computerBinary({ root, packaged, resourcesPath }) {
-    return packaged ? path.join(resourcesPath, 'runtime', 'iimos-computer') : path.join(root, 'hands', 'runtime', 'iimos-computer');
+    return packaged ? path.join(resourcesPath, 'runtime', COMPUTER_EXE) : path.join(root, 'hands', 'runtime', COMPUTER_EXE);
 }
 
 export async function startLocalHands({ paths, log, root, packaged, resourcesPath, notify: showNotification }) {
@@ -24,7 +25,7 @@ export async function startLocalHands({ paths, log, root, packaged, resourcesPat
         fs.writeFileSync(file, JSON.stringify({ ...read(), ...patch }, null, 2), { mode: 0o600 });
     };
 
-    const computer = process.platform === 'darwin'
+    const computer = ['darwin', 'win32'].includes(process.platform)
         ? createComputer({ binary: computerBinary({ root, packaged, resourcesPath }), enabled: () => read().computer === true, log })
         : null;
     const browser = await createBrowserHost({ store: { get: () => read().browser || null, set: (value) => write({ browser: value }) }, log });
@@ -63,7 +64,7 @@ export async function startLocalHands({ paths, log, root, packaged, resourcesPat
             if (!value) computer?.stop('用户收回了电脑操作的许可');
             log?.(value ? '用户允许了电脑操作' : '用户收回了电脑操作的许可');
         },
-        /** 紧急停止:⌘⇧⎋ 或菜单栏。正在进行的电脑、浏览器操作立刻中断。 */
+        /** 紧急停止:⌘⇧⎋(Windows 上 Ctrl+Alt+Shift+Esc)或菜单栏。正在进行的电脑、浏览器操作立刻中断。 */
         stopAll(reason) {
             computer?.stop(`用户${reason ? `从${reason}` : ''}停下了所有操作`);
             browser.stop();

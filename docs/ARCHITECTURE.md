@@ -9,7 +9,7 @@
 
 | 目录 | 是什么 | 跑在哪 |
 | --- | --- | --- |
-| `client/` | 桌面客户端(Electron),唯一的产品 | 用户的电脑(macOS,Windows 在做) |
+| `client/` | 桌面客户端(Electron),唯一的产品 | 用户的电脑(macOS、Windows) |
 | `extension/` | Chrome 插件,让它用用户自己的浏览器 | 用户的 Chrome |
 | `site/` | iimos.ai:首页、发布、形态墙与接口 | Cloudflare,一个 Worker + D1 + R2,都叫 iimos |
 
@@ -38,7 +38,8 @@ client/
 
   hands/         本机的手
     computer/mac/  Swift 小程序源码(ScreenCaptureKit 截屏、CGEvent 键鼠、辅助功能树),build.js 编译
-    computer/win/  Windows 版(待做),同一份协议:一行一个 JSON 请求 / 回复
+    computer/win/  C# 小程序源码(GDI 截屏、SendInput 键鼠、UI Automation),系统自带的 csc.exe 编译
+                   两边同一份协议:一行一个 JSON 请求 / 回复。Windows 上 bundleId 就是 exe 名
     computer.js    跟小程序说话;没勾「允许它操作这台电脑」时一律拒绝
     browser.js     浏览器插件的本地宿主(127.0.0.1:47231):插件连进来,命令转过去
     index.js       把电脑、浏览器、通知包成一只手 { tools, call(tool, args) },挂到 hub
@@ -88,7 +89,9 @@ await hands.call('computer', { action: 'screenshot' });
 手就在本机进程里。没有能干这件事的手时 call 返回明确的错误,Agent 照实告诉用户。
 
 电脑操作要两道门:用户在菜单栏勾上「允许它操作这台电脑」(存在 `$IIMOS_DATA/hands.json`),
-以及 macOS 的「辅助功能」和「屏幕录制」授权(绑在签过名的 iimos.app 上)。⌘⇧Esc 随时停下所有电脑操作。
+以及 macOS 的「辅助功能」和「屏幕录制」授权(绑在签过名的 iimos.app 上;Windows 没有这一道)。
+⌘⇧Esc(Windows 上 Ctrl+Alt+Shift+Esc,因为 Ctrl+Shift+Esc 是任务管理器)随时停下所有电脑操作。
+Windows 上的电脑操作用物理像素坐标;以管理员身份运行的程序、UAC 弹窗和锁屏操作不了,这是系统的权限隔离。
 浏览器插件经本机 WebSocket(127.0.0.1 + 5 分钟有效的一次性配对码,之后是长期令牌,本机只存哈希)连到 hands,
 只能动用户共享给 iimos 的标签页和 iimos 自己开的标签页。
 
@@ -119,6 +122,6 @@ await hands.call('computer', { action: 'screenshot' });
 | 产物 | 组成 | 给谁 |
 | --- | --- | --- |
 | Mac 安装包(dmg) | client:shell + launcher + app(种子)+ hands | 用户 |
-| Windows 安装包 | 同上,电脑操作换成 Windows 版 | 用户(在做) |
+| Windows 安装包(exe) | 同上,电脑操作换成 Windows 版 | 用户 |
 | Chrome 插件 | extension | 想让它用浏览器的人 |
 | iimos.ai | site | 官方部署,也可自部署 |

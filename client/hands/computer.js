@@ -1,4 +1,6 @@
-// 电脑操作:驱动 hands/computer/mac/main.swift 编出来的小程序(iimos-computer),一行一个 JSON 请求/回复。
+// 电脑操作:驱动电脑操作小程序,一行一个 JSON 请求/回复。
+//   macOS:hands/computer/mac/main.swift 编出来的 iimos-computer
+//   Windows:hands/computer/win/Program.cs 编出来的 iimos-computer.exe(同一份协议)
 //
 // 截屏、读界面(辅助功能树)、点击、键盘、滚动、拖拽、打开/切换应用。需要两项 macOS 授权:
 // 辅助功能、屏幕录制 —— 授权绑在签过名的 iimos.app 上,由用户在系统设置里勾。
@@ -28,7 +30,7 @@ export function createComputer({ binary, enabled, log }) {
 
     function start() {
         if (helper) return helper;
-        if (process.platform !== 'darwin') throw new Error('电脑操作目前只支持 macOS');
+        if (!['darwin', 'win32'].includes(process.platform)) throw new Error('电脑操作目前只支持 macOS 和 Windows');
         if (!fs.existsSync(binary)) throw new Error(`电脑操作的小程序还没编译:${binary}(开发时运行 npm run build:hands)`);
         const child = spawn(binary, [], { stdio: ['pipe', 'pipe', 'pipe'] });
         helper = child;

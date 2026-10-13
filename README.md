@@ -50,7 +50,8 @@ It edits its own code, reloads, and tells you what's new and how to use it. It a
 On first launch it asks, in the chat, for your model settings: endpoint URL, API key, model name, context window size. The URL is the full Responses endpoint, usually ending in `/responses` (for example `https://api.deepseek.com/v1/responses`).
 It keeps running in the menu bar after you close the window. Open the panel (≡, top right) to see scheduled tasks and which hands it has.
 
-**Windows:** an installer is on the way. For now, run it from source (below); computer use is macOS-only for now.
+**Windows (x64):** download the exe installer from [Releases](https://github.com/yanglongyun/iimos/releases). It isn't code-signed yet, so SmartScreen will stop it the first time: click "More info → Run anyway".
+It keeps running in the system tray after you close the window.
 
 **Chrome extension (optional):** `cd extension && npm run build`, then load `extension/dist/iimos-extension` as an unpacked extension and enter the pairing code the agent gives you.
 
@@ -71,7 +72,8 @@ client/       The desktop app (Electron) — the product
                 Recovery page: loads none of the app's code; rollback, factory reset, a minimal rescue agent.
                 shape.js is the shape bundle format, shared with the site.
   hands/        Local hands: computer use (on macOS, computer/mac/main.swift: ScreenCaptureKit, CGEvent,
-                accessibility tree), the Chrome extension's local host, notifications.
+                accessibility tree; on Windows, computer/win/Program.cs: GDI capture, SendInput, UI Automation),
+                the Chrome extension's local host, notifications.
   app/          The app as shipped (the seed). Copied into <data dir>/workspace/ (a git repo) on first launch;
                 everything the agent changes happens there. Ships as a chat and a small panel:
     main.js       starts the local server → reports ready (with its URL) to the launcher; pure Node, no Electron
@@ -92,7 +94,7 @@ The only contract the app has to honor (see [client/launcher/CONTRACT.md](client
 Data directory (macOS): `~/Library/Application Support/ai.iimos.desktop/`
 — `workspace/` (app code, a git repo) · `data/` (conversation, model config, tasks, memory; never rolled back) · `launcher/` (ledger, logs).
 
-Recovery: ⌘⌥⇧R (Windows: Ctrl+Alt+Shift+R), the menu bar, or the `--recovery` flag. Stop all computer use: ⌘⇧Esc.
+Recovery: ⌘⌥⇧R (Windows: Ctrl+Alt+Shift+R), the menu bar, or the `--recovery` flag. Stop all computer use: ⌘⇧Esc (Windows: Ctrl+Alt+Shift+Esc).
 
 ## Run from source
 
@@ -114,9 +116,10 @@ In `client/`:
 
 ```bash
 npm test                # launcher seeding / rollback / upgrade, app end-to-end (fake model), shape format
-npm run build:hands     # compile the computer-use helper (macOS)
+npm run build:hands     # compile the computer-use helper (swiftc on macOS, the built-in csc.exe on Windows)
 npm run build:app       # unsigned build
 npm run ship:mac        # sign + notarize + verify
+npm run release:win     # Windows installer (run on Windows)
 ```
 
 The site lives in `site/` (`npm run dev` / `npm run deploy`), the extension in `extension/` (`npm run build`).

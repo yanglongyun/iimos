@@ -12,7 +12,9 @@ import { startLocalHands } from '../hands/index.js';
 import { linkCli, linkedAt, unlinkCli } from './cli-link.js';
 
 const RECOVERY_SHORTCUT = 'CommandOrControl+Alt+Shift+R';
-const STOP_HANDS_SHORTCUT = 'CommandOrControl+Shift+Escape';
+// Windows 上 Ctrl+Shift+Esc 是任务管理器,换成 Ctrl+Alt+Shift+Esc
+const STOP_HANDS_SHORTCUT = process.platform === 'darwin' ? 'Command+Shift+Escape' : 'Control+Alt+Shift+Escape';
+const STOP_HANDS_LABEL = process.platform === 'darwin' ? '⌘⇧⎋' : 'Ctrl+Alt+Shift+Esc';
 
 const paths = launcherPaths();
 const dev = !app.isPackaged;
@@ -153,7 +155,7 @@ function setupTray({ core, surfaces, hands }) {
                     label: '允许它操作这台电脑', type: 'checkbox', checked: hands.computerEnabled(),
                     click: (item) => { hands.setComputerEnabled(item.checked); render(); },
                 },
-                { label: '停下所有电脑操作  ⌘⇧⎋', click: () => hands.stopAll('菜单栏') },
+                { label: `停下所有电脑操作  ${STOP_HANDS_LABEL}`, click: () => hands.stopAll('菜单栏') },
             ] : []),
             { type: 'separator' },
             {

@@ -39,7 +39,8 @@
 第一次打开时在对话里填模型配置(服务地址、API Key、模型名、上下文窗口大小)。服务地址填完整的 Responses 端点,通常以 `/responses` 结尾,比如 `https://api.deepseek.com/v1/responses`。
 关掉窗口它还在菜单栏醒着。右上角 ≡ 打开面板:看定时任务、看它有哪些手。
 
-**Windows:** 安装包在做。现在可以从源码跑(见下面),电脑操作暂时只支持 macOS。
+**Windows(x64):** 从 [Releases](https://github.com/yanglongyun/iimos/releases) 下载 exe 安装包。还没有代码签名,第一次运行时 SmartScreen 会拦一下,点「更多信息 → 仍要运行」。
+关掉窗口它还在右下角托盘里醒着。
 
 **Chrome 插件(可选):** `cd extension && npm run build`,在 Chrome 里「加载已解压的扩展程序」选 `extension/dist/iimos-extension`,
 填上 agent 给你的配对码。
@@ -59,7 +60,7 @@ client/       桌面客户端(Electron),唯一的产品
                 救援页:不加载 app 的任何代码,带回滚、恢复出厂和一个独立的救援 agent
                 shape.js 是形态包的格式,网站也用这一份
   hands/        本机的手:电脑操作(macOS 是 computer/mac/main.swift:ScreenCaptureKit、CGEvent、辅助功能树)、
-                浏览器插件的本地宿主、通知
+                Windows 是 computer/win/Program.cs:GDI 截屏、SendInput、UI Automation;浏览器插件的本地宿主、通知
   app/          出厂的应用(种子)。首次打开时拷进 <数据目录>/workspace/(一个 git 仓库),
                 之后 agent 改的都是那一份。出厂是一个对话加一个小面板:
     main.js       起本地服务 → 带着地址向 launcher 报到;纯 Node,不碰 Electron
@@ -81,7 +82,7 @@ app 唯一要守的契约(详见 [client/launcher/CONTRACT.md](client/launcher/C
 数据目录(macOS):`~/Library/Application Support/ai.iimos.desktop/`
 —— `workspace/`(应用代码,git 仓库)· `data/`(对话、模型配置、定时任务、记忆,回滚不动它)· `launcher/`(账本、日志)。
 
-救援:⌘⌥⇧R(Windows:Ctrl+Alt+Shift+R)、菜单栏或 `--recovery` 启动参数。停下所有电脑操作:⌘⇧Esc。
+救援:⌘⌥⇧R(Windows:Ctrl+Alt+Shift+R)、菜单栏或 `--recovery` 启动参数。停下所有电脑操作:⌘⇧Esc(Windows:Ctrl+Alt+Shift+Esc)。
 
 ## 从源码跑
 
@@ -106,9 +107,10 @@ IIMOS_HOME=/tmp/iimos-dev npm run app
 
 ```bash
 npm test                # launcher 的播种 / 回滚 / 升级、app 的端到端(假模型)、形态格式
-npm run build:hands     # 编译电脑操作的小程序(macOS)
+npm run build:hands     # 编译电脑操作的小程序(macOS 用 swiftc,Windows 用系统自带的 csc.exe)
 npm run build:app       # 打包,未签名,自己用
 npm run ship:mac        # 签名 + 公证 + 验证
+npm run release:win     # Windows 安装包(在 Windows 上跑)
 ```
 
 网站在 `site/`(`npm run dev` / `npm run deploy`),插件在 `extension/`(`npm run build`)。

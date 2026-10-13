@@ -28,7 +28,7 @@
     "build:app": "npm run build:ui && npm run build:hands && node scripts/pack.mjs",
     "release:mac": "npm run build:ui && npm run build:hands && electron-builder",
     "ship:mac": "node scripts/release-mac.mjs",
-    "release:win": "npm run build:ui && node scripts/pack.mjs --win nsis --x64"
+    "release:win": "npm run build:ui && npm run build:hands && node scripts/pack.mjs --win nsis --x64"
   },
   "dependencies": {
     "isomorphic-git": "^1.43.0",
@@ -115,7 +115,8 @@
         "from": "hands/runtime",
         "to": "runtime",
         "filter": [
-          "iimos-computer"
+          "iimos-computer",
+          "iimos-computer.exe"
         ]
       }
     ],

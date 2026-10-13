@@ -7,6 +7,7 @@ type Task = { id: string; title: string; prompt: string; when: string; enabled: 
 type Hand = { id: string; name: string; tools: string[] };
 type Hub = { hands: Hand[] };
 
+const WINDOWS = navigator.userAgent.includes('Windows');
 const TOOL_NAMES: Record<string, string> = { computer: '电脑操作', browser: '浏览器', notify: '通知' };
 const time = (iso: string | null) => (iso ? new Date(iso).toLocaleString('zh-CN', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—');
 
@@ -58,7 +59,9 @@ export function Panel({ onClose }: { onClose: () => void }) {
                         <span className="meta">{hand.tools.map((t) => TOOL_NAMES[t] || t).join(' · ')}</span>
                     </div>
                 )) : <p className="hint">没有可用的手。</p>}
-                <p className="hint small">电脑操作要在菜单栏 iimos 图标里勾上「允许它操作这台电脑」。⌘⇧Esc 随时叫停。</p>
+                {WINDOWS
+                    ? <p className="hint small">电脑操作要在右下角托盘的 iimos 图标里勾上「允许它操作这台电脑」。Ctrl+Alt+Shift+Esc 随时叫停。</p>
+                    : <p className="hint small">电脑操作要在菜单栏 iimos 图标里勾上「允许它操作这台电脑」。⌘⇧Esc 随时叫停。</p>}
 
                 {error && <p className="hint small" style={{ color: 'var(--bad)' }}>{error}</p>}
             </div>
