@@ -27,7 +27,8 @@
     "test": "npm run build:ui && node --test \"launcher/**/*.test.js\" \"app/test/*.test.js\" \"hands/**/*.test.js\"",
     "build:app": "npm run build:ui && npm run build:hands && node scripts/pack.mjs",
     "release:mac": "npm run build:ui && npm run build:hands && electron-builder",
-    "ship:mac": "node scripts/release-mac.mjs"
+    "ship:mac": "node scripts/release-mac.mjs",
+    "release:win": "npm run build:ui && node scripts/pack.mjs --win nsis --x64"
   },
   "dependencies": {
     "isomorphic-git": "^1.43.0",
@@ -136,6 +137,25 @@
         "NSScreenCaptureUsageDescription": "iimos 要看屏幕,才能按你的要求操作这台电脑。",
         "NSAppleEventsUsageDescription": "iimos 要控制其他应用,才能按你的要求操作这台电脑。"
       }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "iimos-${version}-win-x64.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "iimos",
+      "runAfterFinish": true
     }
   },
   "bin": {
