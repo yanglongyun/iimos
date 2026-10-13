@@ -127,7 +127,7 @@ test('一轮完整对话:调 shell → 拿结果 → 回话,全部落盘', async
     assert.equal(model.requests[0].auth, 'Bearer sk-1');
     assert.match(model.requests[0].request.instructions, /你是 iimos/);
     assert.equal(model.requests[0].request.store, false);
-    assert.deepEqual(model.requests[0].request.tools.map((t) => t.name), ['shell', 'read', 'write', 'edit', 'computer', 'browser', 'notify', 'schedule']);
+    assert.deepEqual(model.requests[0].request.tools.map((t) => t.name), ['shell', 'read', 'write', 'edit', 'notify', 'schedule']);
     assert.equal(model.requests[1].request.input.at(-1).type, 'function_call_output');
     assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversation.json'), 'utf8')).items.length, 4);
 });
@@ -287,63 +287,35 @@ test('重启接续:连续太多次就停下,不陷进「改 → 重启」的循�
 // 一张 1x1 的 PNG
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
-test('手:经 globalThis.iimos.hands 调用;截图存成文件,只有最近一张以原图发给模型', async () => {
-    const calls = [];
-    globalThis.iimos = {
-        host: 'desktop',
-        hands: {
-            list: () => [{ id: 'local', name: '这台电脑', tools: ['computer', 'notify'] }],
-            call: async (tool, args) => { calls.push([tool, args]); return tool === 'computer' ? { png: PNG, width: 1, height: 1 } : { ok: true }; },
-        },
-    };
+test('通知:经 globalThis.iimos.notify 弹;指令里有「此刻」和记忆', async () => {
+    const notes = [];
+    globalThis.iimos = { host: 'desktop', notify: async (note) => { notes.push(note); return { ok: true }; } };
     cleanups.push(() => { delete globalThis.iimos; });
     const model = await fakeModel((request, res, n) => {
-        if (n <= 2) return respond(res, [{ id: `fc_${n}`, type: 'function_call', call_id: `call_${n}`, name: 'computer', arguments: JSON.stringify({ action: 'screenshot' }) }]);
-        if (n === 3) return respond(res, [{ id: 'fc_3', type: 'function_call', call_id: 'call_3', name: 'notify', arguments: JSON.stringify({ title: '看完了' }) }]);
-        respond(res, [said('看到了')]);
-    });
-    const { call, data, idle } = await boot();
-    await call('POST', '/api/config', { responsesUrl: model.url, apiKey: 'sk-1', model: 'fake' });
-    await call('POST', '/api/send', { text: '看看屏幕' });
-    await idle();
-
-    assert.deepEqual(calls.map(([tool]) => tool), ['computer', 'computer', 'notify']);
-    assert.deepEqual(calls[2][1], { title: '看完了', body: '' });
-    assert.equal(fs.readdirSync(path.join(data, 'shots')).length, 2);
-    // 第三次请求:两张截图,只有后一张是原图,前一张换成了文字
-    const input = model.requests[2].request.input;
-    const images = input.flatMap((item) => (item.content || []).filter((part) => part.type === 'input_image'));
-    assert.equal(images.length, 1);
-    assert.match(images[0].image_url, /^data:image\/png;base64,/);
-    assert.ok(input.some((item) => (item.content || []).some((part) => /较早的截图/.test(part.text || ''))));
-    assert.ok(!JSON.stringify(input).includes('"hidden"'), '只给界面的字段不发给模型');
-    // 工具结果里没有塞 base64
-    assert.ok(!JSON.stringify(input.filter((item) => item.type === 'function_call_output')).includes(PNG));
-    // 指令里有「此刻」:手和记忆
-    assert.match(model.requests[0].request.instructions, /能用的手:这台电脑/);
-    assert.match(model.requests[0].request.instructions, /memory\.md/);
-    // 界面能取到截图
-    const { items } = (await call('GET', '/api/state')).body;
-    const shot = items.find((item) => item.hidden).content[1].file;
-    const res = await fetch(`http://127.0.0.1:${(await boot()).app.port}/api/shots/${path.basename(shot)}`);
-    assert.equal(res.status, 401, '截图也要令牌');
-});
-
-test('模型看不了图:请求被拒后换成文字说明再试', async () => {
-    globalThis.iimos = { host: 'desktop', hands: { list: () => [], call: async () => ({ png: PNG }) } };
-    cleanups.push(() => { delete globalThis.iimos; });
-    const model = await fakeModel((request, res, n) => {
-        if (n === 1) return respond(res, [{ id: 'fc_1', type: 'function_call', call_id: 'call_1', name: 'computer', arguments: '{"action":"screenshot"}' }]);
-        if (JSON.stringify(request.input).includes('input_image')) { res.writeHead(400, { 'content-type': 'application/json' }); res.end('{"error":{"message":"This model does not support image input"}}'); return; }
-        respond(res, [said('看不了图,但截图存好了')]);
+        if (n === 1) return respond(res, [{ id: 'fc_1', type: 'function_call', call_id: 'call_1', name: 'notify', arguments: JSON.stringify({ title: '看完了' }) }]);
+        respond(res, [said('叫过你了')]);
     });
     const { call, idle } = await boot();
     await call('POST', '/api/config', { responsesUrl: model.url, apiKey: 'sk-1', model: 'fake' });
-    await call('POST', '/api/send', { text: '截个图' });
+    await call('POST', '/api/send', { text: '弄完了叫我' });
     await idle();
-    const last = model.requests.at(-1).request.input;
-    assert.ok(JSON.stringify(last).includes('这个模型看不了图'));
-    assert.equal(outputOf((await call('GET', '/api/state')).body.items), '看不了图,但截图存好了');
+    assert.deepEqual(notes, [{ title: '看完了', body: '' }]);
+    assert.match(model.requests[0].request.instructions, /你跑在用户的电脑上/);
+    assert.match(model.requests[0].request.instructions, /memory\.md/);
+});
+
+test('对话里的旧截图:只有最近一张以原图发给模型,看不了图时换成文字', async () => {
+    const { imageNote, forModel } = await import('../server/agent/images.js');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-shots-'));
+    const files = [1, 2].map((n) => { const f = path.join(dir, `${n}.png`); fs.writeFileSync(f, Buffer.from(PNG, 'base64')); return f; });
+    const messages = files.map((f) => imageNote('computer', f));
+    const parts = (list) => list.flatMap((item) => item.content);
+    const seen = parts(forModel(messages));
+    assert.equal(seen.filter((p) => p.type === 'input_image').length, 1);
+    assert.match(seen.find((p) => p.type === 'input_image').image_url, /^data:image\/png;base64,/);
+    assert.ok(seen.some((p) => /较早的截图/.test(p.text || '')));
+    assert.ok(!JSON.stringify(forModel(messages)).includes('"hidden"'), '只给界面的字段不发给模型');
+    assert.ok(parts(forModel(messages, { vision: false })).every((p) => p.type === 'input_text'));
 });
 
 const outputOf = (items) => items.filter((i) => i.type === 'message' && i.role === 'assistant').map((i) => i.content[0].text).at(-1);

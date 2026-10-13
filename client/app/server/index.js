@@ -117,7 +117,7 @@ export async function startServer({ workspace, data, port = 0, token = crypto.ra
                 return sendJson(res, 202, { ok: true });
             }
             if (req.method === 'GET' && url.pathname.startsWith('/api/shots/')) {
-                // 手截的图(agent/functions/hands.js 存的),界面里显示用。只给文件名,不许越出 shots/
+                // 对话里的截图($IIMOS_DATA/shots/,老版本的电脑操作存的),界面里显示用。只给文件名,不许越出 shots/
                 const name = path.basename(decodeURIComponent(url.pathname.slice('/api/shots/'.length)));
                 const file = path.join(data, 'shots', name);
                 if (!name.endsWith('.png') || !fs.existsSync(file)) return sendJson(res, 404, { error: 'not found' });
@@ -131,10 +131,6 @@ export async function startServer({ workspace, data, port = 0, token = crypto.ra
             }
             if (route === 'POST /api/tasks/remove') return sendJson(res, 200, { ok: scheduler.remove(String((await readBody(req)).id)) });
             if (route === 'POST /api/tasks/run') return sendJson(res, 200, { ok: scheduler.runNow(String((await readBody(req)).id)) });
-            if (route === 'GET /api/hub') {
-                // 面板用:有哪些手。没有 launcher(单独跑)时是空的
-                return sendJson(res, 200, { hands: globalThis.iimos?.hands?.list() || [] });
-            }
             if (route === 'POST /api/stop') {
                 conversation.stop();
                 return sendJson(res, 200, { ok: true });

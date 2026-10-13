@@ -22,8 +22,6 @@ client/build/appstore.json
 client/build/AuthKey_*.p8
 
 # 编译产物
-client/hands/runtime/
-extension/dist/
 
 # Cloudflare:部署配置含账号和资源 ID,只留在本机;仓库里放 cloudflare.config.example.ts
 **/cloudflare.config.ts

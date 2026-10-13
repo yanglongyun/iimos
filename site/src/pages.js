@@ -84,7 +84,7 @@ footer a:hover { color: var(--ink); }
 .tries { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tries div { border: 1px solid var(--faint); border-radius: 6px; padding: 10px 14px; color: var(--ink-2); background: var(--bg-2); }
 .tries div::before { content: "› "; color: var(--acc); }
-.install { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.install { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .install > div { border: 1px solid var(--faint); border-radius: 8px; padding: 18px; }
 .install b { font-weight: 500; }
 .install p { color: var(--dim); font-size: 12.5px; margin: 6px 0 12px; }
@@ -121,12 +121,12 @@ function card(shape) {
 const FEATURES = [
     ['你的电脑,你的数据', 'Agent、代码、数据都在你自己的电脑上,没有账号。API Key 只存在本机,只发往你填的地址。'],
     ['一直醒着', '自己按时跑定时任务,有要紧的事就弹通知叫你。关掉窗口它还在菜单栏里。'],
-    ['它有手', '能看、能操作你的电脑(你授权之后),能用你自己的 Chrome,能给你发通知。'],
+    ['改完就生效', '界面改完先编译,编过了才重载窗口;编不过,窗口还是上一个能用的样子,错误交回给它接着改。'],
     ['形态能分享', '`iimos share` 把你的 iimos 长成的样子发到这里;`iimos adopt` 换上别人的,原来的留成分支。'],
     ['模型用你自己的', '任何兼容 OpenAI Responses 协议的服务:填地址、API Key、模型名就行。'],
     ['改坏了能救回来', '每次启动前自动快照,起不来就回滚到上一个好版本;还有一个不加载任何应用代码的救援页。'],
 ];
-const TRIES = ['右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '每天早上 8 点给我一份简短的科技早报', '每小时用 Chrome 看一眼我的邮箱,有需要我处理的再告诉我'];
+const TRIES = ['右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '每天早上 8 点给我一份简短的科技早报', '做一个记账本,每周日晚上给我一份这周的总结'];
 
 export function homePage({ shapes, release, origin }) {
     const tick = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -158,8 +158,6 @@ ${cmd('iimos share "给你的形态起个名字" --story "你是怎么让它长�
 <div class="install">
 <div><b>Mac(Apple 芯片)</b><p>下载 dmg,第一次打开时在对话里填模型配置。关掉窗口它还在菜单栏醒着。</p><pre><a href="${esc(release.dmg)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.dmg</a></pre></div>
 <div><b>Windows(x64)</b><p>下载 exe 安装包。还没有代码签名,第一次运行时 SmartScreen 会拦一下,点「更多信息 → 仍要运行」。关掉窗口它还在右下角托盘里。</p><pre><a href="https://github.com/yanglongyun/iimos/releases/latest">从 Releases 下载 .exe</a></pre></div>
-<div><b>Chrome 插件(可选)</b><p>让它用你自己登着账号的浏览器看页面、点、填。</p><pre>cd iimos/extension
-npm run build</pre><p>Chrome「加载已解压的扩展程序」选 <code>extension/dist/iimos-extension</code>,填上 agent 给你的配对码。</p></div>
 </div>`;
     return layout({
         title: 'iimos —— 一个可以完全修改自己的 Agent',

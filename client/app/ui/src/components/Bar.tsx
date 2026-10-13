@@ -15,7 +15,7 @@ export function Bar({ config, tokens, onModel, onPanel }: { config: Config | nul
                 <button className={`model${config?.ready ? ' on' : ''}`} type="button" title="模型设置" onClick={onModel}>
                     {config?.ready ? config.model : '未连接'}
                 </button>
-                <button className="model menu" type="button" title="面板:定时任务、手" onClick={onPanel}>≡</button>
+                <button className="model menu" type="button" title="面板:定时任务" onClick={onPanel}>≡</button>
                 {winButtons && (
                     <span className="winbtns">
                         <button type="button" title="最小化" onClick={() => winButtons.minimize()}>─</button>

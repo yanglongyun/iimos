@@ -23,9 +23,9 @@ const iimos = globalThis.iimos;
 const workspace = iimos?.workspace || process.env.IIMOS_WORKSPACE || import.meta.dirname;
 const data = iimos?.data || process.env.IIMOS_DATA || path.join(workspace, '.data');
 ${notify ? `
-// 价格提醒触发时弹系统通知(server/alerts.js 调 notify),经 launcher 的手
+// 价格提醒触发时弹系统通知(server/alerts.js 调 notify),经 launcher
 async function notify({ title, body }) {
-    try { await iimos?.hands?.call('notify', { title, body }); } catch { console.log(\`[notify] \${title}: \${body}\`); }
+    try { await iimos?.notify({ title, body }); } catch { console.log(\`[notify] \${title}: \${body}\`); }
 }
 ` : ''}
 const server = await startServer({ workspace, data, bin: iimos?.bin${notify ? ', notify' : ''} });

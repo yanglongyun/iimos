@@ -28,11 +28,7 @@ const HELP = `iimos —— 和 launcher 说话
   iimos recovery               打开救援窗口
   iimos upgrade                看新出厂版本的情况;iimos upgrade apply 直接换成新出厂版
   iimos paths                  launcher 用到的各个目录
-
-手(电脑操作、浏览器、通知):
-  iimos hands                  连着的手和它们会的事
-  iimos hands browser          拿浏览器插件的配对码
-  iimos hands call <工具> '<json>'   直接让手做一件事,比如 iimos hands call notify '{"title":"hi"}'
+  iimos notify "标题" [内容]    弹一条系统通知
 
 分享(形态):
   iimos share "标题" [--story "让它长成这样的话"] [--dry-run] [--out 文件]   把现在的样子分享到社区(iimos.ai/shapes)
@@ -153,22 +149,9 @@ const commands = {
     },
     recovery: async () => out(await control('/recovery')),
 
-    async hands() {
-        const [sub, ...rest] = args;
-        if (!sub || sub === 'list') {
-            const { hands } = await control('/hands', null, 'GET');
-            return out(hands.length ? hands.map((h) => `${h.name}  会:${h.tools.join('、')}`).join('\n') : '没有手连着');
-        }
-        if (sub === 'browser') {
-            const { result } = await control('/hands/call', { tool: 'browser', args: { action: 'pair' } });
-            return out(`在 Chrome 的 iimos 插件里填:\n  本机地址 ${result.address}\n  配对码   ${result.code}(${result.expiresIn}内有效,只能用一次)`);
-        }
-        if (sub === 'call') {
-            let callArgs = {};
-            try { callArgs = rest[1] ? JSON.parse(rest[1]) : {}; } catch { fail('参数要是 JSON'); }
-            return out((await control('/hands/call', { tool: rest[0], args: callArgs })).result);
-        }
-        return fail(`不认识:iimos hands ${sub}`);
+    async notify() {
+        if (!args[0]) fail('要写标题:iimos notify "标题" [内容]');
+        out(await control('/notify', { title: args[0], body: args.slice(1).join(' ') }));
     },
     async share() {
         const { share } = await import('./share.js');

@@ -6,7 +6,7 @@ const read = (file, limit = 40_000) => {
     try { return fs.readFileSync(file, 'utf8').slice(0, limit); } catch { return ''; }
 };
 
-/** 此刻的处境:时间、有哪些手。每轮现算,一两行。 */
+/** 此刻的处境:时间、在哪。每轮现算,一两行。 */
 function situation(data) {
     const now = new Date();
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -14,10 +14,6 @@ function situation(data) {
     const iimos = globalThis.iimos;
     if (iimos) {
         lines.push('你跑在用户的电脑上。');
-        const hands = iimos.hands?.list() || [];
-        lines.push(hands.length
-            ? `能用的手:${hands.map((h) => `${h.name}(${h.tools.join('、')})`).join(';')}。`
-            : '现在没有可用的手(电脑操作、浏览器、通知都用不了)。');
     }
     lines.push(`记忆文件:${path.join(data, 'memory.md')}(下面是它现在的内容)。`);
     return `# 此刻\n\n${lines.join('\n')}`;

@@ -1,26 +1,18 @@
-// 面板:它醒着时在干什么。定时任务、手(电脑操作 / 浏览器 / 通知)。
+// 面板:它醒着时在干什么。现在是定时任务。
 // 和模型配置一样是一个小终端窗口,右上角 ≡ 打开,esc 关。
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 
 type Task = { id: string; title: string; prompt: string; when: string; enabled: boolean; lastRun: string | null; nextRun: string | null };
-type Hand = { id: string; name: string; tools: string[] };
-type Hub = { hands: Hand[] };
-
-const WINDOWS = navigator.userAgent.includes('Windows');
-const TOOL_NAMES: Record<string, string> = { computer: '电脑操作', browser: '浏览器', notify: '通知' };
 const time = (iso: string | null) => (iso ? new Date(iso).toLocaleString('zh-CN', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—');
 
 export function Panel({ onClose }: { onClose: () => void }) {
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [hub, setHub] = useState<Hub | null>(null);
     const [error, setError] = useState('');
 
     const load = useCallback(async () => {
         try {
-            const [t, h] = await Promise.all([api<{ tasks: Task[] }>('GET', '/api/tasks'), api<Hub>('GET', '/api/hub')]);
-            setTasks(t.tasks);
-            setHub(h);
+            setTasks((await api<{ tasks: Task[] }>('GET', '/api/tasks')).tasks);
         } catch (cause) { setError((cause as Error).message); }
     }, []);
     useEffect(() => { void load(); const timer = setInterval(load, 5000); return () => clearInterval(timer); }, [load]);
@@ -51,17 +43,6 @@ export function Panel({ onClose }: { onClose: () => void }) {
                         </span>
                     </div>
                 )) : <p className="hint">还没有。跟它说「每天早上 8 点给我一份早报」这样的话,它就会定下来。</p>}
-
-                <h4>手</h4>
-                {hub?.hands.length ? hub.hands.map((hand) => (
-                    <div key={hand.id} className="row">
-                        <span className="what"><b>{hand.name}</b></span>
-                        <span className="meta">{hand.tools.map((t) => TOOL_NAMES[t] || t).join(' · ')}</span>
-                    </div>
-                )) : <p className="hint">没有可用的手。</p>}
-                {WINDOWS
-                    ? <p className="hint small">电脑操作要在右下角托盘的 iimos 图标里勾上「允许它操作这台电脑」。Ctrl+Alt+Shift+Esc 随时叫停。</p>
-                    : <p className="hint small">电脑操作要在菜单栏 iimos 图标里勾上「允许它操作这台电脑」。⌘⇧Esc 随时叫停。</p>}
 
                 {error && <p className="hint small" style={{ color: 'var(--bad)' }}>{error}</p>}
             </div>

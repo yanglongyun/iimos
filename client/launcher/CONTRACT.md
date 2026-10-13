@@ -6,7 +6,7 @@
 - **应用**:就是你脚下这个目录(workspace,bash 的默认工作目录)。界面、本地服务、
   agent 循环、工具、你自己的提示词 —— **全在这里,全都可以改**。
 
-你跑在用户的电脑上(macOS 或 Windows)。launcher 开窗口加载你报到的地址,菜单栏、开机自启、电脑操作、浏览器连接都由它和桌面壳管。
+你跑在用户的电脑上(macOS 或 Windows)。launcher 开窗口加载你报到的地址,菜单栏、开机自启、系统通知都由它和桌面壳管。
 
 **应用是纯 Node,不要 import electron**。要窗口、通知、截屏、操作电脑,经 `globalThis.iimos` 找 launcher。
 
@@ -28,7 +28,7 @@
 | `iimos restart` | 改了 `main.js`、`server/`:先编译界面,再整个应用重启,你这一轮也会被打断;出厂应用会在新代码起来后自动接着这一轮跑(见 AGENT.md「重启接续」)|
 | `iimos rollback <版本\|good>` | 回到某个版本(当前样子会留成分支) |
 | `iimos upgrade` | 有新出厂版本、但应用被改过时,看怎么合并 |
-| `iimos hands [list\|call <工具> '<json>']` | 看现在有哪些手、直接调一次(调试用)|
+| `iimos notify "标题" [内容]` | 弹一条系统通知(调试用)|
 | `iimos share` / `iimos adopt <链接>` | 把现在的样子分享成一个「形态」、换上别人分享的形态 |
 
 ## 改坏了怎么办
@@ -62,13 +62,9 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 | `ready({ url, window? })` / `failed(err)` | 报到 / 自己知道起不来了。`window` 是桌面窗口的偏好:`{ width, height, minWidth, minHeight, title, background }`(background 是开窗时的底色,和界面底色一致就不闪)|
 | `onShutdown(fn)` | 重启或退出前的收尾,`fn({ restarting })` |
 | `restart()` / `reload()` / `recovery()` | 同名命令 |
-| `hands.list()` | 现在有哪些手:`[{ id, name, tools }]` |
-| `hands.call(tool, args)` | 调一只手。`tool` 是 `computer`(看屏幕、点、打字)、`browser`(用户的 Chrome)、`notify`(本机通知)。没有能干这件事的手会抛错,错误信息直接告诉用户就行 |
+| `notify({ title, body? })` | 弹一条系统通知。弹不了会抛错,错误信息直接告诉用户就行 |
 | `capture()` | 截应用界面,返回 PNG Buffer |
 | `host` | `'desktop'` |
-
-电脑操作要用户在菜单栏勾上「允许它操作这台电脑」;macOS 上还要给 iimos 屏幕录制和辅助功能权限。没勾时 `computer` 会报错说明怎么开。
-用户按 ⌘⇧Esc(Windows 上 Ctrl+Alt+Shift+Esc)会立刻停下所有电脑操作。
 
 ## 环境变量
 

@@ -14,6 +14,7 @@
 //   host.showRecovery(url)    给用户看救援页
 //   host.openFolder?(dir)     在访达里打开目录
 //   host.capture?()           截应用界面(分享形态时做封面),返回 PNG Buffer
+//   host.notify?({title,body}) 弹一条系统通知
 //
 // 应用里的一切都可以被改。core 不 import 应用的任何模块,应用通过 globalThis.iimos 和它说话。
 import fs from 'node:fs';
@@ -25,7 +26,6 @@ import * as seed from './seed.js';
 import { writeShims } from './shims.js';
 import { startControl } from './control.js';
 import { startRecovery } from './recovery/server.js';
-import { createHandsHub } from './hands-hub.js';
 
 const READY_TIMEOUT_MS = Number(process.env.IIMOS_READY_TIMEOUT_MS) || 120_000;
 
@@ -41,7 +41,7 @@ export function createLog(file) {
 
 /**
  * opts: { host, paths, seedDir, version, contract, toolchain, execPath, cliPath, log }
- * 返回 { launcher(给应用的那个对象), start(), shutdown({ restarting }) , hub }
+ * 返回 { launcher(给应用的那个对象), start(), shutdown({ restarting }) }
  */
 export function createLauncher({ host, paths, seedDir, version, contract, toolchain, execPath, cliPath, log }) {
     let readyTimer = null;
@@ -52,7 +52,6 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
     let recovery = null;
     const shutdownHooks = [];
 
-    const hub = createHandsHub({ log });
 
     /** 应用看得到的 launcher。应用可以不用它,但 ready() 不调就会被当成没起来。 */
     const launcher = {
@@ -63,8 +62,13 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         seed: seedDir,
         bin: paths.bin,
         contract,
-        /** 手:电脑操作、浏览器、通知。 */
-        hands: hub.api,
+        /** 弹一条系统通知:{ title, body }。 */
+        notify: async ({ title, body = '' } = {}) => {
+            if (!title) throw new Error('缺少 title');
+            if (!host.notify) throw new Error('这里弹不了系统通知');
+            await host.notify({ title: String(title), body: String(body) });
+            return { ok: true };
+        },
         /**
          * 应用起来了。传 { url, window? }:launcher 让宿主打开这个界面,真的加载出来才算报到成功。
          * window 是给桌面窗口的偏好:{ width, height, minWidth, minHeight, title, background }。
@@ -111,7 +115,6 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         for (const fn of shutdownHooks.splice(0)) {
             try { await fn({ restarting }); } catch (error) { log('收尾出错', error); }
         }
-        await hub.stop();
     }
 
     let restarting = false;
@@ -198,8 +201,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
                 'POST /recovery': () => { void showRecovery('从命令行打开'); return { ok: true }; },
                 'GET /status': () => ({ ok: true, state, version, host: host.kind, app: Boolean(appUrl) }),
                 'POST /status': () => ({ ok: true, state, version, host: host.kind, app: Boolean(appUrl) }),
-                'GET /hands': () => ({ ok: true, hands: hub.api.list() }),
-                'POST /hands/call': async ({ tool, args }) => ({ ok: true, result: await hub.api.call(tool, args || {}) }),
+                'POST /notify': async ({ title, body }) => launcher.notify({ title, body }),
                 'POST /capture': async () => {
                     const png = await launcher.capture();
                     return { ok: true, png: png ? png.toString('base64') : null };
@@ -254,7 +256,6 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         launcher,
         start,
         shutdown,
-        hub,
         showRecovery: (reason) => showRecovery(reason),
         state: () => state,
         recoveryUrl: () => recovery?.url || null,

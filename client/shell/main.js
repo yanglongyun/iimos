@@ -1,6 +1,6 @@
-// 桌面壳:Electron 主进程。只做宿主该做的事 —— 窗口、菜单栏、快捷键、开机自启、手 ——
+// 桌面壳:Electron 主进程。只做宿主该做的事 —— 窗口、菜单栏、快捷键、开机自启、系统通知 ——
 // 其余交给 launcher/core.js(纯 Node)。
-import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, powerSaveBlocker, shell, Tray } from 'electron';
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, Notification, powerSaveBlocker, shell, Tray } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -8,13 +8,9 @@ import { launcherPaths } from '../launcher/paths.js';
 import * as seed from '../launcher/seed.js';
 import { createLauncher, createLog } from '../launcher/core.js';
 import { createSurfaces } from './surface.js';
-import { startLocalHands } from '../hands/index.js';
 import { linkCli, linkedAt, unlinkCli } from './cli-link.js';
 
 const RECOVERY_SHORTCUT = 'CommandOrControl+Alt+Shift+R';
-// Windows 上 Ctrl+Shift+Esc 是任务管理器,换成 Ctrl+Alt+Shift+Esc
-const STOP_HANDS_SHORTCUT = process.platform === 'darwin' ? 'Command+Shift+Escape' : 'Control+Alt+Shift+Escape';
-const STOP_HANDS_LABEL = process.platform === 'darwin' ? '⌘⇧⎋' : 'Ctrl+Alt+Shift+Esc';
 
 const paths = launcherPaths();
 const dev = !app.isPackaged;
@@ -58,6 +54,10 @@ function main() {
         showRecovery: (url) => surfaces.openRecovery(url),
         openFolder: (dir) => void shell.openPath(dir),
         capture: () => surfaces.capture(),
+        notify: ({ title, body }) => {
+            if (!Notification.isSupported()) throw new Error('这台电脑不支持系统通知');
+            new Notification({ title, body }).show();
+        },
     };
 
     const core = createLauncher({
@@ -93,16 +93,9 @@ function main() {
         });
         ipcMain.on('win:close', (event) => BrowserWindow.fromWebContents(event.sender)?.close());
 
-        // 本机的手:电脑操作、浏览器、通知。挂到手的总线上,应用经 iimos.hands 调用
-        const hands = await startLocalHands({ paths, log, root, packaged: !dev, resourcesPath: process.resourcesPath }).catch((error) => { log('本机的手没起来', error); return null; });
-        if (hands) {
-            core.hub.attach(hands.hand);
-            try { globalShortcut.register(STOP_HANDS_SHORTCUT, () => hands.stopAll('快捷键')); } catch { /* 被占用 */ }
-        }
-
         const prefs = readPrefs();
         if (prefs.keepAwake) awake = powerSaveBlocker.start('prevent-app-suspension');
-        setupTray({ core, surfaces, hands });
+        setupTray({ core, surfaces });
     });
     app.on('will-quit', () => globalShortcut.unregisterAll());
 
@@ -127,7 +120,7 @@ function trayIcon() {
     return icon;
 }
 
-function setupTray({ core, surfaces, hands }) {
+function setupTray({ core, surfaces }) {
     tray = new Tray(trayIcon());
     tray.setToolTip('iimos');
     const render = () => {
@@ -150,13 +143,6 @@ function setupTray({ core, surfaces, hands }) {
                     render();
                 },
             },
-            ...(hands ? [
-                {
-                    label: '允许它操作这台电脑', type: 'checkbox', checked: hands.computerEnabled(),
-                    click: (item) => { hands.setComputerEnabled(item.checked); render(); },
-                },
-                { label: `停下所有电脑操作  ${STOP_HANDS_LABEL}`, click: () => hands.stopAll('菜单栏') },
-            ] : []),
             { type: 'separator' },
             {
                 label: '在终端里使用 iimos 命令', type: 'checkbox', checked: Boolean(linkedAt(path.join(paths.bin, 'iimos'))),

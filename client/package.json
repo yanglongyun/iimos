@@ -22,17 +22,15 @@
     "app": "npm run build:ui && electron shell/main.js",
     "app:direct": "npm run build:ui && node app/main.js",
     "build:ui": "node launcher/cli-build.js",
-    "build:hands": "node hands/build.js",
     "typecheck": "tsc -p app/ui/tsconfig.json",
-    "test": "npm run build:ui && node --test \"launcher/**/*.test.js\" \"app/test/*.test.js\" \"hands/**/*.test.js\"",
-    "build:app": "npm run build:ui && npm run build:hands && node scripts/pack.mjs",
-    "release:mac": "npm run build:ui && npm run build:hands && electron-builder",
+    "test": "npm run build:ui && node --test \"launcher/**/*.test.js\" \"app/test/*.test.js\"",
+    "build:app": "npm run build:ui && node scripts/pack.mjs",
+    "release:mac": "npm run build:ui && electron-builder",
     "ship:mac": "node scripts/release-mac.mjs",
-    "release:win": "npm run build:ui && npm run build:hands && node scripts/pack.mjs --win nsis --x64"
+    "release:win": "npm run build:ui && node scripts/pack.mjs --win nsis --x64"
   },
   "dependencies": {
-    "isomorphic-git": "^1.43.0",
-    "ws": "8.18.3"
+    "isomorphic-git": "^1.43.0"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
@@ -54,7 +52,6 @@
     "files": [
       "launcher/**/*",
       "shell/**/*",
-      "hands/*.js",
       "build/trayTemplate*.png",
       "build/icon.png",
       "!**/*.test.js"
@@ -110,14 +107,6 @@
           "**/*",
           "!cjs/*.development.js"
         ]
-      },
-      {
-        "from": "hands/runtime",
-        "to": "runtime",
-        "filter": [
-          "iimos-computer",
-          "iimos-computer.exe"
-        ]
       }
     ],
     "mac": {
@@ -130,14 +119,7 @@
       "notarize": true,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "identity": "Chuan Zhi (Chengdu) Information Technology Co., Ltd. (92696T726U)",
-      "binaries": [
-        "Contents/Resources/runtime/iimos-computer"
-      ],
-      "extendInfo": {
-        "NSScreenCaptureUsageDescription": "iimos 要看屏幕,才能按你的要求操作这台电脑。",
-        "NSAppleEventsUsageDescription": "iimos 要控制其他应用,才能按你的要求操作这台电脑。"
-      }
+      "identity": "Chuan Zhi (Chengdu) Information Technology Co., Ltd. (92696T726U)"
     },
     "win": {
       "target": [
