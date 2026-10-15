@@ -111,7 +111,7 @@ function layout({ title, description, image, body, on = '' }) {
     return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(description)}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}">${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter:card" content="summary_large_image">` : ''}
-<link rel="icon" href="/icon.png"><style>${STYLE}</style><script async src="https://www.googletagmanager.com/gtag/js?id=G-WGWEERYES8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-WGWEERYES8');</script></head><body><div class="wrap">
+<link rel="icon" href="/icon.png"><style>${STYLE}</style><script async src="https://www.googletagmanager.com/gtag/js?id=G-QVMYW89RY7"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-QVMYW89RY7');</script></head><body><div class="wrap">
 <header class="top"><a href="/"><b><i>morphic</i></b></a><nav><a href="/" class="${on === 'home' ? 'on' : ''}">首页</a><a href="/shapes" class="${on === 'shapes' ? 'on' : ''}">形态</a><a href="https://github.com/yanglongyun/morphic/releases">发布</a><a href="https://github.com/yanglongyun/morphic">GitHub</a></nav></header>
 ${body}
 <footer><span>morphic · MIT 开源 · 你的机器,你的数据 · <a href="/privacy">隐私</a> · <a href="/terms">条款</a></span><span><a href="https://github.com/yanglongyun/morphic">github.com/yanglongyun/morphic</a></span></footer>
