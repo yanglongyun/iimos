@@ -114,7 +114,7 @@ function layout({ title, description, image, body, on = '' }) {
 <link rel="icon" href="/icon.png"><style>${STYLE}</style><script async src="https://www.googletagmanager.com/gtag/js?id=G-WGWEERYES8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-WGWEERYES8');</script></head><body><div class="wrap">
 <header class="top"><a href="/"><b><i>iimos</i></b></a><nav><a href="/" class="${on === 'home' ? 'on' : ''}">首页</a><a href="/shapes" class="${on === 'shapes' ? 'on' : ''}">形态</a><a href="https://github.com/yanglongyun/iimos/releases">发布</a><a href="https://github.com/yanglongyun/iimos">GitHub</a></nav></header>
 ${body}
-<footer><span>iimos · MIT 开源 · 你的机器,你的数据</span><span><a href="https://github.com/yanglongyun/iimos">github.com/yanglongyun/iimos</a></span></footer>
+<footer><span>iimos · MIT 开源 · 你的机器,你的数据 · <a href="/privacy">隐私</a> · <a href="/terms">条款</a></span><span><a href="https://github.com/yanglongyun/iimos">github.com/yanglongyun/iimos</a></span></footer>
 </div><script>${COPY}</script></body></html>`;
 }
 
@@ -231,3 +231,26 @@ export function devicePage({ user, code, device, done = false, error = '' }) {
         body: `<section class="hero device">${main}${error ? `<p class="note err">${esc(error)}</p>` : ''}${who}</section>`,
     });
 }
+
+/** 隐私政策、服务条款:谷歌登录要求有这两页。只写这个站真的做了什么。 */
+const doc = (title, sections) => layout({
+    title: `${title} —— iimos`,
+    description: title,
+    body: `<section class="hero doc"><h1>${esc(title)}</h1>${sections.map(([h, p]) => `<h4>${esc(h)}</h4><p>${esc(p)}</p>`).join('')}<p class="note">更新于 2026-10-15 · 有问题写信到 hi@iimos.ai</p></section>`,
+});
+
+export const privacyPage = () => doc('隐私政策', [
+    ['iimos 本身', 'iimos 是装在你自己电脑上的应用。你的对话、模型配置、API Key 都只存在你的电脑上,不会发到 iimos.ai;API Key 只发往你自己填的模型服务地址。'],
+    ['用谷歌登录时我们拿到什么', '只在你要发布或删除形态时才需要登录。登录后我们保存谷歌给的账号标识、邮箱、名字和头像地址,用来认出你、在你发布的形态上署名。我们不读取你的谷歌账号里的任何其他内容。'],
+    ['你发布的形态', '形态是你的 iimos 的代码文件,发布后公开,任何人都能看到和下载,并显示你的名字。发布前网站会扫描像密钥的内容并拒绝,但你仍应自己确认里面没有私人信息。你可以随时删除自己发布的形态。'],
+    ['令牌和会话', '浏览器登录用一个 cookie 保持会话;你的 iimos 拿到的是一个 API 令牌。两者在我们这里只存哈希,不存原文。'],
+    ['统计', '网站页面用 Google Analytics 统计访问量。'],
+    ['删除你的数据', '写信到 hi@iimos.ai,我们会删除你的账号和你发布的全部形态。'],
+]);
+
+export const termsPage = () => doc('服务条款', [
+    ['iimos', 'iimos 以 MIT 许可证开源,按「现状」提供,不附带任何担保。它会按你的要求修改自己的代码、在你的电脑上执行命令 —— 后果由使用者自己承担。'],
+    ['形态', '你发布的形态以 MIT 许可证公开,别人可以下载、修改、再分享。不要发布你无权公开的代码、他人的隐私或任何密钥。形态是代码,换上别人的形态前请自己确认可信。'],
+    ['我们可以做的', '对违法、恶意或侵权的形态,我们可以不经通知删除,并停用发布它的账号。'],
+    ['变更', '条款可能更新,更新后继续使用即视为同意。'],
+]);

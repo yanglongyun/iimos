@@ -2,23 +2,23 @@
 
 [中文](README.zh-CN.md)
 
-**An agent that can fully modify itself — and lives on your own computer, always awake.** It ships as a single chat box. The UI, the server, its tools, its own system prompt — all of it is its own source code, and it can rewrite any of it. Ask for something and it changes itself, rather than handing you a separate artifact.
+**An agent that can fully modify itself.** It ships as one chat and one tool: a shell. The UI, the server, its tools, its own system prompt — all of it is its own source code, and it can rewrite any of it. Ask for something and it changes itself, rather than handing you a separate artifact.
 
 **"Turn yourself into a Windows XP desktop."** Real recording, from the factory state, middle fast-forwarded:
 
 ![](docs/xp.gif)
 
-- **Your computer, your data.** The agent, its code and your data live on your own computer. No account.
-- **Always awake.** It runs scheduled tasks on its own and sends a notification when something matters. Close the window and it keeps running in the menu bar.
-- **Shapes are shareable.** `iimos share` publishes what yours has become to [iimos.ai/shapes](https://iimos.ai/shapes); `iimos adopt <id>` turns yours into someone else's, keeping the old one on a branch.
+- **Your computer, your data.** The agent, its code and your data live on your own computer. Your API key is sent only to the endpoint you entered.
+- **One chat, one shell.** That's the whole factory state. The chat compacts itself, so it never fills up; everything else it grows when you ask.
+- **Breaking it is safe.** A snapshot is taken before every boot; if new code doesn't come up, it rolls back to the last good version and keeps the broken one on a branch.
+- **Shapes are shareable.** Tell it "share what you look like now to iimos.ai", or "turn into shape `<id>` from iimos.ai". It reads [iimos.ai/agent.md](https://iimos.ai/agent.md) and calls the site's API with its shell.
 - **Bring your own model.** Any endpoint compatible with the OpenAI Responses API: URL, API key, model name.
-- **Breaking it is safe.** A snapshot is taken before every boot; if the new code doesn't come up, it rolls back automatically. There's also a recovery page that loads none of the app's code.
 
 ## What it did, starting from the factory state
 
-Real recordings, nothing edited by hand. The middle of each clip is fast-forwarded; the moment it reloads is real time. Above: it rewrote its React and CSS, rebuilt, reloaded — the chat became a window on the XP desktop, the panel it had grown earlier became another one.
+Real recordings, nothing edited by hand. The middle of each clip is fast-forwarded; the moment it reloads is real time. Above: it rewrote its React and CSS, rebuilt, reloaded — the chat became a window on the XP desktop.
 
-**"Become a crypto price desk, with real data."** It couldn't read the web at all. It wrote itself a tool that pulls OKX quotes, added a scheduler that refreshes every minute, and built price alerts that fire a system notification.
+**"Become a crypto price desk, with real data."** It couldn't read the web at all. It wrote itself code that pulls OKX quotes, refreshes every minute, and raises price alerts.
 
 ![](docs/crypto.gif)
 
@@ -37,8 +37,8 @@ Open it and type into the prompt:
 ```text
 Add a to-do list on the right
 Turn yourself into a vintage instrument panel
-Every morning at 8, give me a short tech briefing
-Make me an expense tracker, and send me a weekly summary every Sunday night
+Make me an expense tracker
+Go look at what other people's iimos have turned into on iimos.ai
 ```
 
 It edits its own code, reloads, and tells you what's new and how to use it. It answers in whatever language you write in.
@@ -47,37 +47,32 @@ It edits its own code, reloads, and tells you what's new and how to use it. It a
 
 **Mac (Apple Silicon):** download the dmg from [iimos.ai](https://iimos.ai) or [Releases](https://github.com/yanglongyun/iimos/releases).
 On first launch it asks, in the chat, for your model settings: endpoint URL, API key, model name, context window size. The URL is the full Responses endpoint, usually ending in `/responses` (for example `https://api.deepseek.com/v1/responses`).
-It keeps running in the menu bar after you close the window. Open the panel (≡, top right) to see scheduled tasks.
+Closing the window leaves it in the menu bar; the menu has two items, Open and Quit.
 
 **Windows (x64):** download the exe installer from [Releases](https://github.com/yanglongyun/iimos/releases). It isn't code-signed yet, so SmartScreen will stop it the first time: click "More info → Run anyway".
-It keeps running in the system tray after you close the window.
 
-The API key is stored only in a local `config.json` (mode 600) and sent only to the endpoint you entered. A stronger model does noticeably better; everything above ran on DeepSeek V4 Flash.
+The API key is stored only in a local `config.json` (mode 600). A stronger model does noticeably better; everything above ran on DeepSeek V4 Flash.
 
 ## What's in the repo
 
-Two parts, each standalone:
-
 ```text
-client/       The desktop app (Electron) — the product
-  shell/        Electron main process: windows, menu bar, shortcuts, system notifications
-  launcher/     The only part of the install that never changes. Finds the workspace → seeds it on first run /
-                upgrades it → bookkeeping → loads the app.
-                Snapshots before every boot; two failed boots of the same version → roll back to the last good
-                one, the broken version is kept on a crashed-* branch.
-                The `iimos` CLI: status / snapshot / log / diff / rollback / reload / restart / add / notify / share / adopt
-                Recovery page: loads none of the app's code; rollback, factory reset, a minimal rescue agent.
-                shape.js is the shape bundle format, shared with the site.
+client/       The desktop app (Electron)
+  shell/        Electron main process: the window and the menu bar icon (Open / Quit)
+  launcher/     The part of the install that never changes. Finds the workspace → seeds it on first run /
+                upgrades it → snapshots → loads the app. Two failed boots of the same version → roll back to the
+                last good one (the broken version stays on a crashed-* branch). If even that won't start, it says so
+                in a dialog.
+                The `iimos` CLI the agent uses: status / snapshot / log / diff / rollback / add / build / reload / restart / upgrade
   app/          The app as shipped (the seed). Copied into <data dir>/workspace/ (a git repo) on first launch;
-                everything the agent changes happens there. Ships as a chat and a small panel:
+                everything the agent changes happens there.
     main.js       starts the local server → reports ready (with its URL) to the launcher; pure Node, no Electron
-    server/       local server, 127.0.0.1 only, token-protected; conversation, event stream, scheduler
-      agent/        the agent loop; tools shell / read / write / edit / notify / schedule;
-                    context auto-compacted at 70%; prompt.md is its base system prompt
+    server/       local server, 127.0.0.1 only, token-protected; the conversation, the event stream
+      agent/        the agent loop; one tool, shell; context auto-compacted at 70%; prompt.md is its base prompt
       ai/           model calls (Responses streaming, automatic retry)
     ui/           React + TSX; after a change, `iimos reload` compiles with the esbuild the launcher ships
     AGENT.md      notes the agent keeps for its future self
-site/         iimos.ai: home, release, shapes gallery and API. One Cloudflare Worker + D1 + R2, all named iimos.
+site/         iimos.ai: home, downloads, the shapes gallery, Google sign-in, and the API agents call
+              (described in /agent.md). One Cloudflare Worker + D1 + R2.
 ```
 
 More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -85,9 +80,7 @@ More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 The only contract the app has to honor (see [client/launcher/CONTRACT.md](client/launcher/CONTRACT.md)): report ready to the launcher after starting, and keep user data in `$IIMOS_DATA`, not in the workspace. Everything else is fair game.
 
 Data directory (macOS): `~/Library/Application Support/ai.iimos.desktop/`
-— `workspace/` (app code, a git repo) · `data/` (conversation, model config, tasks, memory; never rolled back) · `launcher/` (ledger, logs).
-
-Recovery: ⌘⌥⇧R (Windows: Ctrl+Alt+Shift+R), the menu bar, or the `--recovery` flag.
+— `workspace/` (app code, a git repo) · `data/` (conversation, model config; never rolled back) · `launcher/` (ledger, logs).
 
 ## Run from source
 
@@ -108,13 +101,13 @@ IIMOS_HOME=/tmp/iimos-dev npm run app
 In `client/`:
 
 ```bash
-npm test                # launcher seeding / rollback / upgrade, app end-to-end (fake model), shape format
+npm test                # launcher seeding / rollback / upgrade, app end-to-end (fake model)
 npm run build:app       # unsigned build
 npm run ship:mac        # sign + notarize + verify
 npm run release:win     # Windows installer (run on Windows)
 ```
 
-The site lives in `site/` (`npm run dev` / `npm run deploy`).
+The site lives in `site/` (`npm run dev` / `npm run deploy`; copy `cloudflare.config.example.ts` to `cloudflare.config.ts` first).
 
 ## License
 

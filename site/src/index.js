@@ -6,6 +6,7 @@
 //   /s/<id>                    一个形态:封面、它是怎么长出来的、怎么换上
 //   /device                    设备授权:用户在这里用谷歌登录,同意自己的 iimos 以自己的名义发布
 //   /auth/google(/callback)    谷歌登录;/auth/logout 退出
+//   /privacy  /terms           隐私政策、服务条款(谷歌登录要求有)
 //
 // 给 agent 的接口(说明在 /agent.md,iimos 的提示词里只指向那一页)
 //   GET    /api/shapes                列表(?sort=new|hot&q=关键字&limit=)
@@ -19,7 +20,7 @@
 import { LIMITS, base64, decodeShape, encodeShape, scanSecrets, validateShape } from './shape.js';
 import { currentUser, deviceApprove, deviceLookup, deviceStart, deviceToken, googleCallback, googleStart, logout, sha256 } from './auth.js';
 import { agentDoc } from './agentdoc.js';
-import { detailPage, devicePage, homePage, listPage, notFoundPage } from './pages.js';
+import { detailPage, devicePage, homePage, listPage, notFoundPage, privacyPage, termsPage } from './pages.js';
 
 const PER_HOUR = 20;
 // R2 桶 iimos 是整站共用的,形态放在 shapes/ 下
@@ -201,6 +202,8 @@ async function route(request, env, ctx) {
         if (!shape) return html(notFoundPage(), 404);
         return html(detailPage({ shape, children: await children(env, shape.id), origin }));
     }
+    if (method === 'GET' && path === '/privacy') return html(privacyPage(), 200, 'public, max-age=3600');
+    if (method === 'GET' && path === '/terms') return html(termsPage(), 200, 'public, max-age=3600');
     if (method === 'GET' && (path === '/agent.md' || path === '/llms.txt')) return text(agentDoc(origin), 'text/markdown');
 
     // 登录
