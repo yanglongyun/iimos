@@ -21,6 +21,24 @@ import { buildInstructions } from './instructions.js';
 const INTERRUPTED = '(应用在这条命令执行期间重启了,没拿到结果。需要的话重新执行一次。)';
 const MAX_RESUMES = 3;
 
+/**
+ * 给没有结果的工具调用补一条失败结果,插在调用后面。返回 { items, fixed }。
+ * 每个调用都要有结果,否则之后每次请求都会被模型服务拒绝(No tool output found)。
+ */
+export function repairOrphans(items, text = INTERRUPTED) {
+    const answered = new Set(items.filter((item) => item.type === 'function_call_output').map((item) => item.call_id));
+    const out = [];
+    let fixed = 0;
+    for (const item of items) {
+        out.push(item);
+        if (item.type === 'function_call' && !answered.has(item.call_id)) {
+            out.push({ type: 'function_call_output', call_id: item.call_id, output: JSON.stringify({ success: false, text }) });
+            fixed += 1;
+        }
+    }
+    return { items: out, fixed };
+}
+
 export class Conversation {
     constructor({ workspace, data, bin, emit }) {
         this.workspace = workspace;
@@ -43,14 +61,7 @@ export class Conversation {
         try { saved = JSON.parse(fs.readFileSync(this.file, 'utf8')); } catch { /* 第一次 */ }
         const items = saved.items || [];
         // 上次在工具执行中途被重启:有 function_call 没有对应的 output,协议上下一次请求会被拒。补上
-        const answered = new Set(items.filter((item) => item.type === 'function_call_output').map((item) => item.call_id));
-        const repaired = [];
-        for (const item of items) {
-            repaired.push(item);
-            if (item.type === 'function_call' && !answered.has(item.call_id)) {
-                repaired.push({ type: 'function_call_output', call_id: item.call_id, output: JSON.stringify({ success: false, text: INTERRUPTED }) });
-            }
-        }
+        const repaired = repairOrphans(items).items;
         return { items: repaired, tokens: Number(saved.tokens) || 0, interrupted: Boolean(saved.interrupted), resumes: Number(saved.resumes) || 0 };
     }
 
@@ -144,6 +155,13 @@ export class Conversation {
     }
 
     async run(config, controller, note = '') {
+        // 万一还有没结果的调用(比如老版本停下时漏掉的),先补上,不然这一轮请求直接被拒
+        const { items: healed, fixed } = repairOrphans(this.items, '(这条没执行完。)');
+        if (fixed) {
+            this.items.splice(0, this.items.length, ...healed);
+            this.save();
+            this.emit({ type: 'compacted' });   // 条目插在中间,让界面重拉全量
+        }
         // 上下文数组和 this.items 共用同一批条目对象:agent 往里追加、压缩时替换,
         // 这里在事件里把同一个对象存进 this.items,压缩时靠对象身份找到插标记的位置
         const messages = liveItems(this.items);

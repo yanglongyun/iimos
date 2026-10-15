@@ -372,3 +372,60 @@ test('定时任务:规则校验、下次时间、到点替用户开口跑一轮'
     assert.match(items.find((i) => i.task).content[0].text, /定时任务「提醒」到点了[\s\S]*提醒用户喝水/);
     assert.equal(outputOf(items), '该喝水了');
 });
+
+test('工具跑到一半用户停下:补上「停下了」的结果,转圈停,下一句照常能发(不再 No tool output found)', async () => {
+    const model = await fakeModel((request, res, n) => {
+        // 每次请求都检查:每个调用都要有结果,否则像真的模型服务一样拒绝
+        const calls = request.input.filter((i) => i.type === 'function_call').map((i) => i.call_id);
+        const outs = new Set(request.input.filter((i) => i.type === 'function_call_output').map((i) => i.call_id));
+        const missing = calls.find((id) => !outs.has(id));
+        if (missing) { res.writeHead(400, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: { message: `No tool output found for tool call ${missing}.` } })); return; }
+        if (n === 1) {
+            return respond(res, [
+                { id: 'fc_1', type: 'function_call', call_id: 'call_slow', name: 'shell', arguments: JSON.stringify({ command: 'sleep 5' }) },
+                { id: 'fc_2', type: 'function_call', call_id: 'call_next', name: 'shell', arguments: JSON.stringify({ command: 'echo 后面那条' }) },
+            ]);
+        }
+        respond(res, [said('好的')]);
+    });
+    const { call, idle, data } = await boot();
+    await call('POST', '/api/config', { responsesUrl: model.url, apiKey: 'sk-1', model: 'fake' });
+    await call('POST', '/api/send', { text: '跑个慢命令' });
+    await until(async () => (await call('GET', '/api/state')).body.items.some((i) => i.type === 'function_call'));
+    await new Promise((r) => setTimeout(r, 200));
+    await call('POST', '/api/stop');
+    await idle();
+
+    const { items } = (await call('GET', '/api/state')).body;
+    const outputs = items.filter((i) => i.type === 'function_call_output');
+    assert.deepEqual(outputs.map((o) => o.call_id).sort(), ['call_next', 'call_slow'], '两个调用都有结果,界面上不再转圈');
+    assert.ok(outputs.every((o) => /停下了/.test(JSON.parse(o.output).text)));
+
+    assert.equal((await call('POST', '/api/send', { text: '?' })).status, 202);
+    await idle();
+    assert.equal(outputOf((await call('GET', '/api/state')).body.items), '好的');
+    assert.ok(JSON.parse(fs.readFileSync(path.join(data, 'conversation.json'), 'utf8')).items.length > 4);
+});
+
+test('已经坏掉的对话(老版本停下时漏了结果):下一句发出前自动补上,不用重启', async () => {
+    const { Conversation } = await import('../server/conversation.js');
+    const model = await fakeModel((request, res) => {
+        const calls = request.input.filter((i) => i.type === 'function_call').map((i) => i.call_id);
+        const outs = new Set(request.input.filter((i) => i.type === 'function_call_output').map((i) => i.call_id));
+        if (calls.some((id) => !outs.has(id))) { res.writeHead(400); res.end('{"error":{"message":"No tool output found"}}'); return; }
+        respond(res, [said('接上了')]);
+    });
+    const data = tmp();
+    fs.writeFileSync(path.join(data, 'config.json'), JSON.stringify({ responsesUrl: model.url, apiKey: 'sk-1', model: 'fake' }));
+    const events = [];
+    const conversation = new Conversation({ workspace: tmp(), data, emit: (e) => events.push(e) });
+    // 运行中途坏掉的样子:内存里有一条没有结果的调用(重启时 load() 会补,这里不重启)
+    conversation.items.push({ type: 'message', role: 'user', content: [{ type: 'input_text', text: '看看' }] });
+    conversation.items.push({ type: 'function_call', call_id: 'call_orphan', name: 'shell', arguments: '{"command":"ls"}' });
+    conversation.send('?');
+    await until(async () => !conversation.running);
+    assert.equal(outputOf(conversation.items), '接上了');
+    const fixed = conversation.items.findIndex((i) => i.type === 'function_call_output' && i.call_id === 'call_orphan');
+    assert.equal(fixed, 2, '结果紧跟在那个调用后面');
+    assert.ok(events.some((e) => e.type === 'compacted'), '通知界面重拉');
+});

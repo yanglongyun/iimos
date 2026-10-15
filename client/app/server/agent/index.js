@@ -28,6 +28,9 @@ export async function run({ instructions, messages, model, config, usage = null,
     let stage = 'model';
     let failure;
     let vision = config.vision !== false;
+    // 这一批里已经发出、还没交回结果的工具调用。停下或出错时给它们补一个结果:
+    // 协议要求每个调用都有结果,少一个,之后每次请求都会被模型服务拒绝(No tool output found)
+    let unanswered = [];
     try {
         while (true) {
             signal?.throwIfAborted();
@@ -74,6 +77,7 @@ export async function run({ instructions, messages, model, config, usage = null,
             if (!calls.length) break;
 
             stage = 'tool';
+            unanswered = [...calls];
             for (const call of calls) {
                 signal?.throwIfAborted();
                 const output = await runTool(call, config, signal);
@@ -84,6 +88,7 @@ export async function run({ instructions, messages, model, config, usage = null,
                     output: JSON.stringify({ success: !output.failed, text: output.text }),
                 };
                 messages.push(item);
+                unanswered = unanswered.filter((c) => c !== call);
                 await onEvent({ type: 'function_call_output', item });
                 // 截图:工具结果只能是文字,图作为紧跟着的一条用户消息给模型看(只在最近的请求里带上原图)
                 if (output.image) {
@@ -107,6 +112,15 @@ export async function run({ instructions, messages, model, config, usage = null,
     }
     // 终止事件也必须交付,不因 signal 已取消而跳过
     try {
+        for (const call of unanswered) {
+            const item = {
+                type: 'function_call_output',
+                call_id: call.call_id,
+                output: JSON.stringify({ success: false, text: status === 'aborted' ? '(用户停下了,这条没执行完。)' : '(这条没执行完就出错了。)' }),
+            };
+            messages.push(item);
+            await onEvent({ type: 'function_call_output', item });
+        }
         if (failure) await onEvent(failure);
     } finally {
         const done = { type: 'done', status };
