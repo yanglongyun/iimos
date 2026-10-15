@@ -181,7 +181,8 @@ async function latestRelease(ctx) {
 async function route(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const method = request.method;
+    // HEAD 和 GET 走同一条路(运行时会去掉响应体);监控、链接检查常用 HEAD
+    const method = request.method === 'HEAD' ? 'GET' : request.method;
     const origin = url.origin;
 
     if (method === 'OPTIONS') return new Response(null, { headers: { ...CORS, 'access-control-allow-methods': 'GET, POST, DELETE', 'access-control-allow-headers': 'content-type, authorization' } });
