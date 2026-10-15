@@ -1,5 +1,5 @@
 // 开发时编译仓库里的出厂界面(app/ui/src → app/ui/dist):npm run build:ui。
-// 用户机器上走的是 iimos build / reload,同一份 buildUI。
+// 用户机器上走的是 morphic build / reload,同一份 buildUI。
 import path from 'node:path';
 import { buildUI } from './build.js';
 

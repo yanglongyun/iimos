@@ -1,4 +1,4 @@
-// iimos.ai 的页面:首页、形态墙、形态详情。Worker 里直接拼 HTML,不要前端框架。风格跟出厂的 iimos 一样:黑底、等宽、一种绿。
+// morphic.iimos.ai 的页面:首页、形态墙、形态详情。Worker 里直接拼 HTML,不要前端框架。风格跟出厂的 morphic 一样:黑底、等宽、一种绿。
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const kb = (n) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.ceil(n / 1024))} KB`);
 const date = (iso) => String(iso || '').slice(0, 10);
@@ -112,9 +112,9 @@ function layout({ title, description, image, body, on = '' }) {
 <title>${esc(title)}</title><meta name="description" content="${esc(description)}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}">${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter:card" content="summary_large_image">` : ''}
 <link rel="icon" href="/icon.png"><style>${STYLE}</style><script async src="https://www.googletagmanager.com/gtag/js?id=G-WGWEERYES8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-WGWEERYES8');</script></head><body><div class="wrap">
-<header class="top"><a href="/"><b><i>iimos</i></b></a><nav><a href="/" class="${on === 'home' ? 'on' : ''}">首页</a><a href="/shapes" class="${on === 'shapes' ? 'on' : ''}">形态</a><a href="https://github.com/yanglongyun/iimos/releases">发布</a><a href="https://github.com/yanglongyun/iimos">GitHub</a></nav></header>
+<header class="top"><a href="/"><b><i>morphic</i></b></a><nav><a href="/" class="${on === 'home' ? 'on' : ''}">首页</a><a href="/shapes" class="${on === 'shapes' ? 'on' : ''}">形态</a><a href="https://github.com/yanglongyun/morphic/releases">发布</a><a href="https://github.com/yanglongyun/morphic">GitHub</a></nav></header>
 ${body}
-<footer><span>iimos · MIT 开源 · 你的机器,你的数据 · <a href="/privacy">隐私</a> · <a href="/terms">条款</a></span><span><a href="https://github.com/yanglongyun/iimos">github.com/yanglongyun/iimos</a></span></footer>
+<footer><span>morphic · MIT 开源 · 你的机器,你的数据 · <a href="/privacy">隐私</a> · <a href="/terms">条款</a></span><span><a href="https://github.com/yanglongyun/morphic">github.com/yanglongyun/morphic</a></span></footer>
 </div><script>${COPY}</script></body></html>`;
 }
 
@@ -130,24 +130,24 @@ const FEATURES = [
     ['你的电脑,你的数据', 'Agent、代码、数据都在你自己的电脑上。API Key 只存在本机,只发往你填的地址。'],
     ['一个对话,一个 shell', '出厂就这么多。对话会自动压缩,永远聊不满;别的能力,你要了它再给自己长。'],
     ['改完就生效', '界面改完先编译,编过了才重载窗口;编不过,窗口还是上一个能用的样子,错误交回给它接着改。'],
-    ['形态能分享', '跟它说「把你现在的样子分享到 iimos.ai」或者「换成 iimos.ai 上的某个形态」,它自己去调网站的接口。'],
+    ['形态能分享', '跟它说「把你现在的样子分享到 morphic.iimos.ai」或者「换成 morphic.iimos.ai 上的某个形态」,它自己去调网站的接口。'],
     ['模型用你自己的', '任何兼容 OpenAI Responses 协议的服务:填地址、API Key、模型名就行。'],
     ['改坏了能退回来', '每次启动前自动快照,新代码起不来就退回上一个好版本,坏掉的那版也留着。'],
 ];
-const TRIES = ['右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '给我做一个记账本', '去 iimos.ai 看看别人的 iimos 都长成了什么样'];
-const SAY_SHARE = '把你现在的样子分享到 iimos.ai';
-const sayAdopt = (id) => `换成 iimos.ai 上的形态 ${id}`;
+const TRIES = ['右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '给我做一个记账本', '去 morphic.iimos.ai 看看别人的 morphic 都长成了什么样'];
+const SAY_SHARE = '把你现在的样子分享到 morphic.iimos.ai';
+const sayAdopt = (id) => `换成 morphic.iimos.ai 上的形态 ${id}`;
 
 export function homePage({ shapes, release, origin }) {
     const tick = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
     const body = `<section class="intro"><div>
 <h1>一个可以<em>完全修改自己</em>的 Agent。</h1>
-<p>出厂只有一个对话框。界面、服务、工具,甚至它自己的提示词,都是它自己的源码 —— 你要什么,它就把自己改成什么。所以世上没有两份一样的 iimos,每一份都是它主人的形状。</p>
+<p>出厂只有一个对话框。界面、服务、工具,甚至它自己的提示词,都是它自己的源码 —— 你要什么,它就把自己改成什么。所以世上没有两份一样的 morphic,每一份都是它主人的形状。</p>
 </div><div class="get">
 <a class="btn" href="${esc(release.dmg)}">下载 Mac 版${release.version ? ` · v${esc(release.version)}` : ''}</a>
-<small>Apple 芯片${release.date ? ` · ${esc(release.date)} 发布` : ''} · MIT 开源 · <a href="${esc(release.exe || release.page)}">Windows 版</a><br><a href="${esc(release.page)}">更新说明</a> · <a href="https://github.com/yanglongyun/iimos">源码</a></small>
+<small>Apple 芯片${release.date ? ` · ${esc(release.date)} 发布` : ''} · MIT 开源 · <a href="${esc(release.exe || release.page)}">Windows 版</a><br><a href="${esc(release.page)}">更新说明</a> · <a href="https://github.com/yanglongyun/morphic">源码</a></small>
 </div></section>
-<div class="demo"><img src="/media/xp.gif" alt="iimos 把自己改成 Windows XP 桌面的录屏"></div>
+<div class="demo"><img src="/media/xp.gif" alt="morphic 把自己改成 Windows XP 桌面的录屏"></div>
 <p class="cap"><b>「把自己改成 Windows XP 桌面」</b> —— 真实录屏,从出厂状态开始,中间快进。</p>
 
 <h2 class="h"><span>它能做什么</span></h2>
@@ -157,17 +157,17 @@ export function homePage({ shapes, release, origin }) {
 <div class="tries">${TRIES.map((x) => `<div>${esc(x)}</div>`).join('')}</div>
 <p class="cap">它会改自己的代码、重载窗口,然后告诉你多了什么、怎么用。</p>
 
-<h2 class="h"><span>大家的 iimos 长成了这些样子</span><a href="/shapes">全部形态 →</a></h2>
+<h2 class="h"><span>大家的 morphic 长成了这些样子</span><a href="/shapes">全部形态 →</a></h2>
 ${shapes.length ? `<div class="grid">${shapes.map(card).join('')}</div>` : '<p class="empty">还没有人分享。第一个就是你。</p>'}
-<p class="cap">想把你的也放上来?跟你的 iimos 说:</p>${cmd(SAY_SHARE)}
+<p class="cap">想把你的也放上来?跟你的 morphic 说:</p>${cmd(SAY_SHARE)}
 
 <h2 class="h" id="install"><span>安装</span></h2>
 <div class="install">
-<div><b>Mac(Apple 芯片)</b><p>下载 dmg,第一次打开时在对话里填模型配置。关掉窗口它还在菜单栏,点一下就回来。</p><pre><a href="${esc(release.dmg)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.dmg</a></pre></div>
-<div><b>Windows(x64)</b><p>下载 exe 安装包。还没有代码签名,第一次运行时 SmartScreen 会拦一下,点「更多信息 → 仍要运行」。关掉窗口它还在右下角托盘里。</p><pre><a href="${esc(release.exe || release.page)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.exe</a></pre></div>
+<div><b>Mac(Apple 芯片)</b><p>下载 dmg,第一次打开时在对话里填模型配置。关掉窗口它还在菜单栏,点一下就回来。</p><pre><a href="${esc(release.dmg)}">下载 morphic${release.version ? ` v${esc(release.version)}` : ''}.dmg</a></pre></div>
+<div><b>Windows(x64)</b><p>下载 exe 安装包。还没有代码签名,第一次运行时 SmartScreen 会拦一下,点「更多信息 → 仍要运行」。关掉窗口它还在右下角托盘里。</p><pre><a href="${esc(release.exe || release.page)}">下载 morphic${release.version ? ` v${esc(release.version)}` : ''}.exe</a></pre></div>
 </div>`;
     return layout({
-        title: 'iimos —— 一个可以完全修改自己的 Agent',
+        title: 'morphic —— 一个可以完全修改自己的 Agent',
         description: '出厂只有一个对话框。界面、服务、工具、提示词都是它自己的源码,你说要什么,它就把自己改成什么。住在你自己的机器上。',
         image: `${origin}/media/xp.gif`,
         body, on: 'home',
@@ -176,11 +176,11 @@ ${shapes.length ? `<div class="grid">${shapes.map(card).join('')}</div>` : '<p c
 
 export function listPage({ shapes, sort, origin }) {
     const body = `<section class="hero"><h1>同一颗种子,<em>长成了这些样子</em>。</h1>
-<p>iimos 出厂只有一个对话框。界面、服务、工具、它自己的提示词都是它自己的源码 —— 你说一句,它就改自己。这里是大家的 iimos 长成的样子,看中哪个,跟你的 iimos 说一声就换上;不喜欢,随时换回来。把你的放上来,跟它说:</p>
+<p>morphic 出厂只有一个对话框。界面、服务、工具、它自己的提示词都是它自己的源码 —— 你说一句,它就改自己。这里是大家的 morphic 长成的样子,看中哪个,跟你的 morphic 说一声就换上;不喜欢,随时换回来。把你的放上来,跟它说:</p>
 ${cmd(SAY_SHARE)}</section>
 <div class="tabs"><a href="/shapes" class="${sort === 'new' ? 'on' : ''}">最新</a><a href="/shapes?sort=hot" class="${sort === 'hot' ? 'on' : ''}">最多人换上</a></div>
 ${shapes.length ? `<div class="grid">${shapes.map(card).join('')}</div>` : '<p class="empty">还没有人分享。第一个就是你。</p>'}`;
-    return layout({ title: 'iimos 形态 —— 大家的 iimos 长成的样子', description: '每个 iimos 都会长成主人的样子。看中哪个,跟你的 iimos 说一声就换上。', image: `${origin}/icon.png`, body, on: 'shapes' });
+    return layout({ title: 'morphic 形态 —— 大家的 morphic 长成的样子', description: '每个 morphic 都会长成主人的样子。看中哪个,跟你的 morphic 说一声就换上。', image: `${origin}/icon.png`, body, on: 'shapes' });
 }
 
 export function detailPage({ shape, children, origin }) {
@@ -192,14 +192,14 @@ export function detailPage({ shape, children, origin }) {
 <div><h1>${esc(shape.name)}</h1><div class="by">${esc(shape.author || '匿名')} · ${date(shape.createdAt)} · ${shape.downloads} 次换上${shape.seedVersion ? ` · 出厂 v${esc(shape.seedVersion)}` : ''}</div>
 ${shape.story ? `<h4>它是这样长出来的</h4><div class="story">${esc(shape.story)}</div>` : ''}
 ${lineage}
-<h4>换上它</h4><p class="note" style="margin-top:0">跟你的 iimos 说:</p>${cmd(sayAdopt(shape.id))}
+<h4>换上它</h4><p class="note" style="margin-top:0">跟你的 morphic 说:</p>${cmd(sayAdopt(shape.id))}
 <p class="note">它会先告诉你要换进来哪些文件,你点头了才换。换之前会记一个快照,不喜欢跟它说「换回去」就行;对话、配置、key 不会被动。形态是代码,只换你信得过的。</p>
 <h4>里面有什么</h4><details><summary>${shape.fileCount} 个文件 · ${kb(shape.size)}</summary><ul>${files}</ul></details>
 </div></section>
 ${children.length ? `<section class="kids"><div class="tabs"><a class="on">从它长出来的</a></div><div class="grid">${children.map(card).join('')}</div></section>` : ''}`;
     return layout({
-        title: `${shape.name} —— iimos 形态`,
-        description: shape.story || `${shape.author || '有人'}的 iimos 长成的样子。`,
+        title: `${shape.name} —— morphic 形态`,
+        description: shape.story || `${shape.author || '有人'}的 morphic 长成的样子。`,
         image: shape.cover ? `${origin}${shape.cover}` : `${origin}/icon.png`,
         body, on: 'shapes',
     });
@@ -209,47 +209,47 @@ export function notFoundPage() {
     return layout({ title: '没有这个形态', description: '', body: '<section class="hero"><h1>没有这个形态。</h1><p>可能被作者删掉了。<a href="/shapes" style="color:var(--acc)">看看别的 →</a></p></section>' });
 }
 
-/** 设备授权页:用户在这里用谷歌登录,同意自己的 iimos 以自己的名义发布形态。 */
+/** 设备授权页:用户在这里用谷歌登录,同意自己的 morphic 以自己的名义发布形态。 */
 export function devicePage({ user, code, device, done = false, error = '' }) {
     const who = user ? `<p class="note">已登录:${esc(user.name)}(${esc(user.email)}) · <a href="/auth/logout">换个账号</a></p>` : '';
     let main;
     if (done) {
-        main = `<h1>好了。</h1><p>你的 iimos 现在可以用你的名义发布形态了。回到 iimos 里,它会自己接着做。</p>`;
+        main = `<h1>好了。</h1><p>你的 morphic 现在可以用你的名义发布形态了。回到 morphic 里,它会自己接着做。</p>`;
     } else if (!user) {
-        main = `<h1>让你的 iimos 用你的身份发布</h1><p>先用谷歌账号登录。登录后会让你确认 iimos 给你的那个码。</p>
+        main = `<h1>让你的 morphic 用你的身份发布</h1><p>先用谷歌账号登录。登录后会让你确认 morphic 给你的那个码。</p>
 <p><a class="btn" href="/auth/google?next=${encodeURIComponent(`/device${code ? `?code=${code}` : ''}`)}">用谷歌登录</a></p>`;
     } else if (device) {
-        main = `<h1>确认这个码</h1><p>你的 iimos(「${esc(device.name)}」)想以 <b>${esc(user.name)}</b> 的名义在 iimos.ai 发布和删除形态。</p>
-<p class="code">${esc(device.user_code)}</p><p class="note">和 iimos 里显示的码一样,再点同意。不一样就别点。</p>
+        main = `<h1>确认这个码</h1><p>你的 morphic(「${esc(device.name)}」)想以 <b>${esc(user.name)}</b> 的名义在 morphic.iimos.ai 发布和删除形态。</p>
+<p class="code">${esc(device.user_code)}</p><p class="note">和 morphic 里显示的码一样,再点同意。不一样就别点。</p>
 <form method="post" action="/device"><input type="hidden" name="code" value="${esc(device.user_code)}"><button class="btn" type="submit">同意</button></form>`;
     } else {
-        main = `<h1>输入 iimos 给你的码</h1><form method="get" action="/device" class="codeform"><input name="code" placeholder="XXXX-XXXX" autocomplete="off" autofocus value="${esc(code)}"><button class="btn" type="submit">下一步</button></form>`;
+        main = `<h1>输入 morphic 给你的码</h1><form method="get" action="/device" class="codeform"><input name="code" placeholder="XXXX-XXXX" autocomplete="off" autofocus value="${esc(code)}"><button class="btn" type="submit">下一步</button></form>`;
     }
     return layout({
-        title: 'iimos —— 授权',
-        description: '让你的 iimos 用你的身份在 iimos.ai 发布形态。',
+        title: 'morphic —— 授权',
+        description: '让你的 morphic 用你的身份在 morphic.iimos.ai 发布形态。',
         body: `<section class="hero device">${main}${error ? `<p class="note err">${esc(error)}</p>` : ''}${who}</section>`,
     });
 }
 
 /** 隐私政策、服务条款:谷歌登录要求有这两页。只写这个站真的做了什么。 */
 const doc = (title, sections) => layout({
-    title: `${title} —— iimos`,
+    title: `${title} —— morphic`,
     description: title,
     body: `<section class="hero doc"><h1>${esc(title)}</h1>${sections.map(([h, p]) => `<h4>${esc(h)}</h4><p>${esc(p)}</p>`).join('')}<p class="note">更新于 2026-10-15 · 有问题写信到 hi@iimos.ai</p></section>`,
 });
 
 export const privacyPage = () => doc('隐私政策', [
-    ['iimos 本身', 'iimos 是装在你自己电脑上的应用。你的对话、模型配置、API Key 都只存在你的电脑上,不会发到 iimos.ai;API Key 只发往你自己填的模型服务地址。'],
+    ['morphic 本身', 'morphic 是装在你自己电脑上的应用。你的对话、模型配置、API Key 都只存在你的电脑上,不会发到 morphic.iimos.ai;API Key 只发往你自己填的模型服务地址。'],
     ['用谷歌登录时我们拿到什么', '只在你要发布或删除形态时才需要登录。登录后我们保存谷歌给的账号标识、邮箱、名字和头像地址,用来认出你、在你发布的形态上署名。我们不读取你的谷歌账号里的任何其他内容。'],
-    ['你发布的形态', '形态是你的 iimos 的代码文件,发布后公开,任何人都能看到和下载,并显示你的名字。发布前网站会扫描像密钥的内容并拒绝,但你仍应自己确认里面没有私人信息。你可以随时删除自己发布的形态。'],
-    ['令牌和会话', '浏览器登录用一个 cookie 保持会话;你的 iimos 拿到的是一个 API 令牌。两者在我们这里只存哈希,不存原文。'],
+    ['你发布的形态', '形态是你的 morphic 的代码文件,发布后公开,任何人都能看到和下载,并显示你的名字。发布前网站会扫描像密钥的内容并拒绝,但你仍应自己确认里面没有私人信息。你可以随时删除自己发布的形态。'],
+    ['令牌和会话', '浏览器登录用一个 cookie 保持会话;你的 morphic 拿到的是一个 API 令牌。两者在我们这里只存哈希,不存原文。'],
     ['统计', '网站页面用 Google Analytics 统计访问量。'],
     ['删除你的数据', '写信到 hi@iimos.ai,我们会删除你的账号和你发布的全部形态。'],
 ]);
 
 export const termsPage = () => doc('服务条款', [
-    ['iimos', 'iimos 以 MIT 许可证开源,按「现状」提供,不附带任何担保。它会按你的要求修改自己的代码、在你的电脑上执行命令 —— 后果由使用者自己承担。'],
+    ['morphic', 'morphic 以 MIT 许可证开源,按「现状」提供,不附带任何担保。它会按你的要求修改自己的代码、在你的电脑上执行命令 —— 后果由使用者自己承担。'],
     ['形态', '你发布的形态以 MIT 许可证公开,别人可以下载、修改、再分享。不要发布你无权公开的代码、他人的隐私或任何密钥。形态是代码,换上别人的形态前请自己确认可信。'],
     ['我们可以做的', '对违法、恶意或侵权的形态,我们可以不经通知删除,并停用发布它的账号。'],
     ['变更', '条款可能更新,更新后继续使用即视为同意。'],

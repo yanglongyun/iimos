@@ -1,18 +1,18 @@
 {
-  "name": "iimos",
+  "name": "morphic",
   "version": "0.5.0",
   "private": true,
   "type": "module",
-  "description": "iimos —— 一个可以完全修改自己的 Agent:一个对话,一个 shell,其余都由它自己长",
+  "description": "morphic —— 一个可以完全修改自己的 Agent:一个对话,一个 shell,其余都由它自己长",
   "author": "woodchange",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yanglongyun/iimos.git"
+    "url": "git+https://github.com/yanglongyun/morphic.git"
   },
-  "homepage": "https://github.com/yanglongyun/iimos#readme",
+  "homepage": "https://github.com/yanglongyun/morphic#readme",
   "bugs": {
-    "url": "https://github.com/yanglongyun/iimos/issues"
+    "url": "https://github.com/yanglongyun/morphic/issues"
   },
   "main": "shell/main.js",
   "engines": {
@@ -43,8 +43,8 @@
     "typescript": "^7.0.2"
   },
   "build": {
-    "appId": "ai.iimos.desktop",
-    "productName": "iimos",
+    "appId": "ai.iimos.morphic",
+    "productName": "morphic",
     "directories": {
       "app": ".",
       "output": "dist"
@@ -131,17 +131,17 @@
         }
       ],
       "icon": "build/icon.png",
-      "artifactName": "iimos-${version}-win-x64.${ext}"
+      "artifactName": "morphic-${version}-win-x64.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "iimos",
+      "shortcutName": "morphic",
       "runAfterFinish": true
     }
   },
   "bin": {
-    "iimos": "launcher/cli.js"
+    "morphic": "launcher/cli.js"
   }
 }

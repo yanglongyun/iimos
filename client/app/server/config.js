@@ -1,4 +1,4 @@
-// 模型配置:$IIMOS_DATA/config.json。
+// 模型配置:$MORPHIC_DATA/config.json。
 // 位置是 launcher 契约里写死的,别挪。
 import fs from 'node:fs';
 import path from 'node:path';

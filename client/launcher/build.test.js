@@ -11,7 +11,7 @@ import { buildUI } from './build.js';
 const APP = path.resolve(import.meta.dirname, '..', 'app');
 
 async function planted() {
-    const workspace = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-build-')), 'workspace');
+    const workspace = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-build-')), 'workspace');
     await seed.plant({ seedDir: APP, workspace, version: '0.0.0' });
     return workspace;
 }
@@ -59,7 +59,7 @@ test('应用自己的 build.config.mjs 能改编译选项', async () => {
 });
 
 test('没有 ui/src 的纯静态界面:跳过', async () => {
-    const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-static-'));
+    const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-static-'));
     fs.mkdirSync(path.join(workspace, 'ui'));
     assert.deepEqual(await buildUI({ workspace }), { ok: true, skipped: true });
 });

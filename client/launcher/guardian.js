@@ -12,7 +12,7 @@ import path from 'node:path';
 import * as snap from './snapshot.js';
 
 export const MAX_STRIKES = 2;
-export const HEALTHY_MS = Number(process.env.IIMOS_HEALTHY_MS) || 3 * 60_000;
+export const HEALTHY_MS = Number(process.env.MORPHIC_HEALTHY_MS) || 3 * 60_000;
 
 export function readLedger(file) {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return {}; }
@@ -25,7 +25,7 @@ export function writeLedger(file, value) {
 }
 
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-');
-const noticeFile = (workspace) => path.join(workspace, '.iimos', 'rollback.json');
+const noticeFile = (workspace) => path.join(workspace, '.morphic', 'rollback.json');
 
 /** 告诉应用「你被回滚过」。agent 每轮读它,醒来就知道发生了什么。 */
 function writeNotice(workspace, value) {

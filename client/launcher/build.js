@@ -1,4 +1,4 @@
-// 界面编译:ui/src(React + TSX)→ ui/dist。iimos reload / restart / build 都先走这里。
+// 界面编译:ui/src(React + TSX)→ ui/dist。morphic reload / restart / build 都先走这里。
 //
 // 工具链(esbuild、React)由 launcher 带着,放在一个真实目录里(打包后是 resources/toolchain/node_modules,
 // esbuild 的原生二进制没法在 asar 里跑);workspace 里没有 node_modules,import 'react' 靠 nodePaths 找到这里。
@@ -10,18 +10,18 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
-/** 工具链目录:launcher 启动时写进 IIMOS_TOOLCHAIN;没有就用仓库自己的 node_modules(开发、测试)。 */
+/** 工具链目录:launcher 启动时写进 MORPHIC_TOOLCHAIN;没有就用仓库自己的 node_modules(开发、测试)。 */
 export function toolchainDir() {
-    return process.env.IIMOS_TOOLCHAIN || path.resolve(import.meta.dirname, '..', 'node_modules');
+    return process.env.MORPHIC_TOOLCHAIN || path.resolve(import.meta.dirname, '..', 'node_modules');
 }
 
-/** iimos add 装进来的第三方库:ui/vendor/vendor.json 记着 包名 → 本地文件。 */
+/** morphic add 装进来的第三方库:ui/vendor/vendor.json 记着 包名 → 本地文件。 */
 export function readVendor(ui) {
     try { return JSON.parse(fs.readFileSync(path.join(ui, 'vendor', 'vendor.json'), 'utf8')); } catch { return {}; }
 }
 
 export function defaultOptions(ui, toolchain) {
-    // import 'dayjs' → ./vendor/dayjs.js(iimos add 装的,没有 npm 也能用)
+    // import 'dayjs' → ./vendor/dayjs.js(morphic add 装的,没有 npm 也能用)
     const alias = Object.fromEntries(Object.entries(readVendor(ui)).map(([name, { file }]) => [name, `./vendor/${file}`]));
     return {
         absWorkingDir: ui,

@@ -43,7 +43,7 @@ async function fakeModel(handler) {
     return { requests, url: `http://127.0.0.1:${server.address().port}/v1/responses` };
 }
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-app-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-app-'));
 const cleanups = [];
 after(async () => { for (const fn of cleanups) await fn(); });
 
@@ -54,7 +54,7 @@ async function boot(data = tmp()) {
     const call = async (method, url, body, headers = {}) => {
         const res = await fetch(`http://127.0.0.1:${app.port}${url}`, {
             method,
-            headers: { 'x-iimos-token': app.token, 'content-type': 'application/json', ...headers },
+            headers: { 'x-morphic-token': app.token, 'content-type': 'application/json', ...headers },
             body: body ? JSON.stringify(body) : undefined,
         });
         return { status: res.status, body: await res.json().catch(() => null) };
@@ -125,7 +125,7 @@ test('一轮完整对话:调 shell → 拿结果 → 回话,全部落盘', async
     assert.match(result.text, /hello[\s\S]*\[退出码 0\]/);
     // 模型收到了 key、基础提示词、store:false,第二次请求带上了工具结果
     assert.equal(model.requests[0].auth, 'Bearer sk-1');
-    assert.match(model.requests[0].request.instructions, /你是 iimos/);
+    assert.match(model.requests[0].request.instructions, /你是 morphic/);
     assert.equal(model.requests[0].request.store, false);
     assert.deepEqual(model.requests[0].request.tools.map((t) => t.name), ['shell']);
     assert.equal(model.requests[1].request.input.at(-1).type, 'function_call_output');
@@ -155,7 +155,7 @@ test('重启打断了工具调用:下次加载补上结果,不留孤儿调用', 
     const data = tmp();
     fs.writeFileSync(path.join(data, 'conversation.json'), JSON.stringify({ items: [
         { type: 'message', role: 'user', content: [{ type: 'input_text', text: '改一下然后重启' }] },
-        { type: 'function_call', call_id: 'c1', name: 'shell', arguments: '{"command":"iimos restart"}' },
+        { type: 'function_call', call_id: 'c1', name: 'shell', arguments: '{"command":"morphic restart"}' },
     ] }));
     const conversation = new Conversation({ workspace: tmp(), data, emit: () => {} });
     assert.equal(conversation.items.length, 3);
@@ -227,7 +227,7 @@ test('一次完整的压缩:用量过线 → 写摘要 → 摘要替换早期上
 
 // ── 重启接续 ───────────────────────────────────────────
 
-/** 假模型:第一句让 agent 跑一条会卡住的命令(模拟它执行 iimos restart 时被打断);重启接续时回一句收尾。 */
+/** 假模型:第一句让 agent 跑一条会卡住的命令(模拟它执行 morphic restart 时被打断);重启接续时回一句收尾。 */
 async function restartModel() {
     return fakeModel((request, res) => {
         // 接续请求:对话流里最后一条是「重启完成」消息

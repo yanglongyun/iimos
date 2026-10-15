@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import git from 'isomorphic-git';
 
-const AUTHOR = { name: 'iimos', email: 'launcher@iimos.ai' };
+const AUTHOR = { name: 'morphic', email: 'launcher@iimos.ai' };
 const BRANCH = 'main';
 
 const exists = (dir) => fs.existsSync(path.join(dir, '.git'));

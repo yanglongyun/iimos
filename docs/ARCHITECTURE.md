@@ -1,4 +1,4 @@
-# iimos 架构
+# morphic 架构
 
 一个可以完全修改自己的 Agent。出厂只有一个会压缩的对话和一个工具 shell,
 其余的一切,由用户在对话里要、由它自己在自己身上长。
@@ -10,9 +10,9 @@
 | 目录 | 是什么 | 跑在哪 |
 | --- | --- | --- |
 | `client/` | 桌面客户端(Electron),唯一的产品 | 用户的电脑(macOS、Windows) |
-| `site/` | iimos.ai:首页、下载、形态墙、谷歌登录、给 agent 调的接口 | Cloudflare,一个 Worker + D1 + R2,都叫 iimos |
+| `site/` | morphic.iimos.ai:首页、下载、形态墙、谷歌登录、给 agent 调的接口 | Cloudflare,一个 Worker + D1 + R2,都叫 morphic |
 
-两块各有自己的 `package.json`,互不依赖。它们之间唯一的约定是网站的接口,写在 `https://iimos.ai/agent.md` 里。
+两块各有自己的 `package.json`,互不依赖。它们之间唯一的约定是网站的接口,写在 `https://morphic.iimos.ai/agent.md` 里。
 
 ## 客户端里的模块
 
@@ -30,16 +30,16 @@ client/
     seed.js        出厂种子怎么进 workspace,升级怎么合
     control.js     控制接口(127.0.0.1 + 令牌):restart / reload / status
     build.js       界面编译(esbuild + React,随安装包带着)
-    add.js         iimos add:从 esm.sh 装前端库
-    cli.js         `iimos` 命令:agent 编译、重载、重启、快照、回滚自己用
+    add.js         morphic add:从 esm.sh 装前端库
+    cli.js         `morphic` 命令:agent 编译、重载、重启、快照、回滚自己用
     CONTRACT.md    写给 agent 的契约,每轮都在它的系统指令里
 
   app/           出厂种子 = Agent 能改的身体。纯 Node + 网页,不碰 Electron
-    main.js        应用入口:起本地服务,iimos.ready({ url }) 报到
+    main.js        应用入口:起本地服务,morphic.ready({ url }) 报到
     server/        本地服务(127.0.0.1 + 令牌)、唯一的那个对话
       agent/         Agent 循环、唯一的工具 shell、上下文压缩、prompt.md
       ai/            模型请求(Responses 流式)
-    ui/            React + TSX,iimos reload 时编译。一个对话
+    ui/            React + TSX,morphic reload 时编译。一个对话
 
   build/  scripts/   图标、签名、打包、发版
 ```
@@ -59,7 +59,7 @@ client/
 | `relaunch()` | `app.relaunch()` 后退出 |
 | `fatal(message)` | 连稳定版本都起不来:弹对话框说明,给「退出」「打开数据目录」 |
 
-**应用怎么报到**:workspace 根目录的 `main.js` 起服务后调用 `globalThis.iimos.ready({ url, window })`。
+**应用怎么报到**:workspace 根目录的 `main.js` 起服务后调用 `globalThis.morphic.ready({ url, window })`。
 launcher 交给宿主打开这个 url,确认界面真的能加载,才记为启动成功。`window` 是桌面窗口的偏好
 (大小、标题、开窗底色),应用换了风格可以跟着改。
 
@@ -76,17 +76,17 @@ good 本身也起不来,就不再硬起,弹对话框告诉用户。没有救援�
 
 ## 工具只有 shell
 
-读文件、改文件、联网、给自己加东西,都在 shell 里做。`node` 和 `iimos` 两条命令在 PATH 里
+读文件、改文件、联网、给自己加东西,都在 shell 里做。`node` 和 `morphic` 两条命令在 PATH 里
 (node 是 Electron 自带的那个,用户机器上不需要另装)。要别的工具,agent 按 AGENT.md 里写的方式给自己加。
 
-电脑操作、浏览器操作不归 iimos,那是 agentic 的事。
+电脑操作、浏览器操作不归 morphic,那是 agentic 的事。
 
-## 分享:形态和 iimos.ai
+## 分享:形态和 morphic.iimos.ai
 
-一份形态 = 某个 iimos 的 workspace 里的全部代码文件(不含 `.git`、`.iimos/`、依赖、日志)。
-用户数据在 `$IIMOS_DATA`,天然不在里面。
+一份形态 = 某个 morphic 的 workspace 里的全部代码文件(不含 `.git`、`.morphic/`、依赖、日志)。
+用户数据在 `$MORPHIC_DATA`,天然不在里面。
 
-客户端里没有分享的代码。agent 的提示词只写一句:用户要看、要换、要分享时,先 `curl https://iimos.ai/agent.md`。
+客户端里没有分享的代码。agent 的提示词只写一句:用户要看、要换、要分享时,先 `curl https://morphic.iimos.ai/agent.md`。
 那一页写着全部接口和现成的小脚本,agent 照着用 shell 调。改接口只改网站,不用发新客户端。
 
 | 接口 | 要登录 | 作用 |
@@ -98,11 +98,11 @@ good 本身也起不来,就不再硬起,弹对话框告诉用户。没有救援�
 | `DELETE /api/shapes/<id>` | 是 | 删除自己发的 |
 
 **登录**只用谷歌。agent 走设备授权(像电视登录):`POST /api/auth/device` 拿一个码 → 用户打开 `/device`,
-用谷歌登录、核对码、点同意 → agent `POST /api/auth/token` 取到令牌,存在 `$IIMOS_DATA/iimos-ai.json`。
+用谷歌登录、核对码、点同意 → agent `POST /api/auth/token` 取到令牌,存在 `$MORPHIC_DATA/morphic-ai.json`。
 会话、令牌、设备码在网站上都只存哈希。
 
-**换上别人的形态**:agent 先 `iimos snapshot`,告诉用户要换进来什么,用户点头了再写文件、`iimos restart`。
-换上的起不来,launcher 照常回滚;不喜欢,`iimos rollback` 回去。
+**换上别人的形态**:agent 先 `morphic snapshot`,告诉用户要换进来什么,用户点头了再写文件、`morphic restart`。
+换上的起不来,launcher 照常回滚;不喜欢,`morphic rollback` 回去。
 
 ## 发出去的东西
 
@@ -110,4 +110,4 @@ good 本身也起不来,就不再硬起,弹对话框告诉用户。没有救援�
 | --- | --- | --- |
 | Mac 安装包(dmg) | client:shell + launcher + app(种子) | 用户 |
 | Windows 安装包(exe) | 同上 | 用户 |
-| iimos.ai | site | 官方部署,也可自部署 |
+| morphic.iimos.ai | site | 官方部署,也可自部署 |

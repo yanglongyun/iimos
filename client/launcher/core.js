@@ -2,7 +2,7 @@
 //
 //   1. 找到应用(workspace),第一次就从出厂 seed 播一份,装了新版就尝试升级
 //   2. 记账:启动前快照,连续起不来就回滚到 good —— 这是唯一的兜底
-//   3. 加载应用入口(workspace/main.js),等它报到 iimos.ready({ url })
+//   3. 加载应用入口(workspace/main.js),等它报到 morphic.ready({ url })
 //
 // 跟环境有关的事交给宿主(host):
 //   host.whenReady()          宿主准备好了(Electron 的 app.whenReady)
@@ -11,7 +11,7 @@
 //   host.relaunch()           整个进程重启
 //   host.fatal(message)       连稳定版本都起不来:告诉用户,没有别的办法了
 //
-// 应用里的一切都可以被改。core 不 import 应用的任何模块,应用通过 globalThis.iimos 和它说话。
+// 应用里的一切都可以被改。core 不 import 应用的任何模块,应用通过 globalThis.morphic 和它说话。
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -21,7 +21,7 @@ import * as seed from './seed.js';
 import { writeShims } from './shims.js';
 import { startControl } from './control.js';
 
-const READY_TIMEOUT_MS = Number(process.env.IIMOS_READY_TIMEOUT_MS) || 120_000;
+const READY_TIMEOUT_MS = Number(process.env.MORPHIC_READY_TIMEOUT_MS) || 120_000;
 
 export function createLog(file) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -102,7 +102,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
     function giveUp(reason) {
         state = 'failed';
         log('起不来,也没有更早的稳定版本可回:', reason);
-        return host.fatal(`iimos 起不来了,也没有更早的稳定版本可以退回。\n\n${String(reason?.stack || reason || '').slice(0, 1500)}\n\n日志:${paths.log}`);
+        return host.fatal(`morphic 起不来了,也没有更早的稳定版本可以退回。\n\n${String(reason?.stack || reason || '').slice(0, 1500)}\n\n日志:${paths.log}`);
     }
 
     async function fail(error) {
@@ -134,14 +134,14 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         fs.mkdirSync(paths.state, { recursive: true });
         fs.mkdirSync(paths.data, { recursive: true });
         const env = {
-            IIMOS_HOME: paths.base,
-            IIMOS_WORKSPACE: paths.workspace,
-            IIMOS_DATA: paths.data,
-            IIMOS_SEED: seedDir,
-            IIMOS_VERSION: version,
-            IIMOS_CONTRACT: contract,
-            IIMOS_BIN: paths.bin,
-            IIMOS_TOOLCHAIN: toolchain,
+            MORPHIC_HOME: paths.base,
+            MORPHIC_WORKSPACE: paths.workspace,
+            MORPHIC_DATA: paths.data,
+            MORPHIC_SEED: seedDir,
+            MORPHIC_VERSION: version,
+            MORPHIC_CONTRACT: contract,
+            MORPHIC_BIN: paths.bin,
+            MORPHIC_TOOLCHAIN: toolchain,
         };
         writeShims({ binDir: paths.bin, execPath, cliPath, env });
         // 应用和它的子进程(agent 的 shell)都继承这些
@@ -170,7 +170,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         await host.whenReady();
         if (decision.action === 'give-up') return giveUp(decision.reason);
 
-        globalThis.iimos = launcher;
+        globalThis.morphic = launcher;
         state = 'running';
         readyTimer = setTimeout(() => void fail(new Error(`应用 ${READY_TIMEOUT_MS / 1000} 秒内没有报到`)), READY_TIMEOUT_MS);
         readyTimer.unref?.();

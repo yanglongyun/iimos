@@ -1,6 +1,6 @@
 // 登录。只有一种身份:谷歌账号。两种拿到身份的方式:
 //
-//   浏览器:/auth/google → 谷歌 → /auth/google/callback,种一个会话 cookie(iimos_session,30 天)。
+//   浏览器:/auth/google → 谷歌 → /auth/google/callback,种一个会话 cookie(morphic_session,30 天)。
 //   agent:  设备授权(像电视登录)——
 //           POST /api/auth/device   → { device_code, user_code, verification_uri_complete, interval, expires_in }
 //           用户打开 verification_uri_complete,用谷歌登录,点「同意」
@@ -8,7 +8,7 @@
 //           之后请求带 Authorization: Bearer <token>。
 //
 // 会话、令牌、设备码都只存哈希。谷歌的 client id / secret 是 Worker 的 secret:GOOGLE_CLIENT_ID、GOOGLE_CLIENT_SECRET。
-const SESSION_COOKIE = 'iimos_session';
+const SESSION_COOKIE = 'morphic_session';
 const SESSION_DAYS = 30;
 const DEVICE_TTL_S = 600;
 
@@ -76,14 +76,14 @@ export function googleStart(request, env) {
         status: 302,
         headers: [
             ['location', google.toString()],
-            ['set-cookie', setCookie('iimos_oauth', `${state}|${next}`, 600)],
+            ['set-cookie', setCookie('morphic_oauth', `${state}|${next}`, 600)],
         ],
     });
 }
 
 export async function googleCallback(request, env) {
     const url = new URL(request.url);
-    const [state, next] = (cookie(request, 'iimos_oauth') || '').split('|');
+    const [state, next] = (cookie(request, 'morphic_oauth') || '').split('|');
     if (!state || url.searchParams.get('state') !== state) return new Response('登录过期了,回去再点一次', { status: 400 });
     const code = url.searchParams.get('code');
     if (!code) return new Response('没登录上', { status: 400 });
@@ -115,7 +115,7 @@ export async function googleCallback(request, env) {
         headers: [
             ['location', safeNext(next)],
             ['set-cookie', setCookie(SESSION_COOKIE, session, SESSION_DAYS * 86400)],
-            ['set-cookie', setCookie('iimos_oauth', '', 0)],
+            ['set-cookie', setCookie('morphic_oauth', '', 0)],
         ],
     });
 }
@@ -128,7 +128,7 @@ export async function logout(request, env) {
 
 /** agent 要一个设备码。name 是它给自己起的名字(在同意页上给用户看)。 */
 export async function deviceStart(request, env) {
-    let name = 'iimos';
+    let name = 'morphic';
     try { name = String((await request.json()).name || name).slice(0, 60); } catch { /* 没带 body */ }
     const deviceCode = randomToken();
     const code = userCode();

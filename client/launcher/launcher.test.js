@@ -13,7 +13,7 @@ function fakeSeed(version, extra = {}) {
     const files = {
         'package.json': JSON.stringify({ version }),
         'AGENT.md': '# agent\n',
-        'main.js': `globalThis.iimos?.ready(); // v${version}\n`,
+        'main.js': `globalThis.morphic?.ready(); // v${version}\n`,
         'server/index.js': 'export {};\n',
         'ui/index.html': '<p>ui</p>\n',
         'node_modules/dep/index.js': 'module.exports = 1;\n',
@@ -30,7 +30,7 @@ function fakeSeed(version, extra = {}) {
 
 function setup(version = '1.0.0') {
     const seedDir = fakeSeed(version);
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-'));
     return { seedDir, workspace: path.join(root, 'workspace'), ledgerFile: path.join(root, 'body', 'state.json') };
 }
 
@@ -50,7 +50,7 @@ test('播种:整份拷进来、打 good;依赖目录、系统垃圾不进 worksp
 });
 
 test('真实的出厂 app/ 能播种,入口在', async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-'));
     const workspace = path.join(root, 'workspace');
     const appDir = path.resolve(import.meta.dirname, '..', 'app');
     await seed.plant({ seedDir: appDir, workspace, version: seed.readSeedVersion(appDir, '0') });

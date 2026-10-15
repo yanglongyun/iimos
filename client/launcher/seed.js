@@ -3,7 +3,7 @@
 // 首次运行:把 seed 整个拷进 workspace,git init,打 seed-v<版本> 与 good。
 // 装了新版本:
 //   - 用户(和 agent)没动过 → 直接换成新 seed,用户无感
-//   - 动过 → 不覆盖。写 .iimos/upgrade.json,由 agent 和用户商量怎么合进来
+//   - 动过 → 不覆盖。写 .morphic/upgrade.json,由 agent 和用户商量怎么合进来
 //     (旧出厂版在 seed-v<旧> 标签里,新出厂版在 seed 目录里,三方都在)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,7 +16,7 @@ import * as snap from './snapshot.js';
 const SKIP = /^(\.data|test)([\\/]|$)|(^|[\\/])(\.git|\.DS_Store|node_modules|[^\\/]+\.db(-wal|-shm)?|[^\\/]+\.log)$/;
 
 export const GITIGNORE = `# 由 launcher 写入,可以改。
-.iimos/
+.morphic/
 node_modules
 .DS_Store
 *.log
@@ -37,10 +37,10 @@ function copySeed(seedDir, workspace) {
     fs.writeFileSync(path.join(workspace, '.gitignore'), GITIGNORE);
 }
 
-/** 删掉 workspace 里除了 .git、.iimos 以外的一切。换成另一份 seed 之前用。 */
+/** 删掉 workspace 里除了 .git、.morphic 以外的一切。换成另一份 seed 之前用。 */
 function clearWorkspace(workspace) {
     for (const entry of fs.readdirSync(workspace)) {
-        if (entry === '.git' || entry === '.iimos') continue;
+        if (entry === '.git' || entry === '.morphic') continue;
         fs.rmSync(path.join(workspace, entry), { recursive: true, force: true });
     }
 }
@@ -87,7 +87,7 @@ export async function upgrade({ seedDir, workspace, version, previous }) {
     return { kind: 'pending' };
 }
 
-const pendingFile = (workspace) => path.join(workspace, '.iimos', 'upgrade.json');
+const pendingFile = (workspace) => path.join(workspace, '.morphic', 'upgrade.json');
 export function readPending(workspace) {
     try { return JSON.parse(fs.readFileSync(pendingFile(workspace), 'utf8')); } catch { return null; }
 }

@@ -12,7 +12,7 @@ const WINDOW = {
     height: 760,
     minWidth: 520,
     minHeight: 480,
-    title: 'iimos',
+    title: 'morphic',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     // 和出厂界面的 --bg 一致,开窗时不闪一下
     backgroundColor: '#050505',

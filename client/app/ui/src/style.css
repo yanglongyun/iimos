@@ -1,4 +1,4 @@
-/* iimos —— 终端。黑底、等宽、一种绿。整个对话就是一份执行日志。 */
+/* morphic —— 终端。黑底、等宽、一种绿。整个对话就是一份执行日志。 */
 :root {
   --bg: #050505; --bg-2: #0d0d0c; --ink: #e8e8e3; --ink-2: #b9b9b2; --dim: #6b6b66; --faint: #232321;
   --acc: #7cff9b; --cyan: #9fdcff; --warn: #ffcf6b; --bad: #ff6b6b; --bad-soft: rgba(255, 107, 107, .12);

@@ -11,7 +11,7 @@ import { callModel, message, outputText } from '../ai/index.js';
 export const DEFAULT_CONTEXT_WINDOW = 128_000;
 export const COMPACT_RATIO = 0.7;
 export const KEEP = 20;
-export const COMPACT_SYSTEM = '把下面这段对话压成中文交接摘要,给之后接手的 iimos 看。iimos 是住在用户电脑里、按用户的话改造自己的 agent。'
+export const COMPACT_SYSTEM = '把下面这段对话压成中文交接摘要,给之后接手的 morphic 看。morphic 是住在用户电脑里、按用户的话改造自己的 agent。'
     + '保留:用户要过什么、明确的偏好和约定、已经做过的改动(加了什么功能、改了哪些文件、数据存在哪)、当前进度、没做完的事、关键命令。'
     + '丢掉寒暄和中间试错。分条写,尽量短,不要开场白。';
 export const COMPACT_PREFIX = '以下是此前对话的压缩摘要:\n\n';
@@ -32,7 +32,7 @@ export function lastCompaction(items) {
  * 只放进系统指令不够 —— 模型看到自己上一步 restart 的结果是「马上重启」,会以为重启还没发生。
  */
 export const RESTARTED = '[launcher] 重启完成:应用已经用新代码起来了(launcher 确认它报到了)。'
-    + '这是你重启前那一轮的接续:确认刚才的改动真的生效了,然后用一两句话告诉用户结果。不要再 iimos restart。'
+    + '这是你重启前那一轮的接续:确认刚才的改动真的生效了,然后用一两句话告诉用户结果。不要再 morphic restart。'
     + '如果系统指令里有「应用被 launcher 回滚过」的通知,说明新代码没起来,先如实告诉用户。';
 
 /** 从全部条目里取出发给模型的上下文:最近一次压缩的摘要消息 + 它之后的条目(重启标记换成一条消息)。 */
@@ -56,7 +56,7 @@ export function transcript(items) {
     for (const item of items) {
         if (item.type === 'message') {
             const text = (item.content || []).map((part) => part.text || '').join('');
-            lines.push(`${item.role === 'user' ? '用户' : 'iimos'}:${text}`);
+            lines.push(`${item.role === 'user' ? '用户' : 'morphic'}:${text}`);
         } else if (item.type === 'function_call') {
             lines.push(`[调用 ${item.name}] ${clip(String(item.arguments || ''), 1500)}`);
         } else if (item.type === 'function_call_output') {
