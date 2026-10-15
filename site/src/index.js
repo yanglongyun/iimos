@@ -11,7 +11,7 @@
 //   DELETE /api/shapes/<id>    删除(Authorization: Bearer <editToken>)
 //
 // 不要账号:发布时给一个删除令牌,只存在作者本机($IIMOS_DATA/shares.json)。按 IP 限流。
-import { LIMITS, decodeShape, scanSecrets } from '../../client/launcher/shape.js';
+import { LIMITS, decodeShape, scanSecrets } from './shape.js';
 import { detailPage, homePage, listPage, notFoundPage } from './pages.js';
 
 const PER_HOUR = 10;

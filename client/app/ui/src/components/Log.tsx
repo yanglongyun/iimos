@@ -2,7 +2,6 @@
 // 连续对同一目标的工具调用(同名同参数摘要)聚合成一行 ×N,次数原地增长;单条仍可点开看输出。
 import type { Item } from '../types';
 import { markdown } from '../markdown';
-import { token } from '../api';
 
 const textOf = (item: { content: { text?: string }[] }) => item.content.map((part) => part.text || '').join('');
 
@@ -11,8 +10,6 @@ function summarize(name: string, raw: string) {
     try { args = JSON.parse(raw || '{}'); } catch { /* 原样显示 */ }
     if (name === 'shell') return String(args.command || '');
     if (name === 'read' || name === 'write' || name === 'edit') return String(args.path || '');
-    if (name === 'computer' || name === 'browser') return [args.action, args.bundleId || args.url || args.text || args.key || args.element || ''].filter(Boolean).join(' ');
-    if (name === 'notify') return String(args.title || '');
     return raw;
 }
 
@@ -88,13 +85,7 @@ export function Log({ items, partial, running }: { items: Item[]; partial: strin
                     const { item, index } = unit;
                     switch (item.type) {
                         case 'message':
-                            if (item.hidden) {
-                                const file = item.content.find((part) => part.type === 'input_image')?.file;
-                                if (!file) return null;
-                                const name = file.split(/[\\/]/).pop() || '';
-                                return <img key={index} className="shot" alt="截图" src={`/api/shots/${encodeURIComponent(name)}?token=${encodeURIComponent(token)}`} />;
-                            }
-                            if (item.role === 'user' && item.task) return <p key={index} className="tick">⏰ {item.task.title} · 到点了</p>;
+                            if (item.hidden) return null;   // 老版本留下的截图消息,不再显示
                             if (item.role === 'user') return <p key={index} className="u">{textOf(item)}</p>;
                             return textOf(item).trim() ? <div key={index} className="a" dangerouslySetInnerHTML={{ __html: markdown(textOf(item)) }} /> : null;
                         case 'compaction':

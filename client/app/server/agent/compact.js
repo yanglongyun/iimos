@@ -41,7 +41,8 @@ export function liveItems(items) {
     const head = at >= 0 && items[at].item ? [items[at].item] : [];
     const rest = [];
     for (const item of items.slice(at + 1)) {
-        if (PROTOCOL.has(item.type)) rest.push(item);
+        // hidden:老版本留下的截图消息,只给界面看过,不再发给模型
+        if (PROTOCOL.has(item.type) && !item.hidden) rest.push(item);
         else if (item.type === 'restart' && !item.stopped) rest.push(message(RESTARTED));
     }
     return [...head, ...rest];

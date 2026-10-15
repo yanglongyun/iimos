@@ -3,7 +3,7 @@ export type Part = { type: string; text?: string; file?: string };
 
 export type Item =
     // hidden:不是用户说的话(比如手截的图,跟在工具调用后面给模型看)
-    | { type: 'message'; role: 'user' | 'assistant'; content: Part[]; hidden?: boolean; task?: { id: string; title: string } }
+    | { type: 'message'; role: 'user' | 'assistant'; content: Part[]; hidden?: boolean }
     | { type: 'function_call'; call_id: string; name: string; arguments: string }
     | { type: 'function_call_output'; call_id: string; output: string }
     | { type: 'reasoning' }

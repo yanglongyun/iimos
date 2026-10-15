@@ -5,7 +5,7 @@
 
 ## 现在有什么
 
-一个对话,加一个面板(右上角 ≡):定时任务。别的功能都等用户要了再做。
+一个对话(会自动压缩),一个工具 shell。别的功能都等用户要了再做。
 
 ## 目录
 
@@ -13,22 +13,20 @@
 main.js             入口(纯 Node):起本地服务 → globalThis.iimos.ready({ url }),窗口由 launcher 开
 server/             业务层
   index.js          本地 HTTP 服务(只听 127.0.0.1,接口要令牌):托管 ui/、对话接口、SSE 事件流
-  conversation.js   唯一的那个对话:准备上下文、调 agent 的 run()、接它的事件存盘并推给界面;wake() 给定时任务用
-  scheduler.js      定时任务:$IIMOS_DATA/tasks.json,到点了调 conversation.wake(task) 替用户开口
-  instructions.js   主模型的指令:prompt.md + launcher 契约 + 本文件 + 此刻(时间)+ memory.md + 回滚 / 升级通知,每轮现读
+  conversation.js   唯一的那个对话:准备上下文、调 agent 的 run()、接它的事件存盘并推给界面
+  instructions.js   主模型的指令:prompt.md + launcher 契约 + 本文件 + 回滚 / 升级通知,每轮现读
   config.js         模型配置 $IIMOS_DATA/config.json(位置是 launcher 契约定的,别挪),含上下文窗口
   agent/            agent 循环,只管「模型 → 工具 → 模型」,不碰存储
     index.js        run():接收上下文,执行模型、压缩和工具循环,通过 onEvent 输出九种事件
     tools.js        工具定义(只放定义)。加工具:这里加定义 + functions/ 加实现 + runner.js 加分发
     runner.js       按名字分发工具调用,出错作为失败结果交回模型
-    functions/      shell / read / write / edit / notify(经 globalThis.iimos.notify)/ schedule
-    images.js       对话里的图怎么给模型看:存文件,只有最近一张带原图,模型看不了图就换成文字
+    functions/      shell.js:出厂唯一的工具
     compact.js      上下文压缩:用量到窗口 70% 时,留最后 20 条,之前的写成交接摘要
     prompt.md       你的基础提示词
   ai/index.js       模型请求(Responses 流式),网络失败 / 429 / 5xx / 断流自动重试两次
 ui/                 界面:React + TypeScript
   index.html        只引用 dist/main.js 和 dist/main.css
-  src/main.tsx      入口;App.tsx 布局;store.ts 状态与 SSE;components/ 各块界面(Panel.tsx 是面板);style.css 终端风格样式
+  src/main.tsx      入口;App.tsx 布局;store.ts 状态与 SSE;components/ 各块界面;style.css 终端风格样式
   dist/             编译产物(iimos reload / build 生成),跟着源码一起进快照
   tsconfig.json     只给编辑器用,运行时不做类型检查
 package.json        version 是出厂版本号
@@ -52,7 +50,7 @@ conversation.js 把这一轮记成 interrupted;新进程起来后 `resumeIfInter
 
 ## 用户数据($IIMOS_DATA)
 
-conversation.json(对话)· config.json(模型)· tasks.json(定时任务)· memory.md(你记得的关于用户的事)· shots/(截图,留最近 50 张)
+conversation.json(对话)· config.json(模型)
 
 ## 约定
 
@@ -61,7 +59,7 @@ conversation.json(对话)· config.json(模型)· tasks.json(定时任务)· mem
 - 其他前端库用 `iimos add <包>`:打成单文件放进 ui/vendor/,记在 ui/vendor/vendor.json,编译时自动走别名,照常 import。
 - 新功能做成 components/ 下的组件,挂进 App.tsx 的布局里;状态从服务端来的走 store.ts。
 - 新功能的数据放 `$IIMOS_DATA` 下,不放 workspace(回滚只回代码)。
-- 不要 import electron:窗口归 launcher 管,应用只是一个本地网页服务。要弹系统通知走 `globalThis.iimos.notify({ title, body })`。
+- 不要 import electron:窗口归 launcher 管,应用只是一个本地网页服务。
 - 改了 main.js 或 server/ 要 `iimos restart`;只改 ui/ 用 `iimos reload`。
 
 ## 记录

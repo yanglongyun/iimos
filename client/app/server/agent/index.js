@@ -18,7 +18,6 @@ import { callModel, outputText } from '../ai/index.js';
 import tools from './tools.js';
 import runTool from './runner.js';
 import compact from './compact.js';
-import { forModel, hasImage, imageNote, isVisionError } from './images.js';
 
 export async function run({ instructions, messages, model, config, usage = null, signal, onEvent = () => {} }) {
     let tokens = null;
@@ -27,7 +26,6 @@ export async function run({ instructions, messages, model, config, usage = null,
     let stopReason;
     let stage = 'model';
     let failure;
-    let vision = config.vision !== false;
     // 这一批里已经发出、还没交回结果的工具调用。停下或出错时给它们补一个结果:
     // 协议要求每个调用都有结果,少一个,之后每次请求都会被模型服务拒绝(No tool output found)
     let unanswered = [];
@@ -47,15 +45,7 @@ export async function run({ instructions, messages, model, config, usage = null,
             }
 
             stage = 'model';
-            let response;
-            try {
-                response = await callModel(instructions, forModel(messages, { vision }), model, config, tools, onEvent, signal);
-            } catch (error) {
-                // 模型看不了图:这一轮剩下的请求都把图换成文字说明,再试一次
-                if (!vision || signal?.aborted || !isVisionError(error) || !messages.some(hasImage)) throw error;
-                vision = false;
-                response = await callModel(instructions, forModel(messages, { vision }), model, config, tools, onEvent, signal);
-            }
+            const response = await callModel(instructions, messages, model, config, tools, onEvent, signal);
             signal?.throwIfAborted();
             // 先确认整份输出有效,再交付完整块、执行工具
             for (const item of response.output) {
@@ -90,12 +80,6 @@ export async function run({ instructions, messages, model, config, usage = null,
                 messages.push(item);
                 unanswered = unanswered.filter((c) => c !== call);
                 await onEvent({ type: 'function_call_output', item });
-                // 截图:工具结果只能是文字,图作为紧跟着的一条用户消息给模型看(只在最近的请求里带上原图)
-                if (output.image) {
-                    const shot = imageNote(call.name, output.image);
-                    messages.push(shot);
-                    await onEvent({ type: 'message', item: shot });
-                }
             }
         }
     } catch (error) {

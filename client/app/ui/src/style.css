@@ -113,7 +113,6 @@ body.fresh .log { display: none; }
 .retry { margin-top: 8px; color: var(--warn); font-size: 12px; }
 .retry::before { content: "[ .. ] "; }
 .t pre { color: #5c5c57; white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 2px; max-height: 280px; overflow: auto; font: inherit; font-size: 12px; }
-.shot { display: block; margin: 6px 0 0 27px; max-width: min(360px, 70%); max-height: 240px; object-fit: contain; border: 1px solid var(--faint); border-radius: 4px; opacity: .85; }
 
 .err { margin-top: 10px; color: var(--bad); }
 .err::before { content: "[ err ] "; }
@@ -152,31 +151,11 @@ body.fresh .log { display: none; }
 .setup .go { margin: 18px 18px 0; color: var(--acc); padding: 4px 0; text-align: left; }
 .setup .go:hover { text-shadow: 0 0 10px rgba(124, 255, 155, .6); }
 
+@media (max-width: 600px) { .bar { padding-left: 14px; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* 面板 */
-.model.menu::before { content: none; }
-.model.menu { font-size: 14px; line-height: 1; }
-.panel { max-height: calc(100vh - 40px); overflow: auto; }
-.panel h4 { margin: 0; padding: 16px 18px 4px; color: var(--acc); font-weight: 500; font-size: 12px; }
-.panel h4::before { content: "## "; color: var(--dim); }
-.panel .row { display: flex; align-items: baseline; gap: 12px; padding: 5px 18px; font-size: 12.5px; }
-.panel .row.off { opacity: .5; }
-.panel .row .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
-.panel .row .what b { color: var(--ink); font-weight: 500; margin-right: 6px; }
-.panel .row em { font-style: normal; color: var(--dim); font-size: 11.5px; }
-.panel .row em.on { color: var(--acc); }
-.panel .row .meta { color: var(--dim); font-size: 11.5px; white-space: nowrap; }
-.panel .row .acts { display: flex; gap: 4px; }
-.panel .row .acts button { color: var(--dim); font-size: 11px; border: 1px solid var(--faint); border-radius: 4px; padding: 0 6px; }
-.panel .row .acts button:hover { color: var(--ink); border-color: #3b3b37; }
-.panel .hint.small { padding-left: 18px; }
-.tick { margin: 18px 0 0; color: var(--warn); font-size: 12.5px; }
-@media (max-width: 600px) {
-  .bar { padding-left: 14px; }
-  .panel .row { flex-wrap: wrap; row-gap: 2px; }
-}
 /* 无框窗口(Windows/Linux)左边没有红绿灯,不用让出位置 */
 .bar.frameless { padding-left: 14px; }

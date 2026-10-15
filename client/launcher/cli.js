@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `iimos` 命令:agent(和用户)跟 launcher 说话的唯一入口。
+// `iimos` 命令:agent 跟 launcher 说话的唯一入口(编译、重载、重启、快照、回滚)。
 // 由 launcher/bin/iimos 垫片以 ELECTRON_RUN_AS_NODE 拉起,不需要机器上装 Node。
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,23 +25,17 @@ const HELP = `iimos —— 和 launcher 说话
   iimos build                  编译界面 ui/src → ui/dist(失败时 dist 不动,错误打出来)
   iimos reload                 先编译界面,成功了再重载窗口(只改了 ui/ 时用)
   iimos restart                先编译界面,再整个应用重启(改了 main.js 或 server/ 时用)
-  iimos recovery               打开救援窗口
   iimos upgrade                看新出厂版本的情况;iimos upgrade apply 直接换成新出厂版
   iimos paths                  launcher 用到的各个目录
-  iimos notify "标题" [内容]    弹一条系统通知
-
-分享(形态):
-  iimos share "标题" [--story "让它长成这样的话"] [--dry-run] [--out 文件]   把现在的样子分享到社区(iimos.ai/shapes)
-  iimos adopt <形态 id | 链接 | 文件> [--yes]                  换上别人分享的样子(先看清楚要换进来什么)
 `;
 
 const out = (value) => process.stdout.write(typeof value === 'string' ? `${value}\n` : `${JSON.stringify(value, null, 2)}\n`);
 const fail = (message) => { process.stderr.write(`${message}\n`); process.exit(1); };
 const short = (oid) => (oid ? oid.slice(0, 8) : '-');
 
-/** 和正在跑的 launcher 说话。soft:launcher 不在或拒绝时抛错,而不是直接退出(可有可无的事用)。 */
-async function control(route, body, method = 'POST', soft = false) {
-    const stop = soft ? (message) => { throw new Error(message); } : fail;
+/** 和正在跑的 launcher 说话。 */
+async function control(route, body, method = 'POST') {
+    const stop = fail;
     let info;
     try { info = JSON.parse(fs.readFileSync(paths.control, 'utf8')); } catch { return stop('launcher 没在运行(找不到 control.json)'); }
     let response;
@@ -146,20 +140,6 @@ const commands = {
         const oid = await snap.commitAll(ws, args.join(' ') || '重启前自动快照');
         if (oid) out(`已记录 ${short(oid)}`);
         out(await control('/restart'));
-    },
-    recovery: async () => out(await control('/recovery')),
-
-    async notify() {
-        if (!args[0]) fail('要写标题:iimos notify "标题" [内容]');
-        out(await control('/notify', { title: args[0], body: args.slice(1).join(' ') }));
-    },
-    async share() {
-        const { share } = await import('./share.js');
-        await share({ paths, args, out, fail, control });
-    },
-    async adopt() {
-        const { adopt } = await import('./share.js');
-        await adopt({ paths, args, out, fail, control });
     },
 
     async upgrade() {

@@ -4,7 +4,7 @@
 //   1. 上次启动没报到(没调 ready 就死了,或明确报了失败)→ 记一次失败
 //   2. 工作区里没提交的改动先记一笔快照 —— agent 改到一半的东西也算数
 //   3. 同一个版本连续失败 MAX_STRIKES 次 → 当前版本留成 crashed-* 分支,回滚到 good
-//      已经在 good 上还起不来 → 不再硬起,交给救援窗口
+//      已经在 good 上还起不来 → 不再硬起,告诉用户起不来了(没有更早的版本可回)
 //   4. 本次启动记为 pending,等应用报到
 // 应用报到(ready)后稳定跑满 HEALTHY_MS,这个版本就成为新的 good。
 import fs from 'node:fs';
@@ -67,7 +67,7 @@ export async function beginBoot({ workspace, ledgerFile }) {
         } else {
             ledger.strikes = strikes;
             writeLedger(ledgerFile, ledger);
-            return { action: 'recovery', reason: last?.error || '在稳定版本上也起不来', commit: current };
+            return { action: 'give-up', reason: last?.error || '在稳定版本上也起不来', commit: current };
         }
     }
 
@@ -108,7 +108,7 @@ export async function promote({ workspace, ledgerFile }) {
     return commit;
 }
 
-/** 下一次启动会不会自动回滚。失败后用它决定「重启再试」还是「直接开救援」。 */
+/** 下一次启动会不会自动回滚。失败后用它决定「重启再试」还是「告诉用户起不来了」。 */
 export async function willRecover({ workspace, ledgerFile }) {
     const ledger = readLedger(ledgerFile);
     const current = await snap.head(workspace);

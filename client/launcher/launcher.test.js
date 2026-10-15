@@ -91,7 +91,7 @@ test('连续两次没报到 → 回滚到 good,坏版本留成分支,新文件�
     assert.ok(guardian.readNotice(ctx.workspace));
 });
 
-test('good 本身起不来 → 交给救援', async () => {
+test('good 本身起不来 → 放弃(不再硬起)', async () => {
     const ctx = setup();
     await seed.plant({ ...ctx, version: '1.0.0' });
     await guardian.beginBoot(ctx);
@@ -100,7 +100,7 @@ test('good 本身起不来 → 交给救援', async () => {
     guardian.markFailed(ctx, 'x');
     assert.equal(await guardian.willRecover(ctx), false);
     const d = await guardian.beginBoot(ctx);
-    assert.equal(d.action, 'recovery');
+    assert.equal(d.action, 'give-up');
 });
 
 test('报到并稳定后成为 good', async () => {

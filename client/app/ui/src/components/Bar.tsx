@@ -1,10 +1,10 @@
-// 顶栏:整条可拖窗口。右边是上下文用量、当前模型(点开模型配置)、面板(≡),
+// 顶栏:整条可拖窗口。右边是上下文用量、当前模型(点开模型配置),
 // 和无框窗口(Windows/Linux)的窗口钮 —— 桌面壳注入了 window.iimosWin 才画;macOS 用原生红绿灯
 import type { Config } from '../types';
 
 const winButtons = typeof window !== 'undefined' ? window.iimosWin : undefined;
 
-export function Bar({ config, tokens, onModel, onPanel }: { config: Config | null; tokens: number; onModel: () => void; onPanel: () => void }) {
+export function Bar({ config, tokens, onModel }: { config: Config | null; tokens: number; onModel: () => void }) {
     const pct = config?.contextWindow ? Math.round((tokens / config.contextWindow) * 100) : 0;
     return (
         <header className={`bar${winButtons ? ' frameless' : ''}`}>
@@ -15,7 +15,6 @@ export function Bar({ config, tokens, onModel, onPanel }: { config: Config | nul
                 <button className={`model${config?.ready ? ' on' : ''}`} type="button" title="模型设置" onClick={onModel}>
                     {config?.ready ? config.model : '未连接'}
                 </button>
-                <button className="model menu" type="button" title="面板:定时任务" onClick={onPanel}>≡</button>
                 {winButtons && (
                     <span className="winbtns">
                         <button type="button" title="最小化" onClick={() => winButtons.minimize()}>─</button>

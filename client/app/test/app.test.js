@@ -127,7 +127,7 @@ test('一轮完整对话:调 shell → 拿结果 → 回话,全部落盘', async
     assert.equal(model.requests[0].auth, 'Bearer sk-1');
     assert.match(model.requests[0].request.instructions, /你是 iimos/);
     assert.equal(model.requests[0].request.store, false);
-    assert.deepEqual(model.requests[0].request.tools.map((t) => t.name), ['shell', 'read', 'write', 'edit', 'notify', 'schedule']);
+    assert.deepEqual(model.requests[0].request.tools.map((t) => t.name), ['shell']);
     assert.equal(model.requests[1].request.input.at(-1).type, 'function_call_output');
     assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversation.json'), 'utf8')).items.length, 4);
 });
@@ -287,90 +287,23 @@ test('重启接续:连续太多次就停下,不陷进「改 → 重启」的循�
 // 一张 1x1 的 PNG
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
-test('通知:经 globalThis.iimos.notify 弹;指令里有「此刻」和记忆', async () => {
-    const notes = [];
-    globalThis.iimos = { host: 'desktop', notify: async (note) => { notes.push(note); return { ok: true }; } };
-    cleanups.push(() => { delete globalThis.iimos; });
-    const model = await fakeModel((request, res, n) => {
-        if (n === 1) return respond(res, [{ id: 'fc_1', type: 'function_call', call_id: 'call_1', name: 'notify', arguments: JSON.stringify({ title: '看完了' }) }]);
-        respond(res, [said('叫过你了')]);
-    });
-    const { call, idle } = await boot();
-    await call('POST', '/api/config', { responsesUrl: model.url, apiKey: 'sk-1', model: 'fake' });
-    await call('POST', '/api/send', { text: '弄完了叫我' });
-    await idle();
-    assert.deepEqual(notes, [{ title: '看完了', body: '' }]);
-    assert.match(model.requests[0].request.instructions, /你跑在用户的电脑上/);
-    assert.match(model.requests[0].request.instructions, /memory\.md/);
-});
-
-test('对话里的旧截图:只有最近一张以原图发给模型,看不了图时换成文字', async () => {
-    const { imageNote, forModel } = await import('../server/agent/images.js');
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-shots-'));
-    const files = [1, 2].map((n) => { const f = path.join(dir, `${n}.png`); fs.writeFileSync(f, Buffer.from(PNG, 'base64')); return f; });
-    const messages = files.map((f) => imageNote('computer', f));
-    const parts = (list) => list.flatMap((item) => item.content);
-    const seen = parts(forModel(messages));
-    assert.equal(seen.filter((p) => p.type === 'input_image').length, 1);
-    assert.match(seen.find((p) => p.type === 'input_image').image_url, /^data:image\/png;base64,/);
-    assert.ok(seen.some((p) => /较早的截图/.test(p.text || '')));
-    assert.ok(!JSON.stringify(forModel(messages)).includes('"hidden"'), '只给界面的字段不发给模型');
-    assert.ok(parts(forModel(messages, { vision: false })).every((p) => p.type === 'input_text'));
-});
-
 const outputOf = (items) => items.filter((i) => i.type === 'message' && i.role === 'assistant').map((i) => i.content[0].text).at(-1);
 
-test('定时任务:规则校验、下次时间、到点替用户开口跑一轮', async () => {
-    const { nextRun, validRule, describe, createScheduler } = await import('../server/scheduler.js');
-    assert.throws(() => validRule({ type: 'interval', minutes: 1 }), /至少 5 分钟/);
-    assert.throws(() => validRule({ type: 'daily', time: '8:00' }), /HH:MM/);
-    const monday9 = new Date(2026, 9, 12, 9, 0, 0);   // 2026-10-12 是周一
-    assert.equal(new Date(nextRun({ type: 'daily', time: '08:00' }, monday9)).getDate(), 13);
-    assert.equal(new Date(nextRun({ type: 'daily', time: '10:00' }, monday9)).getHours(), 10);
-    assert.equal(new Date(nextRun({ type: 'daily', time: '08:00', days: [6] }, monday9)).getDay(), 6);
-    assert.equal(nextRun({ type: 'once', at: new Date(2026, 9, 1).toISOString() }, monday9), null);
-    assert.equal(describe({ type: 'daily', time: '08:00', days: [1, 2, 3, 4, 5] }), '工作日 08:00');
-
-    // 调度器:时间推到点了,fire 被调;正忙就等下一次
-    let clock = monday9;
-    const fired = [];
-    let busy = true;
+test('老版本留下的截图消息(hidden):界面不显示,也不发给模型', async () => {
     const data = tmp();
-    const s = createScheduler({ data, now: () => clock, fire: (task) => { if (busy) return false; fired.push(task.title); return true; } });
-    const task = s.add({ title: '早报', prompt: '整理新闻', rule: { type: 'daily', time: '10:00' } });
-    s.tick();
-    assert.deepEqual(fired, []);
-    clock = new Date(2026, 9, 12, 10, 0, 30);
-    s.tick();
-    assert.deepEqual(fired, [], '正忙');
-    busy = false;
-    s.tick();
-    assert.deepEqual(fired, ['早报']);
-    assert.equal(new Date(s.list()[0].nextRun).getDate(), 13);
-    // 睡过头太久就不补
-    clock = new Date(2026, 9, 14, 9, 0);
-    s.tick();
-    assert.deepEqual(fired, ['早报']);
-    s.remove(task.id);
-    assert.deepEqual(s.list(), []);
-
-    // 接到真的对话上:agent 用 schedule 工具加任务,到点了对话里多一条带 task 标记的消息
-    const model = await fakeModel((request, res, n) => {
-        if (n === 1) return respond(res, [{ id: 'fc_1', type: 'function_call', call_id: 'call_1', name: 'schedule', arguments: JSON.stringify({ action: 'add', title: '提醒', prompt: '提醒用户喝水', rule: { type: 'interval', minutes: 30 } }) }]);
-        respond(res, [said(n === 2 ? '定好了' : '该喝水了')]);
-    });
-    const app = await boot();
-    await app.call('POST', '/api/config', { responsesUrl: model.url, apiKey: 'sk-1', model: 'fake' });
-    await app.call('POST', '/api/send', { text: '每半小时提醒我喝水' });
-    await app.idle();
-    const { tasks } = (await app.call('GET', '/api/tasks')).body;
-    assert.equal(tasks[0].when, '每 30 分钟');
-    assert.equal((await app.call('POST', '/api/tasks/run', { id: tasks[0].id })).status, 200);
-    await until(async () => (await app.call('GET', '/api/state')).body.items.some((i) => i.task));
-    await app.idle();
-    const { items } = (await app.call('GET', '/api/state')).body;
-    assert.match(items.find((i) => i.task).content[0].text, /定时任务「提醒」到点了[\s\S]*提醒用户喝水/);
-    assert.equal(outputOf(items), '该喝水了');
+    fs.writeFileSync(path.join(data, 'conversation.json'), JSON.stringify({ items: [
+        { type: 'message', role: 'user', content: [{ type: 'input_text', text: '截个图' }] },
+        { type: 'message', role: 'user', hidden: true, content: [{ type: 'input_text', text: '[截图]' }, { type: 'input_image', file: '/tmp/x.png' }] },
+        { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: '看到了' }] },
+    ] }));
+    const model = await fakeModel((request, res) => respond(res, [said('好')]));
+    const { call, idle } = await boot(data);
+    await call('POST', '/api/config', { responsesUrl: model.url, apiKey: 'sk-1', model: 'fake' });
+    await call('POST', '/api/send', { text: '继续' });
+    await idle();
+    const sent = JSON.stringify(model.requests[0].request.input);
+    assert.ok(!sent.includes('input_image') && !sent.includes('hidden'));
+    assert.match(sent, /截个图[\s\S]*看到了[\s\S]*继续/);
 });
 
 test('工具跑到一半用户停下:补上「停下了」的结果,转圈停,下一句照常能发(不再 No tool output found)', async () => {

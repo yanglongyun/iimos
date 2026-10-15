@@ -101,21 +101,6 @@ export class Conversation {
         this.start(config);
     }
 
-    /**
-     * 定时任务到点了:替用户开口,跑一轮。对话正忙或没配模型就返回 false(调度器过一会儿再试)。
-     * 这条消息带 task 标记,界面显示成「到点了」而不是用户说的话;发给模型时就是一条普通的用户消息。
-     */
-    wake(task) {
-        if (this.running || this.shuttingDown) return false;
-        const config = readConfig(this.data);
-        if (!(config.responsesUrl && config.apiKey && config.model)) return false;
-        const text = `[定时任务「${task.title}」到点了 · ${new Date().toLocaleString('zh-CN', { hour12: false })}]\n\n${task.prompt}\n\n`
-            + '(这是你自己定的任务,用户可能不在跟前。做完把结果说清楚;要紧的用 notify 叫用户。)';
-        this.push({ type: 'message', role: 'user', task: { id: task.id, title: task.title }, content: [{ type: 'input_text', text }] });
-        this.start(config);
-        return true;
-    }
-
     start(config, note = '') {
         const controller = new AbortController();
         this.setRunning(controller);
@@ -167,17 +152,14 @@ export class Conversation {
         const messages = liveItems(this.items);
         const window = contextWindow(config);
         const result = await run({
-            instructions: [buildInstructions(this.workspace, this.data), note].filter(Boolean).join('\n\n---\n\n'),
+            instructions: [buildInstructions(this.workspace), note].filter(Boolean).join('\n\n---\n\n'),
             messages,
             model: config.model,
             config: {
                 url: config.responsesUrl,
                 key: config.apiKey,
                 workdir: this.workspace,
-                data: this.data,
                 bin: this.bin,
-                scheduler: this.scheduler,
-                vision: config.vision,
                 timeout: 120,
                 max_output: 30_000,
                 compact_at: Math.floor(window * COMPACT_RATIO),

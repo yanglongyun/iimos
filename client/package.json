@@ -1,9 +1,9 @@
 {
   "name": "iimos",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
-  "description": "iimos —— 住在你自己机器上、一直醒着、会长出自己身体的个人 Agent",
+  "description": "iimos —— 一个可以完全修改自己的 Agent:一个对话,一个 shell,其余都由它自己长",
   "author": "woodchange",
   "license": "MIT",
   "repository": {
