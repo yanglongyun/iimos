@@ -94,6 +94,14 @@ footer a:hover { color: var(--ink); }
 .rescue p { color: var(--ink-2); margin: 0 0 10px; }
 @media (max-width: 820px) { .intro, .rescue { grid-template-columns: 1fr; } .feats, .install, .tries { grid-template-columns: 1fr; } }
 @media (max-width: 820px) { .detail { grid-template-columns: 1fr; } header.top nav a.hide { display: none; } }
+.device { max-width: 560px; }
+.device .btn, .device button.btn { display: inline-block; background: var(--acc); color: #04140a; font: inherit; font-weight: 600; border: 0; border-radius: 6px; padding: 10px 22px; cursor: pointer; }
+.device .btn:hover { filter: brightness(1.08); }
+.device .code { font-size: 32px; letter-spacing: .12em; color: var(--acc); margin: 18px 0 6px; }
+.device .codeform { display: flex; gap: 10px; margin-top: 18px; }
+.device .codeform input { flex: 1; background: var(--bg-2); border: 1px solid var(--faint); border-radius: 6px; color: var(--ink); font: inherit; font-size: 18px; letter-spacing: .1em; padding: 8px 12px; text-transform: uppercase; }
+.device .note.err { color: #ff6b6b; }
+.device form { margin-top: 16px; }
 `;
 
 const COPY = `document.addEventListener('click', (e) => { const b = e.target.closest('[data-copy]'); if (!b) return;
@@ -119,14 +127,16 @@ function card(shape) {
 }
 
 const FEATURES = [
-    ['你的电脑,你的数据', 'Agent、代码、数据都在你自己的电脑上,没有账号。API Key 只存在本机,只发往你填的地址。'],
-    ['一直醒着', '自己按时跑定时任务,有要紧的事就弹通知叫你。关掉窗口它还在菜单栏里。'],
+    ['你的电脑,你的数据', 'Agent、代码、数据都在你自己的电脑上。API Key 只存在本机,只发往你填的地址。'],
+    ['一个对话,一个 shell', '出厂就这么多。对话会自动压缩,永远聊不满;别的能力,你要了它再给自己长。'],
     ['改完就生效', '界面改完先编译,编过了才重载窗口;编不过,窗口还是上一个能用的样子,错误交回给它接着改。'],
-    ['形态能分享', '`iimos share` 把你的 iimos 长成的样子发到这里;`iimos adopt` 换上别人的,原来的留成分支。'],
+    ['形态能分享', '跟它说「把你现在的样子分享到 iimos.ai」或者「换成 iimos.ai 上的某个形态」,它自己去调网站的接口。'],
     ['模型用你自己的', '任何兼容 OpenAI Responses 协议的服务:填地址、API Key、模型名就行。'],
-    ['改坏了能救回来', '每次启动前自动快照,起不来就回滚到上一个好版本;还有一个不加载任何应用代码的救援页。'],
+    ['改坏了能退回来', '每次启动前自动快照,新代码起不来就退回上一个好版本,坏掉的那版也留着。'],
 ];
-const TRIES = ['右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '每天早上 8 点给我一份简短的科技早报', '做一个记账本,每周日晚上给我一份这周的总结'];
+const TRIES = ['右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '给我做一个记账本', '去 iimos.ai 看看别人的 iimos 都长成了什么样'];
+const SAY_SHARE = '把你现在的样子分享到 iimos.ai';
+const sayAdopt = (id) => `换成 iimos.ai 上的形态 ${id}`;
 
 export function homePage({ shapes, release, origin }) {
     const tick = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -149,31 +159,28 @@ export function homePage({ shapes, release, origin }) {
 
 <h2 class="h"><span>大家的 iimos 长成了这些样子</span><a href="/shapes">全部形态 →</a></h2>
 ${shapes.length ? `<div class="grid">${shapes.map(card).join('')}</div>` : '<p class="empty">还没有人分享。第一个就是你。</p>'}
-${cmd('iimos share "给你的形态起个名字" --story "你是怎么让它长成这样的"')}
-
-<h2 class="h"><span>改坏了也不怕</span></h2>
-<div class="rescue"><div><p>每次启动前自动快照;起不来就回滚到上一个好版本。</p><p>还有一个不加载应用任何代码的救援页,一键回到任何一个版本。</p></div><img loading="lazy" src="/media/recover.png" alt="救援页"></div>
+<p class="cap">想把你的也放上来?跟你的 iimos 说:</p>${cmd(SAY_SHARE)}
 
 <h2 class="h" id="install"><span>安装</span></h2>
 <div class="install">
-<div><b>Mac(Apple 芯片)</b><p>下载 dmg,第一次打开时在对话里填模型配置。关掉窗口它还在菜单栏醒着。</p><pre><a href="${esc(release.dmg)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.dmg</a></pre></div>
+<div><b>Mac(Apple 芯片)</b><p>下载 dmg,第一次打开时在对话里填模型配置。关掉窗口它还在菜单栏,点一下就回来。</p><pre><a href="${esc(release.dmg)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.dmg</a></pre></div>
 <div><b>Windows(x64)</b><p>下载 exe 安装包。还没有代码签名,第一次运行时 SmartScreen 会拦一下,点「更多信息 → 仍要运行」。关掉窗口它还在右下角托盘里。</p><pre><a href="${esc(release.exe || release.page)}">下载 iimos${release.version ? ` v${esc(release.version)}` : ''}.exe</a></pre></div>
 </div>`;
     return layout({
         title: 'iimos —— 一个可以完全修改自己的 Agent',
         description: '出厂只有一个对话框。界面、服务、工具、提示词都是它自己的源码,你说要什么,它就把自己改成什么。住在你自己的机器上。',
-        image: `${origin}/media/recover.png`,
+        image: `${origin}/media/xp.gif`,
         body, on: 'home',
     });
 }
 
 export function listPage({ shapes, sort, origin }) {
     const body = `<section class="hero"><h1>同一颗种子,<em>长成了这些样子</em>。</h1>
-<p>iimos 出厂只有一个对话框。界面、服务、工具、它自己的提示词都是它自己的源码 —— 你说一句,它就改自己。这里是大家的 iimos 长成的样子,看中哪个,一条命令换上;不喜欢,随时换回来。</p>
-${cmd('iimos share "给你的形态起个名字" --story "你是怎么让它长成这样的"')}</section>
+<p>iimos 出厂只有一个对话框。界面、服务、工具、它自己的提示词都是它自己的源码 —— 你说一句,它就改自己。这里是大家的 iimos 长成的样子,看中哪个,跟你的 iimos 说一声就换上;不喜欢,随时换回来。把你的放上来,跟它说:</p>
+${cmd(SAY_SHARE)}</section>
 <div class="tabs"><a href="/shapes" class="${sort === 'new' ? 'on' : ''}">最新</a><a href="/shapes?sort=hot" class="${sort === 'hot' ? 'on' : ''}">最多人换上</a></div>
 ${shapes.length ? `<div class="grid">${shapes.map(card).join('')}</div>` : '<p class="empty">还没有人分享。第一个就是你。</p>'}`;
-    return layout({ title: 'iimos 形态 —— 大家的 iimos 长成的样子', description: '每个 iimos 都会长成主人的样子。看中哪个,一条命令换上。', image: `${origin}/icon.png`, body, on: 'shapes' });
+    return layout({ title: 'iimos 形态 —— 大家的 iimos 长成的样子', description: '每个 iimos 都会长成主人的样子。看中哪个,跟你的 iimos 说一声就换上。', image: `${origin}/icon.png`, body, on: 'shapes' });
 }
 
 export function detailPage({ shape, children, origin }) {
@@ -185,8 +192,8 @@ export function detailPage({ shape, children, origin }) {
 <div><h1>${esc(shape.name)}</h1><div class="by">${esc(shape.author || '匿名')} · ${date(shape.createdAt)} · ${shape.downloads} 次换上${shape.seedVersion ? ` · 出厂 v${esc(shape.seedVersion)}` : ''}</div>
 ${shape.story ? `<h4>它是这样长出来的</h4><div class="story">${esc(shape.story)}</div>` : ''}
 ${lineage}
-<h4>换上它</h4>${cmd(`iimos adopt ${shape.id}`)}
-<p class="note">先给你看要换进来哪些文件,确认了才换。你现在的样子会留成一个分支,随时 <code>iimos rollback</code> 回来;对话、配置、key 不会被动。形态是代码,只换你信得过的。</p>
+<h4>换上它</h4><p class="note" style="margin-top:0">跟你的 iimos 说:</p>${cmd(sayAdopt(shape.id))}
+<p class="note">它会先告诉你要换进来哪些文件,你点头了才换。换之前会记一个快照,不喜欢跟它说「换回去」就行;对话、配置、key 不会被动。形态是代码,只换你信得过的。</p>
 <h4>里面有什么</h4><details><summary>${shape.fileCount} 个文件 · ${kb(shape.size)}</summary><ul>${files}</ul></details>
 </div></section>
 ${children.length ? `<section class="kids"><div class="tabs"><a class="on">从它长出来的</a></div><div class="grid">${children.map(card).join('')}</div></section>` : ''}`;
@@ -200,4 +207,27 @@ ${children.length ? `<section class="kids"><div class="tabs"><a class="on">从�
 
 export function notFoundPage() {
     return layout({ title: '没有这个形态', description: '', body: '<section class="hero"><h1>没有这个形态。</h1><p>可能被作者删掉了。<a href="/shapes" style="color:var(--acc)">看看别的 →</a></p></section>' });
+}
+
+/** 设备授权页:用户在这里用谷歌登录,同意自己的 iimos 以自己的名义发布形态。 */
+export function devicePage({ user, code, device, done = false, error = '' }) {
+    const who = user ? `<p class="note">已登录:${esc(user.name)}(${esc(user.email)}) · <a href="/auth/logout">换个账号</a></p>` : '';
+    let main;
+    if (done) {
+        main = `<h1>好了。</h1><p>你的 iimos 现在可以用你的名义发布形态了。回到 iimos 里,它会自己接着做。</p>`;
+    } else if (!user) {
+        main = `<h1>让你的 iimos 用你的身份发布</h1><p>先用谷歌账号登录。登录后会让你确认 iimos 给你的那个码。</p>
+<p><a class="btn" href="/auth/google?next=${encodeURIComponent(`/device${code ? `?code=${code}` : ''}`)}">用谷歌登录</a></p>`;
+    } else if (device) {
+        main = `<h1>确认这个码</h1><p>你的 iimos(「${esc(device.name)}」)想以 <b>${esc(user.name)}</b> 的名义在 iimos.ai 发布和删除形态。</p>
+<p class="code">${esc(device.user_code)}</p><p class="note">和 iimos 里显示的码一样,再点同意。不一样就别点。</p>
+<form method="post" action="/device"><input type="hidden" name="code" value="${esc(device.user_code)}"><button class="btn" type="submit">同意</button></form>`;
+    } else {
+        main = `<h1>输入 iimos 给你的码</h1><form method="get" action="/device" class="codeform"><input name="code" placeholder="XXXX-XXXX" autocomplete="off" autofocus value="${esc(code)}"><button class="btn" type="submit">下一步</button></form>`;
+    }
+    return layout({
+        title: 'iimos —— 授权',
+        description: '让你的 iimos 用你的身份在 iimos.ai 发布形态。',
+        body: `<section class="hero device">${main}${error ? `<p class="note err">${esc(error)}</p>` : ''}${who}</section>`,
+    });
 }

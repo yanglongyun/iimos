@@ -9,7 +9,7 @@ export default defineConfig({
 		compatibilityDate: "2026-07-30",
 		entrypoint: "src/index.js",
 		observability: { enabled: true },
-		assets: { notFoundHandling: "none", runWorkerFirst: ["/", "/shapes", "/s/*", "/api/*"] },
+		assets: { notFoundHandling: "none", runWorkerFirst: ["/", "/shapes", "/s/*", "/api/*", "/agent.md", "/llms.txt", "/device", "/auth/*"] },
 		domains: ["iimos.ai"],
 		env: {
 			DB: bindings.d1({ name: "iimos", id: "<cf d1 create 返回的 uuid>" }),
