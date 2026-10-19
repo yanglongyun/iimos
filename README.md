@@ -18,11 +18,11 @@
 
 Real recordings, nothing edited by hand. The middle of each clip is fast-forwarded; the moment it reloads is real time. Above: it rewrote its React and CSS, rebuilt, reloaded — the chat became a window on the XP desktop.
 
-**"Become a crypto price desk, with real data."** It couldn't read the web at all. It wrote itself code that pulls OKX quotes, refreshes every minute, and raises price alerts.
+**"Become a crypto price desk, with real data."** It couldn't read the web at all. It tried a few exchanges (Binance is blocked in its region), settled on CoinGecko's public API, and grew a table of 100 coins that refreshes every minute, with the chat moved to a side panel.
 
 ![](docs/crypto.gif)
 
-**"From now on you're the dungeon master."** It rewrote its own system prompt. The UI became a text adventure with option buttons, and every move rolls real dice.
+**"From now on you're the dungeon master: rewrite your own prompt, turn the UI into a text adventure with option buttons, and roll real dice every move."** It rewrote its own system prompt. The UI became a text adventure with option buttons, and every move rolls real dice.
 
 ![](docs/game.gif)
 
