@@ -36,6 +36,13 @@ function windowOptions(prefs = {}) {
     for (const [k, v] of Object.entries(size)) if (v !== undefined) out[k] = v;
     if (typeof prefs.title === 'string' && prefs.title) out.title = prefs.title.slice(0, 60);
     if (typeof prefs.background === 'string' && /^#[0-9a-f]{6}$/i.test(prefs.background)) out.backgroundColor = prefs.background;
+    // titleBar: 'native' —— 用系统原生标题栏(macOS 红绿灯在标题栏里,Windows 有自己的三个钮),界面不用管顶栏;
+    // 默认是自绘:macOS 红绿灯浮在内容上,Windows / Linux 无框,窗口钮由界面经 preload 的 iimosWin 画
+    if (prefs.titleBar === 'native') {
+        delete out.titleBarStyle;
+        delete out.frame;
+        out.webPreferences = { ...WINDOW.webPreferences };
+    }
     return out;
 }
 

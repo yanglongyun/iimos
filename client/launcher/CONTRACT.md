@@ -55,7 +55,7 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 
 | 成员 | 用途 |
 | --- | --- |
-| `ready({ url, window? })` / `failed(err)` | 报到 / 自己知道起不来了。`window` 是桌面窗口的偏好:`{ width, height, minWidth, minHeight, title, background }`(background 是开窗时的底色,和界面底色一致就不闪)|
+| `ready({ url, window? })` / `failed(err)` | 报到 / 自己知道起不来了。`window` 是桌面窗口的偏好:`{ width, height, minWidth, minHeight, title, background, titleBar }`(background 是开窗时的底色,和界面底色一致就不闪;titleBar 见「窗口外框」)|
 | `onShutdown(fn)` | 重启或退出前的收尾,`fn({ restarting })` |
 | `restart()` / `reload()` | 同名命令 |
 | `call(name, args)` | 叫 launcher 做一件事,返回 Promise。能力清单见下 |
@@ -64,13 +64,13 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 
 ## 窗口外框
 
-launcher 开的窗口没有系统标题栏,顶部那一条归界面自己画:
+`window.titleBar` 决定窗口顶上那一条归谁:
 
-- **macOS**:原生红绿灯浮在窗口左上角(约 80×40 的地方,中心离顶约 17px)。界面左上角要让出这块,别把按钮、文字放在下面。
-- **Windows / Linux**:无框窗口,没有系统的最小化 / 最大化 / 关闭。launcher 往页面注入 `window.iimosWin`
-  (`minimize()`、`toggleMaximize()`、`close()`),界面看到它就自己画这三个钮(一般放在顶栏最右)。macOS 上没有这个对象。
-- 想让哪块能拖着移动窗口,给它 CSS `-webkit-app-region: drag`;里面的按钮、输入框、标签要设回 `no-drag`,不然点不动。
-- 判断是不是在 launcher 的窗口里:`navigator.userAgent` 含 `Electron`。浏览器里直接打开时,这些都不用管。
+- `'native'`:系统原生标题栏,标题取页面的 `<title>`。界面不用管红绿灯和窗口钮,最省事。
+- 不写(默认)= 自绘:macOS 上红绿灯浮在窗口左上角(约 80×40,中心离顶约 17px),界面要让开这块;
+  Windows / Linux 是无框窗口,launcher 往页面注入 `window.iimosWin`(`minimize()`、`toggleMaximize()`、`close()`),
+  界面看到它就自己画这三个钮。要能拖着移动窗口的地方给 CSS `-webkit-app-region: drag`,里面的按钮设回 `no-drag`。
+  出厂形态就是这样画的(`ui/src/components/Bar.tsx`)。
 
 ## launcher 提供的能力
 
@@ -79,7 +79,7 @@ launcher 开的窗口没有系统标题栏,顶部那一条归界面自己画:
 | 能力 | 参数 | 返回 |
 | --- | --- | --- |
 | `restart` / `reload` | — | 同名命令 |
-| `window.open` | `{ url, width?, height?, minWidth?, minHeight?, title?, background? }` | `{ id }`,再开一个窗口加载 url(主窗口的 id 是 `main`)|
+| `window.open` | `{ url, width?, height?, minWidth?, minHeight?, title?, background?, titleBar? }` | `{ id }`,再开一个窗口加载 url(主窗口的 id 是 `main`)|
 | `window.close` / `window.focus` | `{ id }` | 关掉 / 拿到前面 |
 | `window.list` | — | `{ windows: [{ id, title, url }] }` |
 | `notify` | `{ title, body }` | 系统通知 |
