@@ -1,6 +1,6 @@
 {
   "name": "iimos",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "type": "module",
   "description": "iimos —— 一个可以完全修改自己的 Agent:一个对话,一个 shell,其余都由它自己长",
