@@ -178,9 +178,17 @@ async function latestRelease(ctx) {
     }
 }
 
+const HOME = 'iimos.ai';
+// 旧地址(morphic.iimos.ai、agentic.iimos.ai)都指到这个 Worker,一律跳到 iimos.ai
+const OLD_HOSTS = { 'morphic.iimos.ai': '', 'agentic.iimos.ai': '/s/agentic' };
+
 async function route(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+    if (url.hostname in OLD_HOSTS) {
+        const target = OLD_HOSTS[url.hostname] || (path === '/' ? '' : path);
+        return Response.redirect(`https://${HOME}${target}${url.search}`, 301);
+    }
     // HEAD 和 GET 走同一条路(运行时会去掉响应体);监控、链接检查常用 HEAD
     const method = request.method === 'HEAD' ? 'GET' : request.method;
     const origin = url.origin;

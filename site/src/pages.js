@@ -128,13 +128,13 @@ function card(shape) {
 
 const FEATURES = [
     ['你的电脑,你的数据', 'Agent、代码、数据都在你自己的电脑上。API Key 只存在本机,只发往你填的地址。'],
-    ['一个对话,一个 shell', '出厂就这么多。对话会自动压缩,永远聊不满;别的能力,你要了它再给自己长。'],
+    ['一个对话,一个 shell', '出厂就这么多。对话会自动压缩,永远聊不满;别的能力,你要了它再给自己长。不想从零开始,就换上一个现成的形态,比如 agentic(类 ChatGPT 的对话列表 + 五个工具)。'],
     ['改完就生效', '界面改完先编译,编过了才重载窗口;编不过,窗口还是上一个能用的样子,错误交回给它接着改。'],
     ['形态能分享', '跟它说「把你现在的样子分享到 iimos.ai」或者「换成 iimos.ai 上的某个形态」,它自己去调网站的接口。'],
     ['模型用你自己的', '任何兼容 OpenAI Responses 协议的服务:填地址、API Key、模型名就行。'],
     ['改坏了能退回来', '每次启动前自动快照,新代码起不来就退回上一个好版本,坏掉的那版也留着。'],
 ];
-const TRIES = ['右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '给我做一个记账本', '去 iimos.ai 看看别人的 iimos 都长成了什么样'];
+const TRIES = ['换成 iimos.ai 上的形态 agentic', '右边加一个待办列表', '换成拟物风格,老式仪器面板那种', '给我做一个记账本', '把 agentic 形态里的浏览器工具搬过来'];
 const SAY_SHARE = '把你现在的样子分享到 iimos.ai';
 const sayAdopt = (id) => `换成 iimos.ai 上的形态 ${id}`;
 
@@ -157,7 +157,7 @@ export function homePage({ shapes, release, origin }) {
 <div class="tries">${TRIES.map((x) => `<div>${esc(x)}</div>`).join('')}</div>
 <p class="cap">它会改自己的代码、重载窗口,然后告诉你多了什么、怎么用。</p>
 
-<h2 class="h"><span>大家的 iimos 长成了这些样子</span><a href="/shapes">全部形态 →</a></h2>
+<h2 class="h"><span>形态:现成的样子,直接换上</span><a href="/shapes">全部形态 →</a></h2>
 ${shapes.length ? `<div class="grid">${shapes.map(card).join('')}</div>` : '<p class="empty">还没有人分享。第一个就是你。</p>'}
 <p class="cap">想把你的也放上来?跟你的 iimos 说:</p>${cmd(SAY_SHARE)}
 
