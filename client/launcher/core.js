@@ -1,20 +1,23 @@
 // launcher 的核心:一次启动的全过程。纯 Node,不 import Electron;窗口这些交给宿主(shell)。
 //
-//   1. 找到应用(workspace),第一次就从出厂 seed 播一份,装了新版就尝试升级
+//   1. 找到形态(workspace),第一次就从出厂 seed 播一份,装了新版就尝试升级
 //   2. 记账:启动前快照,连续起不来就回滚到 good —— 这是唯一的兜底
-//   3. 加载应用入口(workspace/main.js),等它报到 morphic.ready({ url })
+//   3. 把形态拉起成子进程(child.js 加载 workspace/main.js),等它报到 morphic.ready({ url })
+//
+// 形态跑在自己的进程里:它卡死、崩溃都拖不垮 launcher 和窗口;起不来由 launcher 记账回滚,
+// 报到之后崩了由 launcher 重新拉起。形态通过 globalThis.morphic(child.js 装的)和 launcher 说话。
 //
 // 跟环境有关的事交给宿主(host):
 //   host.whenReady()          宿主准备好了(Electron 的 app.whenReady)
-//   host.openSurface(url, w)  打开应用界面(w 是窗口偏好),界面真的加载出来才 resolve
-//   host.reloadSurfaces()     重载应用界面
+//   host.openSurface(url, w)  打开形态界面(w 是窗口偏好),界面真的加载出来才 resolve
+//   host.reloadSurfaces()     重载形态界面
 //   host.relaunch()           整个进程重启
 //   host.fatal(message)       连稳定版本都起不来:告诉用户,没有别的办法了
 //
-// 应用里的一切都可以被改。core 不 import 应用的任何模块,应用通过 globalThis.morphic 和它说话。
+// 形态能叫 launcher 做的事(morphic.call(name, args))在 capabilities 里,宿主能力和 launcher 自己的能力都从这里给。
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import * as guardian from './guardian.js';
 import * as seed from './seed.js';
@@ -22,6 +25,8 @@ import { writeShims } from './shims.js';
 import { startControl } from './control.js';
 
 const READY_TIMEOUT_MS = Number(process.env.MORPHIC_READY_TIMEOUT_MS) || 120_000;
+const EXIT_TIMEOUT_MS = 5_000;
+const CHILD = path.join(import.meta.dirname, 'child.js');
 
 export function createLog(file) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -34,60 +39,77 @@ export function createLog(file) {
 }
 
 /**
- * opts: { host, paths, seedDir, version, contract, toolchain, execPath, cliPath, log }
- * 返回 { launcher(给应用的那个对象), start(), shutdown({ restarting }) }
+ * opts: { host, paths, seedDir, version, contract, toolchain, execPath, cliPath, log, capabilities }
+ * 返回 { start(), shutdown({ restarting }), state(), emit(name, data) }
  */
-export function createLauncher({ host, paths, seedDir, version, contract, toolchain, execPath, cliPath, log }) {
+export function createLauncher({ host, paths, seedDir, version, contract, toolchain, execPath, cliPath, log, capabilities = {} }) {
     let readyTimer = null;
     let promoteTimer = null;
     let state = 'starting';   // starting → running → opening → ready | failed
-    const shutdownHooks = [];
+    let child = null;
+    let childExited = null;   // 子进程退出的 Promise
+    let promoted = false;
+    let closing = false;
 
-    /** 应用看得到的 launcher。应用可以不用它,但 ready() 不调就会被当成没起来。 */
-    const launcher = {
-        version,
-        workspace: paths.workspace,
-        data: paths.data,
-        seed: seedDir,
-        bin: paths.bin,
-        contract,
-        /**
-         * 应用起来了。传 { url, window? }:launcher 让宿主打开这个界面,真的加载出来才算报到成功。
-         * window 是给桌面窗口的偏好:{ width, height, minWidth, minHeight, title, background }。
-         */
-        ready(info) {
-            if (state !== 'running') return;
-            if (!info?.url) { void fail(new Error('ready() 要带上界面地址 { url }')); return; }
-            state = 'opening';
-            Promise.resolve(host.openSurface(info.url, info.window || {}))
-                .then(() => markReady())
-                .catch((error) => void fail(error));
-        },
-        /** 应用自己知道起不来了。 */
-        failed(error) { void fail(error); },
-        restart: () => restart(),
-        reload: () => host.reloadSurfaces(),
-        /** 应用注册的收尾动作,launcher 重启或退出前依次调用,参数 { restarting }。 */
-        onShutdown(fn) { shutdownHooks.push(fn); },
+    /** launcher 自己的能力;宿主和能力层的放在 capabilities 里,同名时这里的优先。 */
+    const builtin = {
+        restart: async () => { setTimeout(restart, 300); return { ok: true, message: '马上重启' }; },
+        reload: async () => { await host.reloadSurfaces(); return { ok: true, message: '窗口已重载' }; },
     };
+
+    /** 推一个事件给形态(快捷键按下、窗口关闭……)。形态没在跑就丢掉。 */
+    function emit(name, data) {
+        if (child?.connected) child.send({ type: 'event', name, data });
+    }
+
+    async function handleCall(id, name, args) {
+        const fn = builtin[name] || capabilities[name];
+        let reply;
+        if (!fn) reply = { type: 'result', id, error: { message: `launcher 没有这个能力:${name}` } };
+        else {
+            try { reply = { type: 'result', id, value: await fn(args || {}) }; }
+            catch (error) { reply = { type: 'result', id, error: { message: String(error?.message || error), stack: error?.stack ? String(error.stack).slice(0, 4000) : undefined } }; }
+        }
+        if (child?.connected) child.send(reply);
+    }
+
+    function onReady(info) {
+        if (state !== 'running') return;
+        if (!info?.url) { void fail(new Error('ready() 要带上界面地址 { url }')); return; }
+        state = 'opening';
+        Promise.resolve(host.openSurface(info.url, info.window || {}))
+            .then(() => markReady())
+            .catch((error) => void fail(error));
+    }
 
     function markReady() {
         if (state !== 'running' && state !== 'opening') return;
         state = 'ready';
         clearTimeout(readyTimer);
         guardian.markReady({ ledgerFile: paths.ledger });
-        log('应用已报到');
+        log('形态已报到');
         promoteTimer = setTimeout(() => {
             void guardian.promote({ workspace: paths.workspace, ledgerFile: paths.ledger })
-                .then((oid) => oid && log(`稳定运行,${oid.slice(0, 8)} 成为 good`));
+                .then((oid) => { if (oid) { promoted = true; log(`稳定运行,${oid.slice(0, 8)} 成为 good`); } });
         }, guardian.HEALTHY_MS);
         promoteTimer.unref?.();
     }
 
+    /** 让形态进程收尾并退出;不肯退就杀。 */
+    async function stopChild({ restarting }) {
+        if (!child) return;
+        const proc = child;
+        if (proc.connected) proc.send({ type: 'shutdown', restarting });
+        const killer = setTimeout(() => { if (proc.exitCode === null) proc.kill('SIGKILL'); }, EXIT_TIMEOUT_MS);
+        await childExited;
+        clearTimeout(killer);
+    }
+
     async function shutdown({ restarting = false } = {}) {
-        for (const fn of shutdownHooks.splice(0)) {
-            try { await fn({ restarting }); } catch (error) { log('收尾出错', error); }
-        }
+        closing = true;
+        clearTimeout(readyTimer);
+        clearTimeout(promoteTimer);
+        await stopChild({ restarting });
     }
 
     let restarting = false;
@@ -106,16 +128,46 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
     }
 
     async function fail(error) {
-        if (state === 'failed') return;
+        if (state === 'failed' || closing) return;
         clearTimeout(readyTimer);
         clearTimeout(promoteTimer);
-        log('应用没起来:', error);
-        // 已经报到过的应用后来出的错不算「起不来」:不回滚,只记日志
-        if (state === 'ready') return;
+        log('形态没起来:', error);
         state = 'failed';
         guardian.markFailed({ ledgerFile: paths.ledger }, error);
         if (await guardian.willRecover({ workspace: paths.workspace, ledgerFile: paths.ledger })) await restart();
         else await giveUp(error);
+    }
+
+    /** 形态进程退出了。什么时候退的,决定怎么处理。 */
+    async function onExit(code, signal) {
+        const reason = new Error(`形态进程退出(${signal || code})`);
+        if (closing) return;
+        if (state !== 'ready') { await fail(reason); return; }
+        // 报到过但还没稳定到成为 good:算这次启动失败,交给记账去决定要不要回滚
+        if (!promoted) { state = 'running'; await fail(reason); return; }
+        // 稳定版本自己崩了:不算起不来,拉起来就是
+        log('形态崩了,重新拉起:', reason);
+        await restart();
+    }
+
+    function spawnChild(entry, env) {
+        const stdio = fs.openSync(paths.log, 'a');
+        child = spawn(execPath, [CHILD, entry], {
+            cwd: paths.workspace,
+            env: { ...process.env, ...env, ELECTRON_RUN_AS_NODE: '1' },
+            stdio: ['ignore', stdio, stdio, 'ipc'],
+        });
+        fs.closeSync(stdio);
+        childExited = new Promise((resolve) => child.once('exit', resolve));
+        child.on('message', (message) => {
+            if (!message || typeof message !== 'object') return;
+            if (message.type === 'ready') onReady(message.info);
+            else if (message.type === 'failed') void fail(Object.assign(new Error(message.error?.message || '形态报告启动失败'), { stack: message.error?.stack }));
+            else if (message.type === 'call') void handleCall(message.id, message.name, message.args);
+        });
+        child.on('error', (error) => void fail(error));
+        child.on('exit', (code, signal) => void onExit(code, signal));
+        log(`形态进程 ${child.pid} 已拉起`);
     }
 
     async function prepareWorkspace() {
@@ -125,7 +177,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
             log(`播种 v${version} → ${planted.slice(0, 8)}`);
         } else {
             const result = await seed.upgrade({ seedDir, workspace: paths.workspace, version, previous: ledger.seedVersion });
-            if (result.kind !== 'none') log(`出厂版本 ${ledger.seedVersion} → ${version}:${result.kind === 'replaced' ? '已直接换上' : '应用改过,等 agent 合并'}`);
+            if (result.kind !== 'none') log(`出厂版本 ${ledger.seedVersion} → ${version}:${result.kind === 'replaced' ? '已直接换上' : '形态改过,等 agent 合并'}`);
         }
         guardian.writeLedger(paths.ledger, { ...guardian.readLedger(paths.ledger), seedVersion: version });
     }
@@ -144,16 +196,16 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
             MORPHIC_TOOLCHAIN: toolchain,
         };
         writeShims({ binDir: paths.bin, execPath, cliPath, env });
-        // 应用和它的子进程(agent 的 shell)都继承这些
+        // morphic 命令和形态的子进程都要这些
         Object.assign(process.env, env);
 
         await startControl({
             file: paths.control,
             routes: {
-                'POST /restart': () => { setTimeout(restart, 300); return { ok: true, message: '马上重启' }; },
-                'POST /reload': () => { host.reloadSurfaces(); return { ok: true, message: '窗口已重载' }; },
-                'GET /status': () => ({ ok: true, state, version }),
-                'POST /status': () => ({ ok: true, state, version }),
+                'POST /restart': () => builtin.restart(),
+                'POST /reload': () => builtin.reload(),
+                'GET /status': () => ({ ok: true, state, version, pid: child?.pid || null }),
+                'POST /status': () => ({ ok: true, state, version, pid: child?.pid || null }),
             },
         });
 
@@ -170,20 +222,15 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         await host.whenReady();
         if (decision.action === 'give-up') return giveUp(decision.reason);
 
-        globalThis.morphic = launcher;
         state = 'running';
-        readyTimer = setTimeout(() => void fail(new Error(`应用 ${READY_TIMEOUT_MS / 1000} 秒内没有报到`)), READY_TIMEOUT_MS);
+        readyTimer = setTimeout(() => void fail(new Error(`形态 ${READY_TIMEOUT_MS / 1000} 秒内没有报到`)), READY_TIMEOUT_MS);
         readyTimer.unref?.();
         const entry = path.join(paths.workspace, 'main.js');
-        log(`加载应用 ${decision.commit?.slice(0, 8)}:${entry}`);
-        try {
-            if (!fs.existsSync(entry)) throw new Error(`应用入口不存在:${entry}`);
-            await import(pathToFileURL(entry).href);
-        } catch (error) {
-            await fail(error);
-        }
+        log(`加载形态 ${decision.commit?.slice(0, 8)}:${entry}`);
+        if (!fs.existsSync(entry)) { await fail(new Error(`形态入口不存在:${entry}`)); return undefined; }
+        spawnChild(entry, env);
         return undefined;
     }
 
-    return { launcher, start, shutdown, state: () => state };
+    return { start, shutdown, state: () => state, emit };
 }

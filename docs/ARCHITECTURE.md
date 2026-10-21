@@ -24,7 +24,8 @@ client/
     preload.cjs    Windows / Linux 无框窗口的三个窗口钮
 
   launcher/      不变层,纯 Node。Agent 改不到它
-    core.js        一次启动的全过程:播种 / 升级 → 快照记账 → 加载应用 → 等报到 → 起不来就回滚
+    core.js        一次启动的全过程:播种 / 升级 → 快照记账 → 拉起形态子进程 → 等报到 → 起不来就回滚、崩了就重拉
+    child.js       形态子进程的入口:装好 globalThis.morphic(经 IPC 和 launcher 说话),再加载 workspace/main.js
     guardian.js    启动记账与回滚(连续两次没报到 → 回到 good,坏版本留成 crashed-* 分支)
     snapshot.js    纯 JS 的 git(isomorphic-git),用户机器上不需要装 git
     seed.js        出厂种子怎么进 workspace,升级怎么合
@@ -58,6 +59,10 @@ client/
 | `reloadSurfaces()` | 重载应用窗口 |
 | `relaunch()` | `app.relaunch()` 后退出 |
 | `fatal(message)` | 连稳定版本都起不来:弹对话框说明,给「退出」「打开数据目录」 |
+
+**形态跑在子进程里**:launcher 用 Electron 自带的 Node(`ELECTRON_RUN_AS_NODE`)把 `launcher/child.js` 拉起成子进程,
+它加载 workspace 的 `main.js`。形态卡死、崩溃、吃光内存都拖不垮 launcher 和窗口;报到之后崩了,launcher 把它重新拉起;
+报到之前就死,按下面的兜底记账。形态和 launcher 之间只有一条 IPC 通道:报到、叫 launcher 做事(`morphic.call`)、收事件(`morphic.on`)。
 
 **应用怎么报到**:workspace 根目录的 `main.js` 起服务后调用 `globalThis.morphic.ready({ url, window })`。
 launcher 交给宿主打开这个 url,确认界面真的能加载,才记为启动成功。`window` 是桌面窗口的偏好
