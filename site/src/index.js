@@ -162,7 +162,7 @@ async function files(env, id, preview, ctx) {
 async function latestRelease(ctx) {
     const latest = `https://github.com/${REPO}/releases/latest`;
     const fallback = { version: '', dmg: latest, exe: latest, page: latest };
-    const key = new Request(`https://iimos.ai/__release/2`);
+    const key = new Request(`https://iimos.ai/__release/3`);
     const cached = await caches.default.match(key);
     if (cached) return cached.json();
     try {
