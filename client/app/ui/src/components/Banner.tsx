@@ -17,7 +17,7 @@ export function Banner({ workspace, config, onSetup, children }: {
     const ws = ['workspace 已就绪', workspace?.version && `v${workspace.version}`, workspace?.commit].filter(Boolean).join(' · ');
     return (
         <section className="fresh-view">
-            <pre className="logo" aria-label="morphic">{LOGO}</pre>
+            <pre className="logo" aria-label="iimos">{LOGO}</pre>
             <div className="boot">
                 <p className="ok">{ws}</p>
                 {config?.ready

@@ -2,10 +2,10 @@
 //
 //   1. 找到形态(workspace),第一次就从出厂 seed 播一份,装了新版就尝试升级
 //   2. 记账:启动前快照,连续起不来就回滚到 good —— 这是唯一的兜底
-//   3. 把形态拉起成子进程(child.js 加载 workspace/main.js),等它报到 morphic.ready({ url })
+//   3. 把形态拉起成子进程(child.js 加载 workspace/main.js),等它报到 iimos.ready({ url })
 //
 // 形态跑在自己的进程里:它卡死、崩溃都拖不垮 launcher 和窗口;起不来由 launcher 记账回滚,
-// 报到之后崩了由 launcher 重新拉起。形态通过 globalThis.morphic(child.js 装的)和 launcher 说话。
+// 报到之后崩了由 launcher 重新拉起。形态通过 globalThis.iimos(child.js 装的)和 launcher 说话。
 //
 // 跟环境有关的事交给宿主(host):
 //   host.whenReady()          宿主准备好了(Electron 的 app.whenReady)
@@ -14,7 +14,7 @@
 //   host.relaunch()           整个进程重启
 //   host.fatal(message)       连稳定版本都起不来:告诉用户,没有别的办法了
 //
-// 形态能叫 launcher 做的事(morphic.call(name, args)):launcher 自己的(restart / reload / browser.*)加上宿主给的 capabilities。
+// 形态能叫 launcher 做的事(iimos.call(name, args)):launcher 自己的(restart / reload / browser.*)加上宿主给的 capabilities。
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,9 +25,9 @@ import { writeShims } from './shims.js';
 import { startControl } from './control.js';
 import { startBrowser } from './browser.js';
 
-/** 契约版本:CONTRACT.md 里的能力对应的版本号,launcher 加了新能力就升。形态在 package.json 的 morphic.contract 里写它需要的最低版本。 */
+/** 契约版本:CONTRACT.md 里的能力对应的版本号,launcher 加了新能力就升。形态在 package.json 的 iimos.contract 里写它需要的最低版本。 */
 export const CONTRACT_VERSION = 1;
-const READY_TIMEOUT_MS = Number(process.env.MORPHIC_READY_TIMEOUT_MS) || 120_000;
+const READY_TIMEOUT_MS = Number(process.env.IIMOS_READY_TIMEOUT_MS) || 120_000;
 const EXIT_TIMEOUT_MS = 5_000;
 const CHILD = path.join(import.meta.dirname, 'child.js');
 
@@ -132,7 +132,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
     function giveUp(reason) {
         state = 'failed';
         log('起不来,也没有更早的稳定版本可回:', reason);
-        return host.fatal(`morphic 起不来了。\n\n${String(reason?.stack || reason || '').slice(0, 1500)}\n\n日志:${paths.log}`);
+        return host.fatal(`iimos 起不来了。\n\n${String(reason?.stack || reason || '').slice(0, 1500)}\n\n日志:${paths.log}`);
     }
 
     async function fail(error) {
@@ -178,11 +178,11 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         log(`形态进程 ${child.pid} 已拉起`);
     }
 
-    /** 形态要求的契约版本比 launcher 高,起不了:装的 morphic 太旧。 */
+    /** 形态要求的契约版本比 launcher 高,起不了:装的 iimos 太旧。 */
     function checkContract() {
         let required = 0;
-        try { required = Number(JSON.parse(fs.readFileSync(path.join(paths.workspace, 'package.json'), 'utf8')).morphic?.contract) || 0; } catch { /* 没写就不要求 */ }
-        if (required > CONTRACT_VERSION) throw new Error(`这个形态需要契约版本 ${required},当前 launcher 只到 ${CONTRACT_VERSION}:请升级 morphic`);
+        try { required = Number(JSON.parse(fs.readFileSync(path.join(paths.workspace, 'package.json'), 'utf8')).iimos?.contract) || 0; } catch { /* 没写就不要求 */ }
+        if (required > CONTRACT_VERSION) throw new Error(`这个形态需要契约版本 ${required},当前 launcher 只到 ${CONTRACT_VERSION}:请升级 iimos`);
     }
 
     async function prepareWorkspace() {
@@ -201,18 +201,18 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         fs.mkdirSync(paths.state, { recursive: true });
         fs.mkdirSync(paths.data, { recursive: true });
         const env = {
-            MORPHIC_HOME: paths.base,
-            MORPHIC_WORKSPACE: paths.workspace,
-            MORPHIC_DATA: paths.data,
-            MORPHIC_SEED: seedDir,
-            MORPHIC_VERSION: version,
-            MORPHIC_CONTRACT: contract,
-            MORPHIC_CONTRACT_VERSION: String(CONTRACT_VERSION),
-            MORPHIC_BIN: paths.bin,
-            MORPHIC_TOOLCHAIN: toolchain,
+            IIMOS_HOME: paths.base,
+            IIMOS_WORKSPACE: paths.workspace,
+            IIMOS_DATA: paths.data,
+            IIMOS_SEED: seedDir,
+            IIMOS_VERSION: version,
+            IIMOS_CONTRACT: contract,
+            IIMOS_CONTRACT_VERSION: String(CONTRACT_VERSION),
+            IIMOS_BIN: paths.bin,
+            IIMOS_TOOLCHAIN: toolchain,
         };
         writeShims({ binDir: paths.bin, execPath, cliPath, env });
-        // morphic 命令和形态的子进程都要这些
+        // iimos 命令和形态的子进程都要这些
         Object.assign(process.env, env);
 
         browser = startBrowser({ address: paths.browser, emit, log });

@@ -18,7 +18,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = 'iimos-chuanzhi';
 const TEAM_ID = '92696T726U';
 const IDENTITY = `Developer ID Application: Chuan Zhi (Chengdu) Information Technology Co., Ltd. (${TEAM_ID})`;
-const APPLE_ID = process.env.MORPHIC_APPLE_ID || 'woodchange@icloud.com';
+const APPLE_ID = process.env.IIMOS_APPLE_ID || 'woodchange@icloud.com';
 
 const run = (cmd, args, options = {}) => spawnSync(cmd, args, { stdio: 'inherit', cwd: ROOT, ...options });
 

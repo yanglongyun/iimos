@@ -1,4 +1,4 @@
-// morphic add:用一个本地假 CDN 模拟 esm.sh(入口是转一手的小模块,真代码在别的 URL,里面还有相对引用)。
+// iimos add:用一个本地假 CDN 模拟 esm.sh(入口是转一手的小模块,真代码在别的 URL,里面还有相对引用)。
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -29,7 +29,7 @@ cdn = `http://127.0.0.1:${server.address().port}`;
 after(() => server.close());
 
 async function planted() {
-    const workspace = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-add-')), 'workspace');
+    const workspace = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-add-')), 'workspace');
     await seed.plant({ seedDir: APP, workspace, version: '0.0.0' });
     return workspace;
 }

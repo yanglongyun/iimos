@@ -1,6 +1,6 @@
 // 形态进程的入口。launcher 用 ELECTRON_RUN_AS_NODE 把它作为子进程拉起:`child.js <workspace/main.js>`。
 //
-// 它只做一件事:把 launcher 装成 globalThis.morphic,再加载形态的入口。形态和 launcher 之间走进程间通道(IPC):
+// 它只做一件事:把 launcher 装成 globalThis.iimos,再加载形态的入口。形态和 launcher 之间走进程间通道(IPC):
 //   形态 → launcher   { type: 'ready', info } · { type: 'failed', error } · { type: 'call', id, name, args }
 //   launcher → 形态   { type: 'result', id, value | error } · { type: 'event', name, data } · { type: 'shutdown', restarting }
 //
@@ -31,13 +31,13 @@ function call(name, args = {}) {
 
 const serializeError = (error) => ({ message: String(error?.message || error), stack: error?.stack ? String(error.stack).slice(0, 4000) : undefined });
 
-const morphic = {
-    version: env.MORPHIC_VERSION,
-    workspace: env.MORPHIC_WORKSPACE,
-    data: env.MORPHIC_DATA,
-    seed: env.MORPHIC_SEED,
-    bin: env.MORPHIC_BIN,
-    contract: env.MORPHIC_CONTRACT,
+const iimos = {
+    version: env.IIMOS_VERSION,
+    workspace: env.IIMOS_WORKSPACE,
+    data: env.IIMOS_DATA,
+    seed: env.IIMOS_SEED,
+    bin: env.IIMOS_BIN,
+    contract: env.IIMOS_CONTRACT,
     /** 形态起来了:{ url, window? }。launcher 开窗口加载 url,真的加载出来才算报到。 */
     ready(info) { send({ type: 'ready', info }); },
     /** 形态自己知道起不来了。 */
@@ -54,7 +54,7 @@ const morphic = {
         return () => listeners.get(name)?.delete(fn);
     },
 };
-globalThis.morphic = morphic;
+globalThis.iimos = iimos;
 
 async function shutdown({ restarting }) {
     for (const fn of shutdownHooks.splice(0)) {
@@ -87,14 +87,14 @@ process.on('message', (message) => {
 });
 // launcher 没了(被杀、崩了),形态也没有存在的理由
 process.on('disconnect', () => process.exit(0));
-process.on('uncaughtException', (error) => { console.error('未捕获异常', error); morphic.failed(error); setTimeout(() => process.exit(1), 100); });
+process.on('uncaughtException', (error) => { console.error('未捕获异常', error); iimos.failed(error); setTimeout(() => process.exit(1), 100); });
 process.on('unhandledRejection', (error) => console.error('未处理的 Promise 拒绝', error));
 
 if (!entry) { console.error('用法:child.js <入口文件>'); process.exit(2); }
 try {
     await import(pathToFileURL(path.resolve(entry)).href);
 } catch (error) {
-    morphic.failed(error);
+    iimos.failed(error);
     console.error(error);
     setTimeout(() => process.exit(1), 100);
 }

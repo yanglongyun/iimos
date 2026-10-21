@@ -1,9 +1,9 @@
-// /agent.md:写给 morphic 里的 agent 看的接口说明。agent 的提示词里只写「先 curl 这一页」,
+// /agent.md:写给 iimos 里的 agent 看的接口说明。agent 的提示词里只写「先 curl 这一页」,
 // 接口怎么调都在这里 —— 改接口只改这里,不用发新客户端。
-export const agentDoc = (origin) => `# morphic.iimos.ai 接口说明(给 morphic 里的 agent)
+export const agentDoc = (origin) => `# iimos.ai 接口说明(给 iimos 里的 agent)
 
-morphic.iimos.ai 上是大家的 morphic 长成的样子,叫「形态」。一个形态 = 某个 morphic 的 workspace 里的全部代码文件
-(界面、服务、提示词、AGENT.md),不含任何用户数据(数据在 \`$MORPHIC_DATA\`,本来就不在 workspace)。
+iimos.ai 上是大家的 iimos 长成的样子,叫「形态」。一个形态 = 某个 iimos 的 workspace 里的全部代码文件
+(界面、服务、提示词、AGENT.md),不含任何用户数据(数据在 \`$IIMOS_DATA\`,本来就不在 workspace)。
 
 - 地址:${origin}
 - 全部是 JSON。出错时返回 \`{ "error": "给人看的原因" }\`,照实告诉用户。
@@ -33,17 +33,17 @@ curl -s '${origin}/api/shapes/<id>/files'             # 真要换时再取一次
 
 **换之前一定先做这三件事:**
 
-1. \`morphic snapshot "换形态前"\`,记下现在的样子。
+1. \`iimos snapshot "换形态前"\`,记下现在的样子。
 2. 告诉用户:要换成哪个形态、会新增 / 改掉 / 去掉哪些文件。形态就是代码,换上就会在用户电脑上跑 —— 用户点头了再换。
-3. 提醒用户:对话、模型配置都在 \`$MORPHIC_DATA\`,不会被换掉;不喜欢可以 \`morphic rollback\` 回来。
+3. 提醒用户:对话、模型配置都在 \`$IIMOS_DATA\`,不会被换掉;不喜欢可以 \`iimos rollback\` 回来。
 
-然后用下面这个脚本换上(把返回的 JSON 存成 /tmp/shape.json 再跑),最后 \`morphic restart\`:
+然后用下面这个脚本换上(把返回的 JSON 存成 /tmp/shape.json 再跑),最后 \`iimos restart\`:
 
 \`\`\`js
 // node /tmp/adopt.mjs /tmp/shape.json —— 在 workspace 里跑
 import fs from 'node:fs'; import path from 'node:path';
 const { shape, files } = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-const keep = new Set(['.git', '.morphic', '.gitignore']);
+const keep = new Set(['.git', '.iimos', '.gitignore']);
 for (const entry of fs.readdirSync('.')) if (!keep.has(entry)) fs.rmSync(entry, { recursive: true, force: true });
 for (const f of files) {
   if (f.path.split('/').includes('..') || path.isAbsolute(f.path)) throw new Error('不安全的路径:' + f.path);
@@ -59,10 +59,10 @@ console.log('换上了「' + shape.name + '」,' + files.length + ' 个文件');
 ## 登录(发布、删除前)
 
 用设备授权:你拿一个码,用户在浏览器里用谷歌账号登录、点同意,你再取令牌。令牌存在
-\`$MORPHIC_DATA/morphic-ai.json\`(权限 600),下次直接用;接口回 401 时说明失效了,重新走一遍。
+\`$IIMOS_DATA/iimos-ai.json\`(权限 600),下次直接用;接口回 401 时说明失效了,重新走一遍。
 
 \`\`\`sh
-curl -s -X POST '${origin}/api/auth/device' -H 'content-type: application/json' -d '{"name":"用户的 morphic"}'
+curl -s -X POST '${origin}/api/auth/device' -H 'content-type: application/json' -d '{"name":"用户的 iimos"}'
 # → { device_code, user_code, verification_uri_complete, interval, expires_in }
 \`\`\`
 
@@ -84,7 +84,7 @@ curl -s -X POST '${origin}/api/auth/token' -H 'content-type: application/json' -
 \`\`\`js
 // node /tmp/share.mjs "名字" "story" —— 在 workspace 里跑,打出要发的 JSON 到 /tmp/share.json
 import fs from 'node:fs'; import path from 'node:path';
-const skip = /^(\\.git|\\.morphic|\\.data|node_modules)(\\/|$)|(^|\\/)(\\.DS_Store|[^/]+\\.log)$/;
+const skip = /^(\\.git|\\.iimos|\\.data|node_modules)(\\/|$)|(^|\\/)(\\.DS_Store|[^/]+\\.log)$/;
 const files = [];
 (function walk(dir) {
   for (const e of fs.readdirSync(dir || '.', { withFileTypes: true })) {
@@ -110,7 +110,7 @@ curl -s -X POST '${origin}/api/shapes' -H "authorization: Bearer $TOKEN" -H 'con
 \`\`\`
 
 可选字段:\`cover\`(封面,PNG 的 base64;macOS 上可以用 \`screencapture -x\` 截一张)、\`parent\`(从哪个形态长过来)。
-限制:必须有 main.js;不能带 .git、.morphic、node_modules;单个文件 8MB、总共 30MB 以内;每人每小时最多发 20 个。
+限制:必须有 main.js;不能带 .git、.iimos、node_modules;单个文件 8MB、总共 30MB 以内;每人每小时最多发 20 个。
 发完把 url 告诉用户。
 
 ## 删掉自己发的

@@ -19,7 +19,7 @@ function seedWith(mainJs, pkg = { version: '1.0.0' }) {
 }
 
 function setup(mainJs, capabilities = {}, pkg = undefined) {
-    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-core-'));
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-core-'));
     const state = path.join(base, 'launcher');
     const paths = {
         base, state,
@@ -58,17 +58,17 @@ const until = async (check, ms = 10_000) => {
 test('形态在子进程里报到;收尾钩子在退出前被调用;launcher 的能力能被调用', async () => {
     const { core, paths, calls } = setup(`
         const fs = await import('node:fs');
-        globalThis.morphic.onShutdown(({ restarting }) => fs.writeFileSync(process.env.MORPHIC_DATA + '/bye', String(restarting)));
-        const echo = await globalThis.morphic.call('echo', { hello: 'world' });
-        globalThis.morphic.on('ping', (data) => fs.writeFileSync(process.env.MORPHIC_DATA + '/ping', JSON.stringify(data)));
-        globalThis.morphic.ready({ url: 'http://127.0.0.1:1/?echo=' + echo.hello, window: { title: 'test' } });
+        globalThis.iimos.onShutdown(({ restarting }) => fs.writeFileSync(process.env.IIMOS_DATA + '/bye', String(restarting)));
+        const echo = await globalThis.iimos.call('echo', { hello: 'world' });
+        globalThis.iimos.on('ping', (data) => fs.writeFileSync(process.env.IIMOS_DATA + '/ping', JSON.stringify(data)));
+        globalThis.iimos.ready({ url: 'http://127.0.0.1:1/?echo=' + echo.hello, window: { title: 'test' } });
     `, { echo: async (args) => args });
     await core.start();
     await until(() => core.state() === 'ready');
     assert.deepEqual(calls, [['open', 'http://127.0.0.1:1/?echo=world', { title: 'test' }]]);
     assert.equal(readLedger(paths.ledger).boot.status, 'ready');
-    // 形态跑在另一个进程里:launcher 这边没有 globalThis.morphic
-    assert.equal(globalThis.morphic, undefined);
+    // 形态跑在另一个进程里:launcher 这边没有 globalThis.iimos
+    assert.equal(globalThis.iimos, undefined);
 
     core.emit('ping', { n: 1 });
     await until(() => fs.existsSync(path.join(paths.data, 'ping')));
@@ -96,8 +96,8 @@ test('形态抛错 → 走 failed 通道,错误原样记进账本', async () => 
 
 test('形态收尾时赖着不退 → 到时限被杀掉', async () => {
     const { core } = setup(`
-        globalThis.morphic.onShutdown(() => new Promise(() => {}));
-        globalThis.morphic.ready({ url: 'http://127.0.0.1:1/' });
+        globalThis.iimos.onShutdown(() => new Promise(() => {}));
+        globalThis.iimos.ready({ url: 'http://127.0.0.1:1/' });
         setInterval(() => {}, 1000);
     `);
     await core.start();
@@ -110,15 +110,15 @@ test('形态收尾时赖着不退 → 到时限被杀掉', async () => {
 test('浏览器能力:插件经管道连上,形态的 browser.request 转给插件,断开后报未连接', async () => {
     const { core, paths } = setup(`
         const fs = await import('node:fs');
-        globalThis.morphic.on('browser.connected', async () => {
-            const result = await globalThis.morphic.call('browser.request', { action: 'open', args: { url: 'https://example.com/' } });
-            fs.writeFileSync(process.env.MORPHIC_DATA + '/result', JSON.stringify(result));
+        globalThis.iimos.on('browser.connected', async () => {
+            const result = await globalThis.iimos.call('browser.request', { action: 'open', args: { url: 'https://example.com/' } });
+            fs.writeFileSync(process.env.IIMOS_DATA + '/result', JSON.stringify(result));
         });
-        globalThis.morphic.on('browser.disconnected', async () => {
-            try { await globalThis.morphic.call('browser.request', { action: 'tabs' }); }
-            catch (error) { fs.writeFileSync(process.env.MORPHIC_DATA + '/offline', error.message); }
+        globalThis.iimos.on('browser.disconnected', async () => {
+            try { await globalThis.iimos.call('browser.request', { action: 'tabs' }); }
+            catch (error) { fs.writeFileSync(process.env.IIMOS_DATA + '/offline', error.message); }
         });
-        globalThis.morphic.ready({ url: 'http://127.0.0.1:1/' });
+        globalThis.iimos.ready({ url: 'http://127.0.0.1:1/' });
     `);
     await core.start();
     await until(() => core.state() === 'ready');
@@ -144,7 +144,7 @@ test('浏览器能力:插件经管道连上,形态的 browser.request 转给插�
 });
 
 test('形态要求的契约版本比 launcher 高 → 不启动,提示升级', async () => {
-    const { core, calls } = setup("globalThis.morphic.ready({ url: 'http://127.0.0.1:1/' });\n", {}, { version: '1.0.0', morphic: { contract: CONTRACT_VERSION + 1 } });
+    const { core, calls } = setup("globalThis.iimos.ready({ url: 'http://127.0.0.1:1/' });\n", {}, { version: '1.0.0', iimos: { contract: CONTRACT_VERSION + 1 } });
     await core.start();
     assert.equal(core.state(), 'failed');
     assert.match(calls.find((c) => c[0] === 'fatal')[1], /契约版本/);

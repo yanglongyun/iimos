@@ -1,5 +1,5 @@
-// 控制接口:`morphic` 命令(和应用)叫 launcher 做事的口子。只听 127.0.0.1,每个请求都要令牌。
-// 端口、令牌、pid 写进 control.json(权限 600),morphic 命令从那里读。
+// 控制接口:`iimos` 命令(和应用)叫 launcher 做事的口子。只听 127.0.0.1,每个请求都要令牌。
+// 端口、令牌、pid 写进 control.json(权限 600),iimos 命令从那里读。
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';

@@ -5,7 +5,7 @@ const tools = [
         type: 'function',
         name: 'shell',
         description: '在 workspace(应用自己的目录)里执行终端命令,返回合并输出与退出码。'
-            + 'node 和 morphic 两条命令可用;读写文件、改代码、联网(curl)都用它。',
+            + 'node 和 iimos 两条命令可用;读写文件、改代码、联网(curl)都用它。',
         parameters: {
             type: 'object',
             properties: {

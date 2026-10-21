@@ -7,13 +7,13 @@ export default function shell(args, config, signal) {
     if (typeof args.command !== 'string' || !args.command) throw new Error('缺少 command 参数');
     if (args.workdir !== undefined && typeof args.workdir !== 'string') throw new Error('workdir 必须是字符串');
     signal?.throwIfAborted();
-    // launcher 的 node / morphic 垫片放在 PATH 最前面;Electron 主进程的 ELECTRON_RUN_AS_NODE 不能漏给子进程
+    // launcher 的 node / iimos 垫片放在 PATH 最前面;Electron 主进程的 ELECTRON_RUN_AS_NODE 不能漏给子进程
     const env = { ...process.env, PATH: `${config.bin ? `${config.bin}${path.delimiter}` : ''}${process.env.PATH || '/usr/bin:/bin'}` };
     delete env.ELECTRON_RUN_AS_NODE;
-    // Windows 没有 /bin/sh:按顺序找 Git Bash(可用环境变量 MORPHIC_BASH 指定),找不到退回 cmd.exe。
+    // Windows 没有 /bin/sh:按顺序找 Git Bash(可用环境变量 IIMOS_BASH 指定),找不到退回 cmd.exe。
     // System32 下的 bash 是 WSL 的,环境不一样,不认。
     const bashCandidates = [
-        process.env.MORPHIC_BASH,
+        process.env.IIMOS_BASH,
         process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'Git', 'bin', 'bash.exe'),
         process.env['ProgramFiles(x86)'] && path.join(process.env['ProgramFiles(x86)'], 'Git', 'bin', 'bash.exe'),
         process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Programs', 'Git', 'bin', 'bash.exe'),

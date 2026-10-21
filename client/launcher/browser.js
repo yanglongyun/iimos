@@ -1,6 +1,6 @@
 // 浏览器能力:浏览器插件经原生消息宿主(native-host.js)连到这个本机管道,launcher 把形态的命令转给插件。
 //
-//   形态 ── morphic.call('browser.request', { action, args }) ──▶ launcher ── 管道 ──▶ 宿主 ── stdio ──▶ 插件 ──▶ 网页
+//   形态 ── iimos.call('browser.request', { action, args }) ──▶ launcher ── 管道 ──▶ 宿主 ── stdio ──▶ 插件 ──▶ 网页
 //
 // 管道上每行一个 JSON:launcher 发 { id, action, args },插件回 { id, result } 或 { id, error }。
 // 只有当前用户能连这个管道,所以不需要令牌。插件连上、断开时给形态发事件 browser.connected / browser.disconnected。
@@ -59,7 +59,7 @@ export function startBrowser({ address, emit, log }) {
     /** 发一条命令给最近连上的插件,等它回结果。 */
     function request({ action, args = {} }) {
         const socket = sockets.at(-1);
-        if (!socket) return Promise.reject(new Error('浏览器插件未连接:请在 Chrome 或 Edge 里安装并启用 morphic 插件'));
+        if (!socket) return Promise.reject(new Error('浏览器插件未连接:请在 Chrome 或 Edge 里安装并启用 iimos 插件'));
         if (typeof action !== 'string' || !action) return Promise.reject(new Error('缺少 action'));
         const id = crypto.randomUUID();
         return new Promise((resolve, reject) => {

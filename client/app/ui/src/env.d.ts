@@ -4,5 +4,5 @@ declare module '*.svg' { const url: string; export default url; }
 declare module '*.png' { const url: string; export default url; }
 // 无框窗口的窗口钮(desktop/preload.cjs 注入;macOS 上没有,调用处用 ?. 兼容)
 interface Window {
-    morphicWin?: { minimize(): void; toggleMaximize(): void; close(): void };
+    iimosWin?: { minimize(): void; toggleMaximize(): void; close(): void };
 }

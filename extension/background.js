@@ -1,12 +1,12 @@
-// morphic 浏览器插件：通过原生消息连上 morphic 的 launcher，接收命令。
+// iimos 浏览器插件：通过原生消息连上 iimos 的 launcher，接收命令。
 // 页面里面的事一律转发给 Chrome 开发者工具协议（CDP）；标签页和标签组用插件接口管理。
 // 只操作 Agent 自己打开的标签页；每个对话的标签页放进一个以对话标题命名的标签组。
 // 鼠标键盘事件和截图需要标签页在前台，插件会自动切过去。
 // Agent 操作期间浏览器顶部会显示“正在调试此浏览器”，这是 Chrome 对 debugger 权限的强制提示。
-const HOST = "ai.iimos.morphic";
+const HOST = "ai.iimos.browser";
 let port = null;
 
-// morphic 没开时连不上；每 30 秒由定时器唤醒重试一次。
+// iimos 没开时连不上；每 30 秒由定时器唤醒重试一次。
 function connect() {
   if (port) {
     return;
@@ -90,7 +90,7 @@ async function agentTab(id) {
     throw new Error("缺少 tab");
   }
   if (!(await agentTabs()).includes(id)) {
-    throw new Error("只能操作 morphic 自己打开的标签页，请先用 open 打开");
+    throw new Error("只能操作 iimos 自己打开的标签页，请先用 open 打开");
   }
   return id;
 }
@@ -153,7 +153,7 @@ async function openTab(args) {
 // 每个对话一个标签组，组名是对话标题；标题改了下次打开时跟着改。用户关掉了组就新建一个。
 async function addToGroup(id, session) {
   const key = session?.id || "";
-  let title = "morphic";
+  let title = "iimos";
   if (session?.title) {
     title = session.title.slice(0, 40);
   }

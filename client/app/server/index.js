@@ -29,7 +29,7 @@ function workspaceInfo(workspace) {
             ? fs.readFileSync(path.join(workspace, '.git', head.slice(5)), 'utf8').trim()
             : head;
     } catch { /* 不是 git 仓库(单独跑 server 时) */ }
-    let version = process.env.MORPHIC_VERSION || '';
+    let version = process.env.IIMOS_VERSION || '';
     if (!version) {
         try { version = JSON.parse(fs.readFileSync(path.join(workspace, 'package.json'), 'utf8')).version || ''; } catch { /* 无 */ }
     }
@@ -63,7 +63,7 @@ function sendJson(res, status, value) {
     res.end(JSON.stringify(value));
 }
 
-/** ui/ 下的静态文件:index.html 和编译出来的 dist/。morphic reload 先编译 ui/src,再重载窗口。 */
+/** ui/ 下的静态文件:index.html 和编译出来的 dist/。iimos reload 先编译 ui/src,再重载窗口。 */
 function serveStatic(res, pathname) {
     const rel = pathname === '/' ? 'index.html' : decodeURIComponent(pathname.slice(1));
     const file = path.resolve(UI_DIR, rel);
@@ -79,7 +79,7 @@ function serveStatic(res, pathname) {
  * 起服务。返回 { url(带令牌,给窗口用), port, token, close() }。
  * workspace:agent 的工作目录(应用自己);data:用户数据目录。
  */
-export async function startServer({ workspace, data, port = 0, token = crypto.randomBytes(24).toString('hex'), bin = process.env.MORPHIC_BIN }) {
+export async function startServer({ workspace, data, port = 0, token = crypto.randomBytes(24).toString('hex'), bin = process.env.IIMOS_BIN }) {
     fs.mkdirSync(data, { recursive: true });
     const subscribers = new Set();
     const broadcast = (event) => {
@@ -95,7 +95,7 @@ export async function startServer({ workspace, data, port = 0, token = crypto.ra
         if (host !== '127.0.0.1' && host !== 'localhost') return sendJson(res, 403, { error: 'bad host' });
         if (!url.pathname.startsWith('/api/')) return serveStatic(res, url.pathname);
 
-        const given = req.headers['x-morphic-token'] || url.searchParams.get('token');
+        const given = req.headers['x-iimos-token'] || url.searchParams.get('token');
         if (given !== token) return sendJson(res, 401, { error: 'unauthorized' });
 
         try {
@@ -151,10 +151,10 @@ export async function startServer({ workspace, data, port = 0, token = crypto.ra
     };
 }
 
-// 单独跑:node server/index.js(开发、测试用)。数据放 MORPHIC_DATA,不给就放 ./.data
+// 单独跑:node server/index.js(开发、测试用)。数据放 IIMOS_DATA,不给就放 ./.data
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-    const workspace = process.env.MORPHIC_WORKSPACE || path.resolve(import.meta.dirname, '..');
-    const data = process.env.MORPHIC_DATA || path.join(workspace, '.data');
-    const server = await startServer({ workspace, data, port: Number(process.env.PORT) || 0, token: process.env.MORPHIC_TOKEN || undefined });
+    const workspace = process.env.IIMOS_WORKSPACE || path.resolve(import.meta.dirname, '..');
+    const data = process.env.IIMOS_DATA || path.join(workspace, '.data');
+    const server = await startServer({ workspace, data, port: Number(process.env.PORT) || 0, token: process.env.IIMOS_TOKEN || undefined });
     console.log(server.url);
 }

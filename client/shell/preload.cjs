@@ -4,7 +4,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 if (process.platform !== 'darwin') {
-    contextBridge.exposeInMainWorld('morphicWin', {
+    contextBridge.exposeInMainWorld('iimosWin', {
         minimize: () => ipcRenderer.send('win:minimize'),
         toggleMaximize: () => ipcRenderer.send('win:toggle-maximize'),
         close: () => ipcRenderer.send('win:close'),

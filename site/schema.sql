@@ -1,4 +1,4 @@
--- morphic.iimos.ai:形态社区和账号。形态本体(gzip 的 JSON)和封面在 R2:shapes/bundles/<id>.gz、shapes/covers/<id>.png。
+-- iimos.ai:形态社区和账号。形态本体(gzip 的 JSON)和封面在 R2:shapes/bundles/<id>.gz、shapes/covers/<id>.png。
 -- shapes.owner_id 是后加的列,在 src/index.js 的 ensureSchema 里 ALTER TABLE 补上(老库没有它)
 CREATE TABLE IF NOT EXISTS shapes (
   id           TEXT PRIMARY KEY,

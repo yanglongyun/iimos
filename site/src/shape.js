@@ -1,9 +1,9 @@
-// 形态(shape):一份 morphic 长成的样子,可以分享、可以被别人换上。
+// 形态(shape):一份 iimos 长成的样子,可以分享、可以被别人换上。
 //
 // 一个形态就是 workspace 里被版本管理的全部文件(代码、界面、提示词、AGENT.md),打成一个 gzip 的 JSON:
 //
 //   {
-//     format: 'morphic-shape/1',
+//     format: 'iimos-shape/1',
 //     name, story,              名字;「让它长成这样的话」(可选)
 //     author,                   署名(可选)
 //     seedVersion,              长出它的出厂版本
@@ -12,13 +12,13 @@
 //     files: [{ path, data }],  data 是 base64
 //   }
 //
-// 不含任何用户数据:数据在 $MORPHIC_DATA,从来不在 workspace 里。分享前还会扫一遍像密钥的东西,有就拒绝。
+// 不含任何用户数据:数据在 $IIMOS_DATA,从来不在 workspace 里。分享前还会扫一遍像密钥的东西,有就拒绝。
 // Node(launcher)和 Cloudflare Worker(社区站)都用这一份,所以只用两边都有的 Web API。
-export const FORMAT = 'morphic-shape/1';
+export const FORMAT = 'iimos-shape/1';
 export const LIMITS = { files: 3000, bytes: 30 * 1024 * 1024, file: 8 * 1024 * 1024, name: 60, story: 4000, author: 40, cover: 2 * 1024 * 1024 };
 
 /** 不进形态的路径:版本库、launcher 的记录、依赖、系统垃圾、日志、数据库。 */
-export const EXCLUDE = /^(\.git|\.morphic|\.data|node_modules)(\/|$)|(^|\/)(\.DS_Store|[^/]+\.log|[^/]+\.db(-wal|-shm)?)$/;
+export const EXCLUDE = /^(\.git|\.iimos|\.data|node_modules)(\/|$)|(^|\/)(\.DS_Store|[^/]+\.log|[^/]+\.db(-wal|-shm)?)$/;
 
 const b64 = {
     encode(bytes) {

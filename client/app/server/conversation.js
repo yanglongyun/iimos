@@ -1,9 +1,9 @@
 // 唯一的那个对话(业务层)。准备指令和上下文,调 agent 的 run(),接它的九种事件:存盘、推给界面。
 //
-// 全部条目原样存进 $MORPHIC_DATA/conversation.json,每完成一步就落一次盘:agent 可能在这一轮里
-// `morphic restart` 把整个应用连同自己一起重启,落了盘的东西才算数。
+// 全部条目原样存进 $IIMOS_DATA/conversation.json,每完成一步就落一次盘:agent 可能在这一轮里
+// `iimos restart` 把整个应用连同自己一起重启,落了盘的东西才算数。
 //
-// 重启接续:agent 自己 `morphic restart` 时,这一轮会连同应用一起被打断。launcher 重启前调 shutdown(),
+// 重启接续:agent 自己 `iimos restart` 时,这一轮会连同应用一起被打断。launcher 重启前调 shutdown(),
 // 这里记下 interrupted;新进程起来后 resumeIfInterrupted() 自动把这一轮接着跑完 —— 确认改动生效、
 // 告诉用户结果。连续接续最多 MAX_RESUMES 次,防止「改 → 重启 → 再改 → 再重启」停不下来。
 //

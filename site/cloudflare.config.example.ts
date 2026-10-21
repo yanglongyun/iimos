@@ -5,15 +5,15 @@ import { bindings, defineConfig } from "cf/config";
 export default defineConfig({
 	accountId: "<你的 Cloudflare 账号 ID>",
 	worker: {
-		name: "morphic",
+		name: "iimos",
 		compatibilityDate: "2026-07-30",
 		entrypoint: "src/index.js",
 		observability: { enabled: true },
 		assets: { notFoundHandling: "none", runWorkerFirst: ["/", "/shapes", "/s/*", "/api/*", "/agent.md", "/llms.txt", "/device", "/auth/*", "/privacy", "/terms"] },
-		domains: ["morphic.iimos.ai"],
+		domains: ["iimos.ai"],
 		env: {
-			DB: bindings.d1({ name: "morphic", id: "<cf d1 create 返回的 uuid>" }),
-			BUCKET: bindings.r2({ name: "morphic" }),
+			DB: bindings.d1({ name: "iimos", id: "<cf d1 create 返回的 uuid>" }),
+			BUCKET: bindings.r2({ name: "iimos" }),
 			ASSETS: bindings.assets(),
 		},
 	},

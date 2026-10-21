@@ -1,14 +1,14 @@
-// morphic.iimos.ai:项目介绍、下载,和形态社区。一个 Worker、一个 D1、一个 R2,都叫 morphic。
+// iimos.ai:项目介绍、下载,和形态社区。一个 Worker、一个 D1、一个 R2,都叫 iimos。
 //
 // 页面
 //   /                          首页:它是什么、最新版本下载、最新的形态
 //   /shapes                    形态墙(?sort=hot 按换上次数)
 //   /s/<id>                    一个形态:封面、它是怎么长出来的、怎么换上
-//   /device                    设备授权:用户在这里用谷歌登录,同意自己的 morphic 以自己的名义发布
+//   /device                    设备授权:用户在这里用谷歌登录,同意自己的 iimos 以自己的名义发布
 //   /auth/google(/callback)    谷歌登录;/auth/logout 退出
 //   /privacy  /terms           隐私政策、服务条款(谷歌登录要求有)
 //
-// 给 agent 的接口(说明在 /agent.md,morphic 的提示词里只指向那一页)
+// 给 agent 的接口(说明在 /agent.md,iimos 的提示词里只指向那一页)
 //   GET    /api/shapes                列表(?sort=new|hot&q=关键字&limit=)
 //   GET    /api/shapes/<id>           详情
 //   GET    /api/shapes/<id>/files     全部文件(文本给 content,二进制给 base64);记一次换上(?preview=1 不记)
@@ -16,17 +16,17 @@
 //   POST   /api/shapes                发布(要登录),JSON:{ name, story, parent?, cover?, files: [{ path, content | base64 }] }
 //   DELETE /api/shapes/<id>           删除自己发的(要登录)
 //   POST   /api/auth/device           拿设备码;POST /api/auth/token 换令牌;GET /api/me 我是谁
-//   GET    /api/shapes/<id>/bundle    老客户端(morphic adopt)用的 gzip 包,保留兼容
+//   GET    /api/shapes/<id>/bundle    老客户端(iimos adopt)用的 gzip 包,保留兼容
 import { LIMITS, base64, decodeShape, encodeShape, scanSecrets, validateShape } from './shape.js';
 import { currentUser, deviceApprove, deviceLookup, deviceStart, deviceToken, googleCallback, googleStart, logout, sha256 } from './auth.js';
 import { agentDoc } from './agentdoc.js';
 import { detailPage, devicePage, homePage, listPage, notFoundPage, privacyPage, termsPage } from './pages.js';
 
 const PER_HOUR = 20;
-// R2 桶 morphic 是整站共用的,形态放在 shapes/ 下
+// R2 桶 iimos 是整站共用的,形态放在 shapes/ 下
 const BUNDLE = (id) => `shapes/bundles/${id}.gz`;
 const COVER = (id) => `shapes/covers/${id}.png`;
-const REPO = 'yanglongyun/morphic';
+const REPO = 'yanglongyun/iimos';
 
 // 表结构(和 schema.sql 一致)。每个 isolate 第一次请求时建一次,都是 IF NOT EXISTS,本地开发和线上一样
 import SCHEMA from '../schema.sql?raw';
@@ -55,7 +55,7 @@ const view = (row, origin) => row && ({
     id: row.id, name: row.name, story: row.story, author: row.author, seedVersion: row.seed_version,
     lineage: JSON.parse(row.lineage || '[]'), parentId: row.parent_id, fileCount: row.file_count, size: row.size,
     cover: row.has_cover ? `/api/shapes/${row.id}/cover` : null, downloads: row.downloads, createdAt: row.created_at,
-    url: `${origin || 'https://morphic.iimos.ai'}/s/${row.id}`,
+    url: `${origin || 'https://iimos.ai'}/s/${row.id}`,
     ...(row.files ? { files: JSON.parse(row.files) } : {}),
 });
 
@@ -95,7 +95,7 @@ async function shapeFromJson(env, body, user) {
     }
     try {
         return validateShape({
-            format: 'morphic-shape/1', name: body.name, story: body.story, author: user.name,
+            format: 'iimos-shape/1', name: body.name, story: body.story, author: user.name,
             seedVersion: body.seedVersion, lineage, cover: typeof body.cover === 'string' ? body.cover : null, files,
         });
     } catch (error) {
@@ -162,11 +162,11 @@ async function files(env, id, preview, ctx) {
 async function latestRelease(ctx) {
     const latest = `https://github.com/${REPO}/releases/latest`;
     const fallback = { version: '', dmg: latest, exe: latest, page: latest };
-    const key = new Request(`https://morphic.iimos.ai/__release/2`);
+    const key = new Request(`https://iimos.ai/__release/2`);
     const cached = await caches.default.match(key);
     if (cached) return cached.json();
     try {
-        const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'user-agent': 'morphic.iimos.ai', accept: 'application/vnd.github+json' } });
+        const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'user-agent': 'iimos.ai', accept: 'application/vnd.github+json' } });
         if (!res.ok) return fallback;
         const data = await res.json();
         const asset = (ext) => (data.assets || []).find((a) => a.name.endsWith(ext))?.browser_download_url || data.html_url;
@@ -218,9 +218,9 @@ async function route(request, env, ctx) {
         if (method === 'POST') {
             if (!user) return Response.redirect(`${origin}/auth/google?next=${encodeURIComponent(`/device?code=${code}`)}`, 302);
             const ok = device && await deviceApprove(env, code, user);
-            return html(devicePage({ user, code, device, done: ok, error: ok ? '' : '这个码不对或者过期了,让 morphic 重新要一个' }), 200, 'no-store');
+            return html(devicePage({ user, code, device, done: ok, error: ok ? '' : '这个码不对或者过期了,让 iimos 重新要一个' }), 200, 'no-store');
         }
-        return html(devicePage({ user, code, device, error: code && !device ? '这个码不对或者过期了,让 morphic 重新要一个' : '' }), 200, 'no-store');
+        return html(devicePage({ user, code, device, error: code && !device ? '这个码不对或者过期了,让 iimos 重新要一个' : '' }), 200, 'no-store');
     }
 
     // 接口

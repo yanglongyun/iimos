@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 /** 宿主的名字,和插件的固定 ID(由 extension/manifest.json 里的 key 决定)。插件里的 HOST 要和这里一致。 */
-export const HOST = 'ai.iimos.morphic';
+export const HOST = 'ai.iimos.browser';
 export const EXTENSION = 'ojhdfjkbofioiolffhgpjpojklabniie';
 
 /** 浏览器只能直接启动一个可执行文件,所以写一个启动脚本:用 Electron 自带的 Node 跑 native-host.js。 */
@@ -25,7 +25,7 @@ function writeLauncher({ dir, execPath, script, env }) {
 }
 
 /**
- * dir:放启动脚本和登记文件的目录(launcher 的状态目录);env:宿主要带的环境变量(MORPHIC_HOME,找到正确的管道)。
+ * dir:放启动脚本和登记文件的目录(launcher 的状态目录);env:宿主要带的环境变量(IIMOS_HOME,找到正确的管道)。
  * 返回登记到了哪些浏览器。
  */
 export function registerHost({ dir, execPath, script, env }) {
@@ -34,7 +34,7 @@ export function registerHost({ dir, execPath, script, env }) {
     const launcher = writeLauncher({ dir, execPath, script, env });
     const manifest = JSON.stringify({
         name: HOST,
-        description: 'morphic 浏览器插件的原生消息宿主',
+        description: 'iimos 浏览器插件的原生消息宿主',
         path: launcher,
         type: 'stdio',
         allowed_origins: [`chrome-extension://${EXTENSION}/`],

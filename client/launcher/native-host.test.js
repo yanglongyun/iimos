@@ -19,11 +19,11 @@ function frame(value) {
 }
 
 test('宿主双向转发;浏览器关掉连接时退出', async () => {
-    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-host-'));
-    // 宿主按 MORPHIC_HOME 算管道地址,这里用同一个算法
-    process.env.MORPHIC_HOME = home;
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-host-'));
+    // 宿主按 IIMOS_HOME 算管道地址,这里用同一个算法
+    process.env.IIMOS_HOME = home;
     const address = launcherPaths().browser;
-    delete process.env.MORPHIC_HOME;
+    delete process.env.IIMOS_HOME;
     const lines = [];
     let pipe = null;
     const server = net.createServer((socket) => {
@@ -33,7 +33,7 @@ test('宿主双向转发;浏览器关掉连接时退出', async () => {
     });
     await new Promise((resolve) => server.listen(address, resolve));
 
-    const host = spawn(process.execPath, [SCRIPT], { env: { ...process.env, MORPHIC_HOME: home }, stdio: ['pipe', 'pipe', 'inherit'] });
+    const host = spawn(process.execPath, [SCRIPT], { env: { ...process.env, IIMOS_HOME: home }, stdio: ['pipe', 'pipe', 'inherit'] });
     // 浏览器 → launcher:一条消息分两次写,宿主按长度拼完整
     const message = frame({ id: '1', result: { title: '中文标题' } });
     host.stdin.write(message.subarray(0, 5));
@@ -52,7 +52,7 @@ test('宿主双向转发;浏览器关掉连接时退出', async () => {
 });
 
 test('launcher 没在运行时宿主直接退出', async () => {
-    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-host-'));
-    const host = spawn(process.execPath, [SCRIPT], { env: { ...process.env, MORPHIC_HOME: home }, stdio: ['pipe', 'pipe', 'inherit'] });
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-host-'));
+    const host = spawn(process.execPath, [SCRIPT], { env: { ...process.env, IIMOS_HOME: home }, stdio: ['pipe', 'pipe', 'inherit'] });
     assert.equal((await once(host, 'exit'))[0], 1);
 });

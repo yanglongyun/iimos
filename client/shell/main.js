@@ -1,5 +1,5 @@
 // 桌面壳:Electron 主进程。只做宿主该做的事 —— 窗口、通知、对话框、全局快捷键、菜单栏图标(打开 / 退出)——
-// 其余交给 launcher/core.js(纯 Node)。宿主能力以 capabilities 交给 launcher,形态用 morphic.call 调。
+// 其余交给 launcher/core.js(纯 Node)。宿主能力以 capabilities 交给 launcher,形态用 iimos.call 调。
 import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, Notification, shell, Tray } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,13 +14,13 @@ const paths = launcherPaths();
 const dev = !app.isPackaged;
 const root = path.resolve(import.meta.dirname, '..');
 // 开发时(npm run app)仓库里的 app/ 就是 seed;打包后 seed 在 resources/seed
-const seedDir = process.env.MORPHIC_SEED || (dev ? path.join(root, 'app') : path.join(process.resourcesPath, 'seed'));
+const seedDir = process.env.IIMOS_SEED || (dev ? path.join(root, 'app') : path.join(process.resourcesPath, 'seed'));
 const version = seed.readSeedVersion(seedDir, app.getVersion());
 // 界面编译工具链(esbuild、React):开发时就是仓库的 node_modules;打包后在 resources/toolchain(真实目录,不在 asar 里)
 const toolchain = dev ? path.join(root, 'node_modules') : path.join(process.resourcesPath, 'toolchain', 'node_modules');
 
-// 指定了 MORPHIC_HOME(开发、测试)时,Electron 自己的 userData 也挪进去:不同的 MORPHIC_HOME 才能同时开着
-if (process.env.MORPHIC_HOME) app.setPath('userData', path.join(paths.base, 'electron'));
+// 指定了 IIMOS_HOME(开发、测试)时,Electron 自己的 userData 也挪进去:不同的 IIMOS_HOME 才能同时开着
+if (process.env.IIMOS_HOME) app.setPath('userData', path.join(paths.base, 'electron'));
 
 let tray = null;
 
@@ -45,7 +45,7 @@ function main() {
             app.quit();
         },
         fatal: async (message) => {
-            const { response } = await dialog.showMessageBox({ type: 'error', message: 'morphic 起不来了', detail: message, buttons: ['退出', '打开数据目录'], defaultId: 0 });
+            const { response } = await dialog.showMessageBox({ type: 'error', message: 'iimos 起不来了', detail: message, buttons: ['退出', '打开数据目录'], defaultId: 0 });
             if (response === 1) await shell.openPath(paths.base);
             quitting = true;
             app.quit();
@@ -60,7 +60,7 @@ function main() {
         'window.list': async () => ({ windows: surfaces.listWindows() }),
         notify: async ({ title, body }) => {
             if (!Notification.isSupported()) throw new Error('这台机器不支持系统通知');
-            new Notification({ title: String(title || 'morphic').slice(0, 100), body: String(body || '').slice(0, 500) }).show();
+            new Notification({ title: String(title || 'iimos').slice(0, 100), body: String(body || '').slice(0, 500) }).show();
             return { ok: true };
         },
         'dialog.open': async ({ title, directory, multiple, filters } = {}) => {
@@ -126,7 +126,7 @@ function main() {
         setupTray({ surfaces });
         // 浏览器插件的原生消息宿主登记到本机浏览器;登记失败不影响客户端本身
         try {
-            const done = registerHost({ dir: paths.state, execPath: process.execPath, script: path.join(root, 'launcher', 'native-host.js'), env: { MORPHIC_HOME: paths.base } });
+            const done = registerHost({ dir: paths.state, execPath: process.execPath, script: path.join(root, 'launcher', 'native-host.js'), env: { IIMOS_HOME: paths.base } });
             if (done.length) log(`浏览器插件宿主已登记:${done.join('、')}`);
         } catch (error) { log('登记浏览器插件宿主失败', error); }
     });
@@ -154,11 +154,11 @@ function trayIcon() {
 
 function setupTray({ surfaces }) {
     tray = new Tray(trayIcon());
-    tray.setToolTip('morphic');
+    tray.setToolTip('iimos');
     tray.setContextMenu(Menu.buildFromTemplate([
-        { label: '打开 morphic', click: () => surfaces.show() },
+        { label: '打开 iimos', click: () => surfaces.show() },
         { type: 'separator' },
-        { label: '退出 morphic', role: 'quit' },
+        { label: '退出 iimos', role: 'quit' },
     ]));
     tray.on('click', () => { if (process.platform !== 'darwin') surfaces.show(); });
 }

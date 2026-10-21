@@ -1,9 +1,9 @@
 {
-  "name": "morphic-site",
+  "name": "iimos-site",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "morphic.iimos.ai:项目介绍、发布页,和大家的 morphic 长成的样子(形态社区)。",
+  "description": "iimos.ai:项目介绍、发布页,和大家的 iimos 长成的样子(形态社区)。",
   "license": "MIT",
   "scripts": {
     "build": "vite build",

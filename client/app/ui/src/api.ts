@@ -4,7 +4,7 @@ export const token = new URLSearchParams(location.search).get('token') || '';
 export async function api<T = unknown>(method: string, url: string, body?: unknown): Promise<T> {
     const res = await fetch(url, {
         method,
-        headers: { 'x-morphic-token': token, ...(body ? { 'content-type': 'application/json' } : {}) },
+        headers: { 'x-iimos-token': token, ...(body ? { 'content-type': 'application/json' } : {}) },
         body: body ? JSON.stringify(body) : undefined,
     });
     const data = await res.json().catch(() => ({}));

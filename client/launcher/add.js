@@ -1,4 +1,4 @@
-// morphic add <包>:用户机器上没有 npm,第三方前端库从 esm.sh 取。
+// iimos add <包>:用户机器上没有 npm,第三方前端库从 esm.sh 取。
 //
 // esm.sh 给的是一个「转一手」的小模块,真代码在它引用的其他 URL 上。这里用 esbuild + 一个 HTTP 插件,
 // 把整棵引用树打成一个本地文件 ui/vendor/<名字>.js,来源和版本记进 ui/vendor/vendor.json。
@@ -26,7 +26,7 @@ export const vendorFile = (name) => `${name.replace(/^@/, '').replace(/\//g, '__
 /** 拉远程模块的 esbuild 插件:绝对 URL、/开头、./ 开头(在远程模块里)都按 URL 解析后下载。 */
 function httpPlugin() {
     return {
-        name: 'morphic-http',
+        name: 'iimos-http',
         setup(build) {
             build.onResolve({ filter: /^https?:\/\// }, (args) => ({ path: args.path, namespace: 'http' }));
             build.onResolve({ filter: /^\.{0,2}\//, namespace: 'http' }, (args) => ({ path: new URL(args.path, args.importer).href, namespace: 'http' }));
@@ -41,9 +41,9 @@ function httpPlugin() {
 
 /**
  * 装一个包。返回 { ok: true, name, version, file } 或 { ok: false, error }。
- * cdn 可以换(测试用本地假服务,或者用户所在网络访问不了 esm.sh 时换镜像):MORPHIC_ESM_CDN。
+ * cdn 可以换(测试用本地假服务,或者用户所在网络访问不了 esm.sh 时换镜像):IIMOS_ESM_CDN。
  */
-export async function addPackage({ workspace, spec, toolchain = toolchainDir(), cdn = process.env.MORPHIC_ESM_CDN || 'https://esm.sh' }) {
+export async function addPackage({ workspace, spec, toolchain = toolchainDir(), cdn = process.env.IIMOS_ESM_CDN || 'https://esm.sh' }) {
     let parsed;
     try { parsed = parseSpec(spec); } catch (error) { return { ok: false, error: error.message }; }
     const ui = path.join(workspace, 'ui');
@@ -59,7 +59,7 @@ export async function addPackage({ workspace, spec, toolchain = toolchainDir(), 
         if (!res.ok) return { ok: false, error: `找不到 ${spec}(${res.status}):${(await res.text()).slice(0, 200)}` };
         entry = await res.text();
     } catch (error) {
-        return { ok: false, error: `连不上 ${cdn}:${error.message}。网络不通,或者需要换镜像(MORPHIC_ESM_CDN)` };
+        return { ok: false, error: `连不上 ${cdn}:${error.message}。网络不通,或者需要换镜像(IIMOS_ESM_CDN)` };
     }
     const resolved = entry.match(/esm\.sh - (\S+)/)?.[1] || `${parsed.pkg}@${parsed.version || 'latest'}`;
     const version = resolved.slice(resolved.lastIndexOf('@') + 1);

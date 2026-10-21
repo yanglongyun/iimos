@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// `morphic` 命令:agent 跟 launcher 说话的唯一入口(编译、重载、重启、快照、回滚)。
-// 由 launcher/bin/morphic 垫片以 ELECTRON_RUN_AS_NODE 拉起,不需要机器上装 Node。
+// `iimos` 命令:agent 跟 launcher 说话的唯一入口(编译、重载、重启、快照、回滚)。
+// 由 launcher/bin/iimos 垫片以 ELECTRON_RUN_AS_NODE 拉起,不需要机器上装 Node。
 import fs from 'node:fs';
 import path from 'node:path';
 import { launcherPaths } from './paths.js';
@@ -14,19 +14,19 @@ const paths = launcherPaths();
 const ws = paths.workspace;
 const [command = 'help', ...args] = process.argv.slice(2);
 
-const HELP = `morphic —— 和 launcher 说话
+const HELP = `iimos —— 和 launcher 说话
 
-  morphic status                 当前版本、good、未提交的改动、待处理的升级
-  morphic snapshot "说明"        把工作区现在的样子记一笔(改完一件事就记)
-  morphic log [条数]             版本史
-  morphic diff [版本]            和某个版本(默认 HEAD)比,哪些文件变了
-  morphic rollback <版本|good>   工作区换回那个版本(当前样子留成分支),然后重启
-  morphic add <包>[@版本]        从 esm.sh 装一个前端库到 ui/vendor/,之后照常 import(没有 npm 也能用)
-  morphic build                  编译界面 ui/src → ui/dist(失败时 dist 不动,错误打出来)
-  morphic reload                 先编译界面,成功了再重载窗口(只改了 ui/ 时用)
-  morphic restart                先编译界面,再整个应用重启(改了 main.js 或 server/ 时用)
-  morphic upgrade                看新出厂版本的情况;morphic upgrade apply 直接换成新出厂版
-  morphic paths                  launcher 用到的各个目录
+  iimos status                 当前版本、good、未提交的改动、待处理的升级
+  iimos snapshot "说明"        把工作区现在的样子记一笔(改完一件事就记)
+  iimos log [条数]             版本史
+  iimos diff [版本]            和某个版本(默认 HEAD)比,哪些文件变了
+  iimos rollback <版本|good>   工作区换回那个版本(当前样子留成分支),然后重启
+  iimos add <包>[@版本]        从 esm.sh 装一个前端库到 ui/vendor/,之后照常 import(没有 npm 也能用)
+  iimos build                  编译界面 ui/src → ui/dist(失败时 dist 不动,错误打出来)
+  iimos reload                 先编译界面,成功了再重载窗口(只改了 ui/ 时用)
+  iimos restart                先编译界面,再整个应用重启(改了 main.js 或 server/ 时用)
+  iimos upgrade                看新出厂版本的情况;iimos upgrade apply 直接换成新出厂版
+  iimos paths                  launcher 用到的各个目录
 `;
 
 const out = (value) => process.stdout.write(typeof value === 'string' ? `${value}\n` : `${JSON.stringify(value, null, 2)}\n`);
@@ -53,13 +53,13 @@ async function control(route, body, method = 'POST') {
 
 const commands = {
     help: () => out(HELP),
-    paths: () => out({ ...paths, seed: process.env.MORPHIC_SEED || null }),
+    paths: () => out({ ...paths, seed: process.env.IIMOS_SEED || null }),
 
     async status() {
         const ledger = readLedger(paths.ledger);
         const changed = await snap.changes(ws);
         out({
-            version: process.env.MORPHIC_VERSION || null,
+            version: process.env.IIMOS_VERSION || null,
             head: short(await snap.head(ws)),
             good: short(await snap.resolve(ws, 'refs/tags/good')),
             boot: ledger.boot ? { ...ledger.boot, commit: short(ledger.boot.commit) } : null,
@@ -106,7 +106,7 @@ const commands = {
 
     async rollback() {
         const ref = args[0];
-        if (!ref) fail('要回到哪个版本?morphic log 里挑一个,或写 good');
+        if (!ref) fail('要回到哪个版本?iimos log 里挑一个,或写 good');
         const oid = await snap.resolve(ws, ref === 'good' ? 'refs/tags/good' : ref);
         if (!oid) fail(`找不到版本:${ref}`);
         const saveAs = `before-rollback-${new Date().toISOString().replace(/[:.]/g, '-')}`;
@@ -116,7 +116,7 @@ const commands = {
     },
 
     add: async () => {
-        if (!args[0]) fail('要装哪个包?比如 morphic add dayjs 或 morphic add dayjs@1');
+        if (!args[0]) fail('要装哪个包?比如 iimos add dayjs 或 iimos add dayjs@1');
         for (const spec of args) {
             const result = await addPackage({ workspace: ws, spec });
             if (!result.ok) fail(`装 ${spec} 失败:\n\n${result.error}`);
@@ -149,7 +149,7 @@ const commands = {
             return out(pending ? {
                 ...pending,
                 hint: `旧出厂版在标签 ${pending.base},新出厂版在 ${pending.seed}。` +
-                    '可以逐个文件比较后手动合进来,完成后 morphic upgrade done;或者 morphic upgrade apply 直接换成新出厂版。',
+                    '可以逐个文件比较后手动合进来,完成后 iimos upgrade done;或者 iimos upgrade apply 直接换成新出厂版。',
             } : '没有待处理的升级');
         }
         if (args[0] === 'apply' && pending) {
