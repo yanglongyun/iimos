@@ -69,6 +69,7 @@ client/       桌面客户端(Electron)
       ai/           模型请求(Responses 流式,失败自动重试)
     ui/           界面:React + TSX,改完 `morphic reload` 由 launcher 带的 esbuild 编译,编不过就不换
     AGENT.md      agent 自己维护的说明,写给下一次的它自己
+extension/    Chrome / Edge 插件:让 agent 控制浏览器,经原生消息连到 launcher
 site/         morphic.iimos.ai:首页、下载、形态墙、谷歌登录,和给 agent 调的接口(说明在 /agent.md)。
               一个 Cloudflare Worker + D1 + R2。
 ```

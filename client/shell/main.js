@@ -1,12 +1,13 @@
-// 桌面壳:Electron 主进程。只做宿主该做的事 —— 窗口、菜单栏图标(打开 / 退出)——
-// 其余交给 launcher/core.js(纯 Node)。
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, shell, Tray } from 'electron';
+// 桌面壳:Electron 主进程。只做宿主该做的事 —— 窗口、通知、对话框、全局快捷键、菜单栏图标(打开 / 退出)——
+// 其余交给 launcher/core.js(纯 Node)。宿主能力以 capabilities 交给 launcher,形态用 morphic.call 调。
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, Notification, shell, Tray } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
 import { launcherPaths } from '../launcher/paths.js';
 import * as seed from '../launcher/seed.js';
 import { createLauncher, createLog } from '../launcher/core.js';
+import { registerHost } from '../launcher/register-host.js';
 import { createSurfaces } from './surface.js';
 
 const paths = launcherPaths();
@@ -28,7 +29,8 @@ function main() {
     if (!app.requestSingleInstanceLock()) { app.quit(); return; }
     fs.mkdirSync(paths.state, { recursive: true });
     const log = createLog(paths.log);
-    const surfaces = createSurfaces({ log });
+    let core = null;
+    const surfaces = createSurfaces({ log, onClosed: (id) => core?.emit('window.closed', { id }) });
 
     const host = {
         kind: 'desktop',
@@ -50,8 +52,46 @@ function main() {
         },
     };
 
-    const core = createLauncher({
-        host, paths, seedDir, version, toolchain, log,
+    /** 宿主给形态的能力。参数都是普通对象,返回值能 JSON 化。 */
+    const capabilities = {
+        'window.open': async (args) => ({ id: await surfaces.openWindow(args) }),
+        'window.close': async ({ id }) => { surfaces.closeWindow(id); return { ok: true }; },
+        'window.focus': async ({ id }) => { surfaces.focusWindow(id); return { ok: true }; },
+        'window.list': async () => ({ windows: surfaces.listWindows() }),
+        notify: async ({ title, body }) => {
+            if (!Notification.isSupported()) throw new Error('这台机器不支持系统通知');
+            new Notification({ title: String(title || 'morphic').slice(0, 100), body: String(body || '').slice(0, 500) }).show();
+            return { ok: true };
+        },
+        'dialog.open': async ({ title, directory, multiple, filters } = {}) => {
+            const properties = [directory ? 'openDirectory' : 'openFile'];
+            if (multiple) properties.push('multiSelections');
+            const result = await dialog.showOpenDialog(surfaces.main() || undefined, { title, properties, filters });
+            return { paths: result.canceled ? [] : result.filePaths };
+        },
+        'dialog.save': async ({ title, defaultPath, filters } = {}) => {
+            const result = await dialog.showSaveDialog(surfaces.main() || undefined, { title, defaultPath, filters });
+            return { path: result.canceled ? null : result.filePath };
+        },
+        'dialog.message': async ({ type, message, detail, buttons } = {}) => {
+            const result = await dialog.showMessageBox(surfaces.main() || undefined, {
+                type: ['info', 'warning', 'error', 'question'].includes(type) ? type : 'info',
+                message: String(message || ''), detail: detail ? String(detail) : undefined,
+                buttons: Array.isArray(buttons) && buttons.length ? buttons.map(String).slice(0, 6) : ['好'],
+            });
+            return { response: result.response };
+        },
+        'shortcut.register': async ({ accelerator }) => {
+            if (typeof accelerator !== 'string' || !accelerator) throw new Error('缺少 accelerator');
+            const ok = globalShortcut.register(accelerator, () => core?.emit('shortcut', { accelerator }));
+            if (!ok) throw new Error(`快捷键注册失败(可能已被别的程序占用):${accelerator}`);
+            return { ok: true };
+        },
+        'shortcut.unregister': async ({ accelerator }) => { globalShortcut.unregister(String(accelerator)); return { ok: true }; },
+    };
+
+    core = createLauncher({
+        host, paths, seedDir, version, toolchain, log, capabilities,
         contract: path.join(root, 'launcher', 'CONTRACT.md'),
         execPath: process.execPath,
         cliPath: path.join(root, 'launcher', 'cli.js'),
@@ -69,6 +109,7 @@ function main() {
     app.on('window-all-closed', () => { if (quitting) app.quit(); });
     app.on('activate', () => surfaces.show());
     app.on('second-instance', () => surfaces.show());
+    app.on('will-quit', () => globalShortcut.unregisterAll());
 
     app.whenReady().then(async () => {
         if (dev && process.platform === 'darwin') app.dock?.setIcon(path.join(root, 'build', 'icon.png'));
@@ -83,6 +124,11 @@ function main() {
         ipcMain.on('win:close', (event) => BrowserWindow.fromWebContents(event.sender)?.close());
 
         setupTray({ surfaces });
+        // 浏览器插件的原生消息宿主登记到本机浏览器;登记失败不影响客户端本身
+        try {
+            const done = registerHost({ dir: paths.state, execPath: process.execPath, script: path.join(root, 'launcher', 'native-host.js'), env: { MORPHIC_HOME: paths.base } });
+            if (done.length) log(`浏览器插件宿主已登记:${done.join('、')}`);
+        } catch (error) { log('登记浏览器插件宿主失败', error); }
     });
 
     void core.start();

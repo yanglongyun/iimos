@@ -30,10 +30,15 @@ client/
     snapshot.js    纯 JS 的 git(isomorphic-git),用户机器上不需要装 git
     seed.js        出厂种子怎么进 workspace,升级怎么合
     control.js     控制接口(127.0.0.1 + 令牌):restart / reload / status
+    browser.js     浏览器能力:本机管道,浏览器插件经原生消息宿主连进来,形态的 browser.request 转给插件
+    native-host.js 原生消息宿主,由 Chrome / Edge 启动,在插件(stdio)和管道之间转发
+    register-host.js 启动时把宿主登记到本机浏览器
     build.js       界面编译(esbuild + React,随安装包带着)
     add.js         morphic add:从 esm.sh 装前端库
     cli.js         `morphic` 命令:agent 编译、重载、重启、快照、回滚自己用
     CONTRACT.md    写给 agent 的契约,每轮都在它的系统指令里
+
+  shell/surface.js 主窗口和形态开的额外窗口;shell/main.js 还提供通知、对话框、全局快捷键这些宿主能力
 
   app/           出厂种子 = Agent 能改的身体。纯 Node + 网页,不碰 Electron
     main.js        应用入口:起本地服务,morphic.ready({ url }) 报到
@@ -70,6 +75,16 @@ launcher 交给宿主打开这个 url,确认界面真的能加载,才记为启�
 
 **兜底只有一层**:每次启动前快照;同一版本连续两次没报到,回滚到 good(稳定跑过几分钟的版本);
 good 本身也起不来,就不再硬起,弹对话框告诉用户。没有救援页,也没有第二个 agent。
+
+## launcher 提供的能力
+
+形态在自己的进程里,碰不到 Electron 和系统;要开窗口、发通知、弹文件框、注册全局快捷键、控制浏览器,
+都通过 `morphic.call(name, args)` 叫 launcher 做,launcher 的事件(快捷键按下、窗口关闭、插件连上)通过 `morphic.on` 收。
+能力清单和契约版本在 `launcher/CONTRACT.md`。
+
+浏览器控制:仓库根目录 `extension/` 是 Chrome / Edge 插件,经原生消息连到 launcher 的本机管道;
+页面里的一切操作是原样转发的 Chrome 开发者工具协议命令(`browser.request { action: 'cdp', ... }`),
+标签页和标签组由插件接口管,只操作形态自己打开的标签页。
 
 ## 对话
 

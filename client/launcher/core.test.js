@@ -5,20 +5,20 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createLauncher } from './core.js';
+import { createLauncher, CONTRACT_VERSION } from './core.js';
 import { readLedger } from './guardian.js';
 
 const CLI = path.join(import.meta.dirname, 'cli.js');
 const CONTRACT = path.join(import.meta.dirname, 'CONTRACT.md');
 
-function seedWith(mainJs) {
+function seedWith(mainJs, pkg = { version: '1.0.0' }) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'seed-'));
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version: '1.0.0' }));
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(pkg));
     fs.writeFileSync(path.join(dir, 'main.js'), mainJs);
     return dir;
 }
 
-function setup(mainJs, capabilities = {}) {
+function setup(mainJs, capabilities = {}, pkg = undefined) {
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'morphic-core-'));
     const state = path.join(base, 'launcher');
     const paths = {
@@ -29,6 +29,7 @@ function setup(mainJs, capabilities = {}) {
         control: path.join(state, 'control.json'),
         bin: path.join(state, 'bin'),
         log: path.join(state, 'launcher.log'),
+        browser: path.join(base, 'browser.sock'),
     };
     const calls = [];
     const host = {
@@ -40,7 +41,7 @@ function setup(mainJs, capabilities = {}) {
     };
     const logs = [];
     const core = createLauncher({
-        host, paths, seedDir: seedWith(mainJs), version: '1.0.0', contract: CONTRACT, toolchain: '', capabilities,
+        host, paths, seedDir: seedWith(mainJs, pkg), version: '1.0.0', contract: CONTRACT, toolchain: '', capabilities,
         execPath: process.execPath, cliPath: CLI, log: (...parts) => logs.push(parts.join(' ')),
     });
     return { core, paths, host, calls, logs };
@@ -104,4 +105,47 @@ test('形态收尾时赖着不退 → 到时限被杀掉', async () => {
     const started = Date.now();
     await core.shutdown();
     assert.ok(Date.now() - started < 8000, '应在时限内被杀掉');
+});
+
+test('浏览器能力:插件经管道连上,形态的 browser.request 转给插件,断开后报未连接', async () => {
+    const { core, paths } = setup(`
+        const fs = await import('node:fs');
+        globalThis.morphic.on('browser.connected', async () => {
+            const result = await globalThis.morphic.call('browser.request', { action: 'open', args: { url: 'https://example.com/' } });
+            fs.writeFileSync(process.env.MORPHIC_DATA + '/result', JSON.stringify(result));
+        });
+        globalThis.morphic.on('browser.disconnected', async () => {
+            try { await globalThis.morphic.call('browser.request', { action: 'tabs' }); }
+            catch (error) { fs.writeFileSync(process.env.MORPHIC_DATA + '/offline', error.message); }
+        });
+        globalThis.morphic.ready({ url: 'http://127.0.0.1:1/' });
+    `);
+    await core.start();
+    await until(() => core.state() === 'ready');
+    assert.deepEqual(await core.call('browser.status'), { connected: false });
+
+    const net = await import('node:net');
+    const socket = net.connect(paths.browser);
+    await new Promise((resolve) => socket.once('connect', resolve));
+    socket.setEncoding('utf8');
+    socket.on('data', (chunk) => {
+        for (const line of chunk.split('\n').filter(Boolean)) {
+            const request = JSON.parse(line);
+            socket.write(JSON.stringify({ id: request.id, result: { tab: 7, title: request.args.url } }) + '\n');
+        }
+    });
+    await until(() => fs.existsSync(path.join(paths.data, 'result')));
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(paths.data, 'result'), 'utf8')), { tab: 7, title: 'https://example.com/' });
+    assert.deepEqual(await core.call('browser.status'), { connected: true });
+    socket.destroy();
+    await until(() => fs.existsSync(path.join(paths.data, 'offline')));
+    assert.match(fs.readFileSync(path.join(paths.data, 'offline'), 'utf8'), /未连接/);
+    await core.shutdown();
+});
+
+test('形态要求的契约版本比 launcher 高 → 不启动,提示升级', async () => {
+    const { core, calls } = setup("globalThis.morphic.ready({ url: 'http://127.0.0.1:1/' });\n", {}, { version: '1.0.0', morphic: { contract: CONTRACT_VERSION + 1 } });
+    await core.start();
+    assert.equal(core.state(), 'failed');
+    assert.match(calls.find((c) => c[0] === 'fatal')[1], /契约版本/);
 });

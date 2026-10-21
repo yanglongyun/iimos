@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "morphic",
+  "description": "让 morphic 的 Agent 在你的浏览器里打开网页、读取内容、点击和输入。",
+  "version": "0.2.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvF5JWX2L4HfTscXS2d1CFu/bz9IthNuSamLeup06sjMHUFJeupu+ltEGk5yqgRcUg51KpopJW0VxlF/GjVB+0BPG7O14vt6SwjSR8bJj/ubbHbtLndXV+7KeEIbW+hvXNvRxh9HHXiy3xh2gFJo/QTf0VR3DLZpy2FWdEdKitO7Osgc42f1x/1ZMnMT0WXhYT12HOV90wyddTkMke5kVBkoUyU0Er57zUX45N3YZTEDrIkzt0yvYkRLrgi724cqXFeFWJGUWlTvM0wqhdrTqyhCvPst06LMvenbNy3nnfpgPZs6bcVsEPMDZ0x3+NPl/tdvlrZBUFWUsL0mr/wa6EQIDAQAB",
+  "permissions": ["nativeMessaging", "debugger", "tabs", "tabGroups", "alarms", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "morphic"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

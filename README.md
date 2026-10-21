@@ -71,6 +71,7 @@ client/       The desktop app (Electron)
       ai/           model calls (Responses streaming, automatic retry)
     ui/           React + TSX; after a change, `morphic reload` compiles with the esbuild the launcher ships
     AGENT.md      notes the agent keeps for its future self
+extension/    Chrome / Edge extension: lets the agent drive the browser, connected to the launcher via native messaging
 site/         morphic.iimos.ai: home, downloads, the shapes gallery, Google sign-in, and the API agents call
               (described in /agent.md). One Cloudflare Worker + D1 + R2.
 ```

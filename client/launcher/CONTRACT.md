@@ -66,9 +66,35 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 
 `morphic.call(name, args)`,没有的能力会报错。
 
-| 能力 | 参数 | 作用 |
+| 能力 | 参数 | 返回 |
 | --- | --- | --- |
 | `restart` / `reload` | — | 同名命令 |
+| `window.open` | `{ url, width?, height?, minWidth?, minHeight?, title?, background? }` | `{ id }`,再开一个窗口加载 url(主窗口的 id 是 `main`)|
+| `window.close` / `window.focus` | `{ id }` | 关掉 / 拿到前面 |
+| `window.list` | — | `{ windows: [{ id, title, url }] }` |
+| `notify` | `{ title, body }` | 系统通知 |
+| `dialog.open` | `{ title?, directory?, multiple?, filters? }` | `{ paths }`,系统的打开文件 / 文件夹对话框,取消时为空数组 |
+| `dialog.save` | `{ title?, defaultPath?, filters? }` | `{ path }`,取消时为 null |
+| `dialog.message` | `{ type?, message, detail?, buttons? }` | `{ response }`,按了第几个按钮 |
+| `shortcut.register` / `shortcut.unregister` | `{ accelerator }`,如 `CommandOrControl+Shift+Space` | 全局快捷键,按下时收到 `shortcut` 事件 |
+| `browser.request` | `{ action, args }` | 交给浏览器插件执行:`tabs` / `open` / `close` 管标签页,`cdp` 把 Chrome 开发者工具协议命令原样转发(`args: { tab, method, params }`)。插件没连上会报错 |
+| `browser.status` | — | `{ connected }` |
+
+`morphic.on(name, fn)` 能收到的事件:
+
+| 事件 | 数据 | 什么时候 |
+| --- | --- | --- |
+| `shortcut` | `{ accelerator }` | 注册过的全局快捷键被按下 |
+| `window.closed` | `{ id }` | 某个窗口被关掉(主窗口关掉后形态还在跑,用户点菜单栏「打开」会重开)|
+| `browser.connected` / `browser.disconnected` | — | 浏览器插件连上 / 断开 |
+
+浏览器插件在仓库根目录 `extension/`,用户自己在 Chrome / Edge 里加载;launcher 启动时把宿主登记到本机浏览器。
+插件只操作你用 `open` 打开的标签页,每个 `open` 可以带 `session: { id, title }`,同一个 id 的标签页放进以 title 命名的标签组。
+
+## 契约版本
+
+本文件描述的能力对应契约版本 **1**。launcher 加了新能力会升版本号。形态在 `package.json` 里写它需要的最低版本:
+`"morphic": { "contract": 1 }`。换上的形态要求的版本比当前 launcher 高,launcher 不会启动它,会提示升级 morphic。
 
 ## 环境变量
 
