@@ -62,6 +62,16 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 | `on(name, fn)` | 订阅 launcher 发来的事件,返回取消订阅的函数 |
 | `version` `workspace` `data` `seed` `bin` `contract` | 和同名环境变量一样 |
 
+## 窗口外框
+
+launcher 开的窗口没有系统标题栏,顶部那一条归界面自己画:
+
+- **macOS**:原生红绿灯浮在窗口左上角(约 80×40 的地方,中心离顶约 17px)。界面左上角要让出这块,别把按钮、文字放在下面。
+- **Windows / Linux**:无框窗口,没有系统的最小化 / 最大化 / 关闭。launcher 往页面注入 `window.iimosWin`
+  (`minimize()`、`toggleMaximize()`、`close()`),界面看到它就自己画这三个钮(一般放在顶栏最右)。macOS 上没有这个对象。
+- 想让哪块能拖着移动窗口,给它 CSS `-webkit-app-region: drag`;里面的按钮、输入框、标签要设回 `no-drag`,不然点不动。
+- 判断是不是在 launcher 的窗口里:`navigator.userAgent` 含 `Electron`。浏览器里直接打开时,这些都不用管。
+
 ## launcher 提供的能力
 
 `iimos.call(name, args)`,没有的能力会报错。
