@@ -149,3 +149,52 @@ test('形态要求的契约版本比 launcher 高 → 不启动,提示升级', a
     assert.equal(core.state(), 'failed');
     assert.match(calls.find((c) => c[0] === 'fatal')[1], /契约版本/);
 });
+
+test('终端能力:形态开一个 shell,敲命令收到输出,改尺寸生效,退出时收到 exit 事件', { skip: process.platform === 'win32' }, async () => {
+    const { core, paths } = setup(`
+        const fs = await import('node:fs');
+        const iimos = globalThis.iimos;
+        let output = '';
+        iimos.on('terminal.data', ({ data }) => { output += data; });
+        iimos.on('terminal.exit', ({ id, code }) => fs.writeFileSync(process.env.IIMOS_DATA + '/exit', JSON.stringify({ id, code, output })));
+        const term = await iimos.call('terminal.spawn', { shell: '/bin/sh', cwd: process.env.IIMOS_DATA, cols: 80, rows: 24, env: { PS1: '$ ' } });
+        fs.writeFileSync(process.env.IIMOS_DATA + '/spawn', JSON.stringify({ ...term, list: await iimos.call('terminal.list') }));
+        await new Promise((r) => setTimeout(r, 400));
+        await iimos.call('terminal.write', { id: term.id, data: 'echo 中文OK; pwd\\r' });
+        await new Promise((r) => setTimeout(r, 400));
+        await iimos.call('terminal.resize', { id: term.id, cols: 120, rows: 40 });
+        await new Promise((r) => setTimeout(r, 400));
+        await iimos.call('terminal.write', { id: term.id, data: 'stty size; exit 5\\r' });
+        iimos.ready({ url: 'http://127.0.0.1:1/' });
+    `);
+    await core.start();
+    await until(() => fs.existsSync(path.join(paths.data, 'exit')), 20_000);
+    const spawned = JSON.parse(fs.readFileSync(path.join(paths.data, 'spawn'), 'utf8'));
+    assert.equal(spawned.shell, '/bin/sh');
+    assert.equal(spawned.list.terminals.length, 1);
+    assert.equal(spawned.list.terminals[0].id, spawned.id);
+    const { id, code, output } = JSON.parse(fs.readFileSync(path.join(paths.data, 'exit'), 'utf8'));
+    assert.equal(id, spawned.id);
+    assert.equal(code, 5);
+    assert.match(output, /中文OK/);
+    assert.ok(output.includes(fs.realpathSync(paths.data)), '终端应在 cwd 里启动');
+    if (spawned.resizable) assert.match(output, /40 120/);
+    if (spawned.pty) assert.match(output, /\$ /, 'pty 里 shell 会回显提示符');
+    assert.deepEqual(await core.call('terminal.list'), { terminals: [] });
+    await core.shutdown();
+});
+
+test('终端能力:形态退出时它开的终端一起被收掉', { skip: process.platform === 'win32' }, async () => {
+    const { core, paths } = setup(`
+        const fs = await import('node:fs');
+        const term = await globalThis.iimos.call('terminal.spawn', { shell: '/bin/sh', cols: 80, rows: 24 });
+        fs.writeFileSync(process.env.IIMOS_DATA + '/pid', String(term.pid));
+        globalThis.iimos.ready({ url: 'http://127.0.0.1:1/' });
+    `);
+    await core.start();
+    await until(() => core.state() === 'ready' && fs.existsSync(path.join(paths.data, 'pid')));
+    const pid = Number(fs.readFileSync(path.join(paths.data, 'pid'), 'utf8'));
+    assert.doesNotThrow(() => process.kill(pid, 0), '终端进程应在跑');
+    await core.shutdown();
+    await until(() => { try { process.kill(pid, 0); return false; } catch { return true; } }, 5000);
+});

@@ -31,6 +31,7 @@ client/
     seed.js        出厂种子怎么进 workspace,升级怎么合
     control.js     控制接口(127.0.0.1 + 令牌):restart / reload / status
     browser.js     浏览器能力:本机管道,浏览器插件经原生消息宿主连进来,形态的 browser.request 转给插件
+    terminal.js    终端能力:借系统自带的 expect / script 开伪终端,形态用 terminal.* 开 shell、敲字、改尺寸,输出走事件;不用原生模块
     native-host.js 原生消息宿主,由 Chrome / Edge 启动,在插件(stdio)和管道之间转发
     register-host.js 启动时把宿主登记到本机浏览器
     build.js       界面编译(esbuild + React,随安装包带着)
@@ -78,8 +79,9 @@ good 本身也起不来,就不再硬起,弹对话框告诉用户。没有救援�
 
 ## launcher 提供的能力
 
-形态在自己的进程里,碰不到 Electron 和系统;要开窗口、发通知、弹文件框、注册全局快捷键、控制浏览器,
-都通过 `iimos.call(name, args)` 叫 launcher 做,launcher 的事件(快捷键按下、窗口关闭、插件连上)通过 `iimos.on` 收。
+形态在自己的进程里,碰不到 Electron 和系统;要开窗口、发通知、弹文件框、注册全局快捷键、控制浏览器、开终端,
+都通过 `iimos.call(name, args)` 叫 launcher 做,launcher 的事件(快捷键按下、窗口关闭、插件连上、终端输出)通过 `iimos.on` 收。
+形态里装不了原生模块,所以伪终端由 launcher 提供(`launcher/terminal.js`,借系统自带的 expect)。
 能力清单和契约版本在 `launcher/CONTRACT.md`。
 
 浏览器控制:仓库根目录 `extension/` 是 Chrome / Edge 插件,经原生消息连到 launcher 的本机管道;

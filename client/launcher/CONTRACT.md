@@ -3,7 +3,7 @@
 你运行在 iimos 里。iimos 分两部分:
 
 - **launcher**:安装包里那一小块,你改不了,也不需要改。它负责启动应用、记录版本、应用起不来时把它退回上一个能用的版本,
-  并提供窗口、通知、浏览器这类系统能力。
+  并提供窗口、通知、浏览器、终端这类系统能力。
 - **应用**:就是你脚下这个目录(workspace,shell 的默认工作目录)。界面、本地服务、
   agent 循环、工具、你自己的提示词 —— **全在这里,全都可以改**。
 
@@ -79,6 +79,11 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 | `shortcut.register` / `shortcut.unregister` | `{ accelerator }`,如 `CommandOrControl+Shift+Space` | 全局快捷键,按下时收到 `shortcut` 事件 |
 | `browser.request` | `{ action, args }` | 交给浏览器插件执行:`tabs` / `open` / `close` 管标签页,`cdp` 把 Chrome 开发者工具协议命令原样转发(`args: { tab, method, params }`)。插件没连上会报错 |
 | `browser.status` | — | `{ connected }` |
+| `terminal.spawn` | `{ shell?, args?, cwd?, cols?, rows?, env? }` | `{ id, pid, pty, resizable, shell, cwd }`,开一个终端(默认用户的 shell,登录到 cwd)。输出走 `terminal.data` 事件。`pty` 为 true 表示是真正的伪终端(macOS 自带 expect 时还能改尺寸,`resizable`);Windows 上是普通管道,命令照常能跑但 TUI 程序不可用 |
+| `terminal.write` | `{ id, data }` | 往终端里敲字(data 是字符串,回车是 `\r`)|
+| `terminal.resize` | `{ id, cols, rows }` | 改尺寸;不支持时返回 `{ ok: false, reason }` |
+| `terminal.kill` | `{ id, signal? }` | 结束终端 |
+| `terminal.list` | — | `{ terminals: [{ id, pid, shell, cwd, cols, rows, pty }] }` |
 
 `iimos.on(name, fn)` 能收到的事件:
 
@@ -87,14 +92,16 @@ launcher 在每次启动前自动快照。重启后应用如果没在规定时�
 | `shortcut` | `{ accelerator }` | 注册过的全局快捷键被按下 |
 | `window.closed` | `{ id }` | 某个窗口被关掉(主窗口关掉后形态还在跑,用户点菜单栏「打开」会重开)|
 | `browser.connected` / `browser.disconnected` | — | 浏览器插件连上 / 断开 |
+| `terminal.data` | `{ id, data }` | 终端有输出 |
+| `terminal.exit` | `{ id, code, signal, error? }` | 终端退出(起不来时带 error)|
 
 浏览器插件在仓库根目录 `extension/`,用户自己在 Chrome / Edge 里加载;launcher 启动时把宿主登记到本机浏览器。
 插件只操作你用 `open` 打开的标签页,每个 `open` 可以带 `session: { id, title }`,同一个 id 的标签页放进以 title 命名的标签组。
 
 ## 契约版本
 
-本文件描述的能力对应契约版本 **1**。launcher 加了新能力会升版本号。形态在 `package.json` 里写它需要的最低版本:
-`"iimos": { "contract": 1 }`。换上的形态要求的版本比当前 launcher 高,launcher 不会启动它,会提示升级 iimos。
+本文件描述的能力对应契约版本 **2**。launcher 加了新能力会升版本号。形态在 `package.json` 里写它需要的最低版本:
+`"iimos": { "contract": 2 }`。版本史:1 窗口 / 通知 / 对话框 / 快捷键 / 浏览器;2 加终端(`terminal.*`)。换上的形态要求的版本比当前 launcher 高,launcher 不会启动它,会提示升级 iimos。
 
 ## 环境变量
 

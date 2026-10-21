@@ -14,7 +14,7 @@
 //   host.relaunch()           整个进程重启
 //   host.fatal(message)       连稳定版本都起不来:告诉用户,没有别的办法了
 //
-// 形态能叫 launcher 做的事(iimos.call(name, args)):launcher 自己的(restart / reload / browser.*)加上宿主给的 capabilities。
+// 形态能叫 launcher 做的事(iimos.call(name, args)):launcher 自己的(restart / reload / browser.* / terminal.*)加上宿主给的 capabilities。
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,9 +24,10 @@ import * as seed from './seed.js';
 import { writeShims } from './shims.js';
 import { startControl } from './control.js';
 import { startBrowser } from './browser.js';
+import { startTerminal } from './terminal.js';
 
 /** 契约版本:CONTRACT.md 里的能力对应的版本号,launcher 加了新能力就升。形态在 package.json 的 iimos.contract 里写它需要的最低版本。 */
-export const CONTRACT_VERSION = 1;
+export const CONTRACT_VERSION = 2;
 const READY_TIMEOUT_MS = Number(process.env.IIMOS_READY_TIMEOUT_MS) || 120_000;
 const EXIT_TIMEOUT_MS = 5_000;
 const CHILD = path.join(import.meta.dirname, 'child.js');
@@ -54,6 +55,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
     let promoted = false;
     let closing = false;
     let browser = null;
+    let terminal = null;
 
     /** launcher 自己的能力;宿主和能力层的放在 capabilities 里,同名时这里的优先。 */
     const builtin = {
@@ -68,7 +70,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
 
     /** launcher 的一项能力。形态经 IPC 调,宿主和测试也能直接调。 */
     function call(name, args = {}) {
-        const fn = builtin[name] || browser?.capabilities[name] || capabilities[name];
+        const fn = builtin[name] || browser?.capabilities[name] || terminal?.capabilities[name] || capabilities[name];
         if (!fn) return Promise.reject(new Error(`launcher 没有这个能力:${name}`));
         return Promise.resolve(fn(args));
     }
@@ -117,6 +119,8 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         clearTimeout(readyTimer);
         clearTimeout(promoteTimer);
         await stopChild({ restarting });
+        // 形态开的终端跟着形态走:它退了,终端一个不留
+        terminal?.close();
         browser?.close();
     }
 
@@ -216,6 +220,7 @@ export function createLauncher({ host, paths, seedDir, version, contract, toolch
         Object.assign(process.env, env);
 
         browser = startBrowser({ address: paths.browser, emit, log });
+        terminal = startTerminal({ stateDir: paths.state, emit, log });
 
         await startControl({
             file: paths.control,
