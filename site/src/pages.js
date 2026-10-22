@@ -68,10 +68,8 @@ footer a:hover { color: var(--ink); }
 .get .btn:hover { filter: brightness(1.08); }
 .get small { display: block; margin-top: 10px; color: var(--dim); font-size: 11.5px; line-height: 1.7; }
 .get small a { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; }
-.demo { border: 1px solid var(--faint); border-radius: 10px; overflow: hidden; background: #0a0a09; max-width: 720px; margin: 0 auto; }
-/* 录屏原尺寸 720px,不放大:放大就糊 */
-.demo img { display: block; width: 100%; }
-.cap { text-align: center; }
+.demo { border: 1px solid var(--faint); border-radius: 10px; overflow: hidden; background: #0a0a09; }
+.demo video, .demo img { display: block; width: 100%; }
 .cap { color: var(--dim); font-size: 12px; margin: 10px 0 0; }
 .cap b { color: var(--ink-2); font-weight: 400; }
 .h { margin: 72px 0 18px; font-size: 13px; font-weight: 500; color: var(--acc); display: flex; justify-content: space-between; align-items: baseline; }
@@ -149,7 +147,7 @@ export function homePage({ shapes, release, origin }) {
 <a class="btn" href="${esc(release.dmg)}">下载 Mac 版${release.version ? ` · v${esc(release.version)}` : ''}</a>
 <small>Apple 芯片${release.date ? ` · ${esc(release.date)} 发布` : ''} · MIT 开源 · <a href="${esc(release.exe || release.page)}">Windows 版</a><br><a href="${esc(release.page)}">更新说明</a> · <a href="https://github.com/yanglongyun/iimos">源码</a></small>
 </div></section>
-<div class="demo"><img src="/media/xp.gif" alt="iimos 把自己改成 Windows XP 桌面的录屏"></div>
+<div class="demo"><video src="/media/xp.mp4" autoplay muted loop playsinline poster="/media/xp-poster.jpg" aria-label="iimos 把自己改成 Windows XP 桌面的录屏"><img src="/media/xp.gif" alt="iimos 把自己改成 Windows XP 桌面的录屏"></video></div>
 <p class="cap"><b>「把自己改成 Windows XP 桌面」</b> —— 真实录屏,从出厂状态开始,中间快进。</p>
 
 <h2 class="h"><span>它能做什么</span></h2>
