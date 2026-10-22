@@ -68,8 +68,10 @@ footer a:hover { color: var(--ink); }
 .get .btn:hover { filter: brightness(1.08); }
 .get small { display: block; margin-top: 10px; color: var(--dim); font-size: 11.5px; line-height: 1.7; }
 .get small a { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; }
-.demo { border: 1px solid var(--faint); border-radius: 10px; overflow: hidden; background: #0a0a09; }
+.demo { border: 1px solid var(--faint); border-radius: 10px; overflow: hidden; background: #0a0a09; max-width: 720px; margin: 0 auto; }
+/* 录屏原尺寸 720px,不放大:放大就糊 */
 .demo img { display: block; width: 100%; }
+.cap { text-align: center; }
 .cap { color: var(--dim); font-size: 12px; margin: 10px 0 0; }
 .cap b { color: var(--ink-2); font-weight: 400; }
 .h { margin: 72px 0 18px; font-size: 13px; font-weight: 500; color: var(--acc); display: flex; justify-content: space-between; align-items: baseline; }
