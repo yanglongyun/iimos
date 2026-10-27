@@ -1,5 +1,6 @@
 .DS_Store
 node_modules/
+.local/
 
 # 本机凭据与开发配置
 .env
