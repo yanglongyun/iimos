@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>思维导图 · 交互原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #EEF1F4; --grid: #DCE2E8; --panel: #FFFFFF; --sunk: #F5F7F9; --ink: #15202B; --muted: #5A6674; --faint: #8A95A2; --rule: #D3DAE2;
+  --root: #15202B; --root-ink: #FFFFFF; --accent: #4B47D6; --accent-ink: #FFFFFF; --ai: #7A4FD6;
+  --c-chatgpt: #0E8468; --c-codex: #5146C8; --c-plugins: #B06F0C; --c-api: #BE3653; --c-ent: #2A70A4; --c-gen: #4B47D6;
+  --shadow: 0 1px 2px rgba(21,32,43,.06), 0 4px 14px rgba(21,32,43,.07);
+  --shadow-lg: 0 10px 40px rgba(21,32,43,.14);
+  --f-sans: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0F151B; --grid: #1A232C; --panel: #161F28; --sunk: #121A22; --ink: #E6ECF2; --muted: #93A1B0; --faint: #6B7887; --rule: #2A3642;
+    --root: #E6ECF2; --root-ink: #0F151B; --accent: #8E8AFF; --accent-ink: #0F151B; --ai: #B595FF;
+    --c-chatgpt: #3CC99E; --c-codex: #9189FF; --c-plugins: #E6A544; --c-api: #F2738C; --c-ent: #62ABE2; --c-gen: #8E8AFF;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25); --shadow-lg: 0 10px 40px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { overflow: hidden; }
+#app { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-sans); font-size: 14px; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+code { font-family: var(--f-mono); font-size: .9em; background: color-mix(in srgb, var(--muted) 14%, transparent); padding: 0 4px; border-radius: 4px; }
+
+/* ---------- 顶栏 ---------- */
+.top { height: 54px; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--rule); position: relative; z-index: 5; }
+.logo { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; text-decoration: none; white-space: nowrap; }
+.logo svg { flex: none; }
+.tag { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--rule); border-radius: 999px; padding: 1px 8px; }
+.top .crumb { min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.top .crumb b { color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grow { flex: 1; }
+.btn { border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; padding: 6px 11px; font-size: 13px; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--panel); padding: 6px 12px; font-size: 13px; }
+.seg button.on { background: var(--ink); color: var(--panel); }
+
+/* ---------- 首页 ---------- */
+.home { height: calc(100% - 54px); overflow-y: auto; }
+.home-in { max-width: 1080px; margin: 0 auto; padding: 56px 20px 64px; display: flex; flex-direction: column; gap: 44px; }
+.hero { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.hero h1 { margin: 0; font-size: clamp(28px, 4.4vw, 44px); line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; max-width: 16em; }
+.hero p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.7; max-width: 40em; }
+.composer { width: 100%; background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.composer textarea { width: 100%; border: 0; outline: 0; resize: none; background: transparent; font-size: 16px; line-height: 1.6; min-height: 54px; }
+.composer .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--rule); background: var(--panel); border-radius: 999px; padding: 4px 11px; font-size: 12.5px; color: var(--muted); }
+.chip.on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+.chip:hover { border-color: var(--muted); }
+.depth { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.depth select { border: 1px solid var(--rule); border-radius: 7px; background: var(--panel); padding: 3px 6px; font: inherit; color: var(--ink); }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.examples button { border: 1px dashed var(--rule); background: transparent; border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); text-align: left; }
+.examples button:hover { border-color: var(--accent); color: var(--accent); }
+.sec-h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.sec-h h2 { margin: 0; font-size: 18px; }
+.sec-h span { color: var(--muted); font-size: 13px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; text-align: left; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card:hover { border-color: var(--muted); box-shadow: var(--shadow); }
+.card h3 { margin: 0; font-size: 16px; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card .meta { display: flex; gap: 10px; font-size: 12px; color: var(--faint); font-family: var(--f-mono); flex-wrap: wrap; }
+.mini { height: 92px; border-radius: 8px; background: var(--sunk); overflow: hidden; }
+.mini svg { width: 100%; height: 100%; display: block; }
+.empty-note { color: var(--muted); font-size: 13px; padding: 18px; border: 1px dashed var(--rule); border-radius: 12px; }
+
+/* ---------- 生成中 ---------- */
+.gen { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(3px); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.gen-box { width: min(440px, 100%); background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+.gen-box h3 { margin: 0; font-size: 16px; }
+.gen-box .src { font-family: var(--f-mono); font-size: 12px; color: var(--muted); word-break: break-all; }
+.bar { height: 4px; background: var(--sunk); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .4s ease; }
+.gen-box .now { font-size: 13px; color: var(--muted); }
+
+/* ---------- 导图页 ---------- */
+.mapview { height: calc(100% - 54px); display: flex; }
+.stage { position: relative; flex: 1; min-width: 0; overflow: hidden; cursor: grab; touch-action: none; background-image: radial-gradient(var(--grid) 1px, transparent 1px); background-size: 22px 22px; }
+.stage.dragging { cursor: grabbing; }
+.world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.world.anim { transition: transform .3s ease; }
+.world svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.zoombar { position: absolute; right: 14px; bottom: 14px; display: flex; gap: 6px; }
+.zoombar .btn { box-shadow: var(--shadow); }
+.notice { position: absolute; left: 14px; top: 14px; right: 14px; max-width: 560px; background: color-mix(in srgb, var(--accent) 8%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule)); border-radius: 10px; padding: 9px 12px; font-size: 13px; line-height: 1.55; }
+
+.node { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px; border: 1px solid transparent; background: none; text-align: left; line-height: 1.4; white-space: nowrap; user-select: none; }
+.node .en { display: block; font-size: 11px; color: var(--muted); font-family: var(--f-mono); font-weight: 400; }
+.node .tog { flex: none; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; font-size: 11px; font-family: var(--f-mono); display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--bc); color: var(--bc); background: var(--panel); }
+.node.open > .tog { background: var(--bc); color: var(--panel); }
+.n0 { background: var(--root); color: var(--root-ink); padding: 12px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; }
+.n0 .en { color: color-mix(in srgb, var(--root-ink) 65%, transparent); font-size: 12px; }
+.n0 .tog { border-color: var(--root-ink); color: var(--root-ink); background: transparent; }
+.n0.open > .tog { background: var(--root-ink); color: var(--root); }
+.n1 { background: var(--bc); color: #fff; padding: 9px 13px; border-radius: 10px; font-size: 15px; font-weight: 600; box-shadow: var(--shadow); }
+@media (prefers-color-scheme: dark) { .n1 { color: #0F151B; } }
+.n1 .en { color: inherit; opacity: .78; }
+.n1 .tog { border-color: currentColor; color: inherit; background: transparent; }
+.n1.open > .tog { background: var(--panel); color: var(--bc); border-color: var(--panel); }
+.n2 { background: color-mix(in srgb, var(--bc) 9%, var(--panel)); border-color: color-mix(in srgb, var(--bc) 45%, var(--rule)); padding: 7px 11px; border-radius: 9px; font-size: 14px; font-weight: 600; box-shadow: var(--shadow); }
+.n3 { padding: 4px 8px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--bc); background: var(--panel); border-color: color-mix(in srgb, var(--bc) 30%, var(--rule)); }
+.n4, .n5, .n6 { padding: 3px 8px; border-radius: 6px; font-size: 13px; color: var(--ink); white-space: normal; max-width: 330px; background: color-mix(in srgb, var(--panel) 75%, transparent); }
+.node.ai { border: 1px dashed color-mix(in srgb, var(--ai) 60%, transparent); background: color-mix(in srgb, var(--ai) 7%, var(--panel)); }
+.node.ai .lab::before { content: "AI"; font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; color: var(--ai); border: 1px solid color-mix(in srgb, var(--ai) 50%, transparent); border-radius: 4px; padding: 0 3px; margin-right: 6px; vertical-align: 1px; }
+.node.sel { outline: 2px solid var(--bc); outline-offset: 2px; }
+.n0.sel { outline-color: var(--ink); }
+.node.hit { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ai) 35%, transparent); }
+.node.born { animation: born .45s ease; }
+@keyframes born { from { opacity: 0; transform: var(--tf) translateX(-10px); } }
+@media (prefers-reduced-motion: reduce) { .node.born { animation: none; } .world.anim { transition: none; } }
+
+/* 节点浮动操作条 */
+.actions { position: absolute; z-index: 4; display: flex; gap: 2px; background: var(--panel); border: 1px solid var(--rule); border-radius: 9px; box-shadow: var(--shadow-lg); padding: 3px; }
+.actions button { border: 0; background: transparent; border-radius: 6px; padding: 5px 9px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.actions button:hover { background: var(--sunk); }
+.actions button svg { color: var(--ai); }
+.actions .sep { width: 1px; background: var(--rule); margin: 4px 2px; }
+
+/* 大纲视图 */
+.outline { flex: 1; min-width: 0; overflow-y: auto; background: var(--panel); }
+.outline-in { max-width: 820px; margin: 0 auto; padding: 32px 24px 64px; }
+.outline h1 { font-size: 26px; margin: 0 0 6px; }
+.outline .lead { color: var(--muted); line-height: 1.75; margin: 0 0 22px; }
+.outline h2 { font-size: 19px; margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--bc); }
+.outline h3 { font-size: 16px; margin: 20px 0 6px; }
+.outline h3 + p { margin: 0 0 8px; color: var(--muted); line-height: 1.7; }
+.outline h4 { font-size: 13.5px; margin: 12px 0 4px; color: var(--bc); }
+.outline ul { margin: 0; padding-left: 20px; line-height: 1.7; }
+.outline li::marker { color: var(--bc); }
+.outline .seo { font-size: 12px; color: var(--faint); font-family: var(--f-mono); margin-bottom: 18px; }
+
+/* ---------- 侧栏 ---------- */
+.side { width: 420px; flex: none; background: var(--panel); border-left: 1px solid var(--rule); display: flex; flex-direction: column; min-height: 0; }
+.tabs { display: flex; border-bottom: 1px solid var(--rule); padding: 0 8px; flex: none; }
+.tabs button { border: 0; background: none; padding: 12px 12px 10px; font-size: 13.5px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--ink); }
+.tabs .x { margin-left: auto; font-weight: 400; display: none; }
+.pane { flex: 1; min-height: 0; overflow-y: auto; }
+.detail { padding: 18px 20px 28px; display: flex; flex-direction: column; gap: 16px; }
+.crumbs { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px; }
+.crumbs button { border: 0; background: none; padding: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.detail h2 { margin: 0; font-size: 20px; line-height: 1.35; text-wrap: balance; }
+.detail .en { font-family: var(--f-mono); font-size: 12px; color: var(--muted); margin-top: 4px; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; color: var(--bc); border: 1px solid color-mix(in srgb, var(--bc) 50%, transparent); border-radius: 999px; padding: 2px 9px; }
+.sum { margin: 0; font-size: 14px; line-height: 1.75; }
+.label { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+.detail section h3 { margin: 0 0 6px; font-size: 13px; color: var(--bc); }
+.detail ul { margin: 0; padding-left: 18px; line-height: 1.65; }
+.detail li::marker { color: var(--bc); }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.links a { font-size: 12.5px; text-decoration: none; border: 1px solid var(--rule); border-radius: 6px; padding: 4px 9px; }
+.links a:hover { border-color: var(--bc); color: var(--bc); }
+.jump { display: block; width: 100%; text-align: left; border: 1px solid var(--rule); background: var(--panel); border-radius: 9px; padding: 10px 12px; }
+.jump:hover { border-color: var(--bc); }
+.jump b { display: block; font-size: 14px; }
+.jump span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.55; margin-top: 3px; }
+.stack { display: flex; flex-direction: column; gap: 8px; }
+
+.aibox { border: 1px solid color-mix(in srgb, var(--ai) 35%, var(--rule)); background: color-mix(in srgb, var(--ai) 5%, var(--panel)); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.aibox .hd { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--ai); }
+.aibox .hd .grow { flex: 1; }
+.aibox .hd button { border: 0; background: none; font-size: 12px; color: var(--muted); font-weight: 400; padding: 2px 4px; }
+.aibox .hd button:hover { color: var(--ink); }
+.aibtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.aibtns .btn { display: inline-flex; align-items: center; gap: 6px; }
+.aibtns .btn svg { color: var(--ai); }
+.md { font-size: 14px; line-height: 1.75; }
+.md p { margin: 0 0 8px; }
+.md p:last-child { margin-bottom: 0; }
+.md ul, .md ol { margin: 4px 0 8px; padding-left: 20px; }
+.md li { margin: 2px 0; }
+.md strong { font-weight: 600; }
+.md h4 { margin: 10px 0 4px; font-size: 13.5px; }
+.caret::after { content: ""; display: inline-block; width: 7px; height: 14px; background: var(--ai); margin-left: 2px; vertical-align: -2px; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* 对话 */
+.chat { display: flex; flex-direction: column; height: 100%; }
+.msgs { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+.msg { max-width: 100%; }
+.msg.me { align-self: flex-end; background: var(--ink); color: var(--panel); padding: 8px 12px; border-radius: 12px 12px 4px 12px; max-width: 88%; line-height: 1.6; }
+.msg.me .ctx { display: block; font-size: 11.5px; opacity: .7; margin-bottom: 2px; }
+.msg.bot { align-self: stretch; }
+.msg.bot .who { font-size: 11.5px; font-weight: 600; color: var(--ai); margin-bottom: 4px; }
+.refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ref { border: 1px solid color-mix(in srgb, var(--bc) 45%, var(--rule)); background: color-mix(in srgb, var(--bc) 7%, var(--panel)); color: var(--ink); border-radius: 7px; padding: 3px 8px; font-size: 12.5px; text-align: left; }
+.ref:hover { border-color: var(--bc); }
+.done-act { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.chat-foot { border-top: 1px solid var(--rule); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; flex: none; }
+.sugg { display: flex; gap: 6px; flex-wrap: wrap; }
+.sugg button { border: 1px solid var(--rule); background: var(--panel); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+.sugg button:hover { color: var(--ink); border-color: var(--muted); }
+.ctxbar { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.ctxbar span { border: 1px solid var(--rule); border-radius: 6px; padding: 2px 7px; color: var(--ink); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctxbar button { border: 0; background: none; color: var(--muted); padding: 0 2px; }
+.inrow { display: flex; gap: 8px; align-items: flex-end; border: 1px solid var(--rule); border-radius: 12px; padding: 6px 6px 6px 12px; background: var(--panel); }
+.inrow:focus-within { border-color: var(--accent); }
+.inrow textarea { flex: 1; border: 0; outline: 0; resize: none; background: transparent; line-height: 1.5; max-height: 120px; padding: 4px 0; }
+.send { flex: none; width: 32px; height: 32px; border-radius: 8px; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.send:disabled { opacity: .4; cursor: default; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--panel); padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 60; box-shadow: var(--shadow-lg); }
+
+@media (max-width: 860px) {
+  .top .crumb, .top .hide-s { display: none; }
+  .mapview { flex-direction: column; }
+  .side { width: 100%; height: 52%; border-left: 0; border-top: 1px solid var(--rule); }
+  .side.min { height: auto; }
+  .side.min .pane { display: none; }
+  .tabs .x { display: block; }
+  .home-in { padding-top: 32px; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const L = (t, u) => [t, u];
+const LC = 'https://learn.chatgpt.com';
+const DATA = {
+  t: 'DevDay 2026', en: 'OpenAI · 2026-09-29',
+  sum: '本次 DevDay 共发布 17 项更新，分为五条主线：ChatGPT 本体（常驻智能体 dots、Work 跨设备、Space 协作）、Codex（Ultrafast、云端环境、安全扫描）、插件与站点（开放给开发者的接入能力）、API（新模型 GPT-6.1 Sol 与 Ultrafast），以及企业版（Slack/Teams、团队任务、共享连接、安全策略）。',
+  kids: [
+  { t: 'ChatGPT', en: '面向个人用户的产品', key: 'chatgpt',
+    sum: '面向终端用户的三项更新：可以长期托管工作的个人智能体 dots、可在多设备间续接的 Work 任务，以及由 Library 升级而来的协作空间 Space。',
+    kids: [
+    { t: 'Dots 常驻智能体', en: 'Meet your dot',
+      sum: '常驻运行的个人智能体。为它设定目标与可自主执行的范围后，它会在自己的云端电脑上跨已连接应用持续推进工作，对话结束后也不会停止，完成后带回结果供你审阅，需要你判断时会主动联系你。目前向符合条件的账号逐步开放。',
+      links: [L('Dots 使用指南', LC+'/docs/dots'), L('可用范围', LC+'/docs/dots#access'), L('管理员指南', LC+'/docs/enterprise/o-admin-guide')],
+      kids: [
+        { t: '核心定位', kids: ['由 GPT-6 Astra 驱动，拥有独立的云端电脑与浏览器', '你的电脑关机后仍可继续工作', '可调研、分析数据、准备文档、开发软件', '自行决定何时暂停、何时唤醒，无需为每次跟进设定固定日程', '可调用后台智能体并行处理多项工作，同时继续和你对话'] },
+        { t: '创建与个性化', kids: ['在 ChatGPT 桌面 App 或桌面浏览器中创建，移动网页版不支持', '可自定义名称、形状、颜色、眼睛、眼镜与配饰，随时可修改', '默认账号形如 @yourname-dot，命名后变为 @tibo-alfred 这类格式'] },
+        { t: '沟通渠道', kids: ['ChatGPT 桌面端与移动 App 中直接对话', '语音通话：对话页点击电话按钮，通话结束后已分配的工作继续执行', 'Slack：私信，或在已添加的频道中 @ 它', 'Microsoft Teams：目前为邀请制 alpha', '所有渠道是同一个 dot，切换渠道不会重置记忆', '可指定分工：日常进度发到 ChatGPT，待决策事项发到 Slack', '加入 Slack 频道不等于开始监控，需明确告诉它关注哪些频道与事件'] },
+        { t: '记忆与上下文', kids: ['信息来源：当前对话 + ChatGPT 记忆 + 它自己保存的笔记', '笔记记录你的偏好、决策与进行中的工作，跨对话、跨渠道延续', '主动调研为只读，据此执行后续动作需要相应权限', '在私人对话中获得的信息，分享给他人前会确认你是否允许'] },
+        { t: '电脑与应用', kids: ['云端电脑可随时点击 Take over 接管，完成后 Return control 交还', '可连接一台个人电脑，访问其本地文件、代码与应用；电脑需在线且 ChatGPT 处于打开状态', '可使用已启用的插件，例如 Gmail 查邮件、Google Drive 处理文档、GitHub 排查代码', '网站登录通过私密表单完成，凭据不进入对话；可选择保存到 Passwords', '云端浏览器被网站拦截时，可改用已连接的本地电脑', '连接消息渠道不会同时授予邮箱、其他应用或本地电脑的访问权限'] },
+        { t: '任务管理', kids: ['可发起云端线程，或在已连接电脑上创建 Work 与 Codex 任务', '可接续本地已有的 Codex 任务，可使用你创建的 Codex 云端环境', '桌面端在 dot 资料页的 Activity 中查看委派任务的进度与结果', 'Pause 暂停当前主任务；委派任务在 Activity 中停止，定时任务在 Scheduled 中取消', '停止任务不会撤销已完成的操作'] },
+        { t: '权限与审批', kids: ['默认生效：内置安全机制 + 已有应用权限 + 自动审批检查', '影响账户或对外分享之前，先判定是直接执行、请你批准还是交由你操作', '可添加指令（如「发送前先给我看草稿」）和自定义规则', '指令与自定义规则都不能覆盖内置安全要求'] },
+        { t: '可用范围与计费', kids: ['Pro 100 / 200 / 500：18 岁以上，不含欧洲经济区、英国与瑞士', 'Business Premium：全球逐步开放', 'Enterprise：全球逐步开放，默认关闭，需管理员启用', '与 dot 对话不计入 ChatGPT 用量限制', 'dot 发起的 Work 或 Codex 任务按对应产品正常计量', '发布后首月提供扩展额度'] },
+        { t: '管理员配置', kids: ['角色权限：Use dots、Add dots to Slack、Allow local computer access、Use custom rules for dots', '云端能力：Cloud browser use、Cloud network access、Cloud computer use、Use password manager', '授予权限不会自动连接服务，Slack 与本地电脑需成员自行完成设置', '企业模型控制与默认模型设置不适用于 dots', '任一云策略启用 enforce_residency 时，dots 无法访问本地电脑', '可通过 Compliance API 审计用户消息与 dot 回复，通过 Analytics API 查看采用情况'] }
+      ] },
+    { t: 'Work 跨设备续接', en: 'Work across devices',
+      sum: '在桌面端新建开启同步的 ChatGPT Work 任务，之后可在网页或手机上继续。需要本地文件和工具的步骤，由一台在线的已连接电脑执行。已有任务保持原来的模式。',
+      links: [L('ChatGPT Work 入门', LC+'/docs/get-started-with-work#continue-work-across-devices'), L('同步设置（管理员）', LC+'/docs/enterprise/cloud-local-access')],
+      kids: [
+        { t: '工作机制', kids: ['开启同步后，使用 Local computer access with Work Cloud 的任务由云端负责协调', '具体执行仍可使用已授权的本地文件与工具', '示例：在笔记本上用某个文件夹启动任务，之后在手机上查看结果、追加指令', '需要本地文件的步骤执行时，电脑须保持在线'] },
+        { t: '使用须知', kids: ['开启同步后需新建任务；已有任务保持仅本地或仅云端', '电脑离线时，新的一轮可在云容器中继续，但无法访问本地文件与工具', '同一轮内不能从本地执行切换到云端执行', '关闭该功能会中断正在运行的轮次'] },
+        { t: '未开启同步时', kids: ['在桌面输入框中选择本地或云端 Work', '本地 Work：使用电脑上的资源', '云端 Work：适合定时调研、检查网站等任务，电脑无需保持唤醒'] },
+        { t: '企业管理', kids: ['企业版 App 内的 Local/Cloud 切换及默认值在发布时保持不变', '协调在 OpenAI 云端，执行留在已连接电脑', '本地执行时 MDM 与旧版设备策略优先级高于 Agent Security', 'Work 与 dots 的本地电脑访问需分别开启'] },
+        { t: 'ChatGPT Work 概念', kids: ['Chat 用于问答、解释、头脑风暴与短草稿', 'Work 用于交付成果：简报、演示文稿、分析、定期更新、文件', '模型选择：GPT-6 Astra 处理高难度任务，GPT-6.1 Sol 以更低成本处理复杂任务，Luna 处理简单任务', 'ChatGPT Work 与 Codex 共用同一套定价、额度与用量限制'] }
+      ] },
+    { t: 'ChatGPT Space', en: 'ChatGPT Space（原 Library）',
+      sum: '把文件与 Pages 汇集到一处。可以与 ChatGPT 一起起草和修改，也可以直接编辑，并邀请协作者查看、评论或编辑。',
+      links: [L('入门', LC+'/docs/space/getting-started'), L('Pages', LC+'/docs/space/pages'), L('与智能体协作', LC+'/docs/space/agents'), L('协作', LC+'/docs/space/collaboration'), L('管理员指南', LC+'/docs/enterprise/chatgpt-space')],
+      kids: [
+        { t: '基本结构', kids: ['All 汇总全部内容，可按 Your items、Shared with you 筛选或搜索', 'Page：可直接编辑或由 ChatGPT 编辑的文档', 'Space：把同一主题或团队的多个页面归到一起', '可从已有对话直接生成页面'] },
+        { t: 'Pages 编辑能力', kids: ['页面由块组成，输入 / 打开插入菜单', '支持表格、代码、高亮、图片、可下载文件、子页面、页面链接', 'Generate：在页面内直接生成初稿，可接受、修改或撤销', 'Visualize：生成可交互的计算器、流程图、界面稿', 'Prompt 块：保存一条请求，读者可一键发起对话', 'Task 块与 Agent Instructions：为 Codex 或智能体留下任务与指引', '@ 提及人员、智能体、文件与对话，引用来源而不复制内容', '选中文字后可 Ask for change 或发起评论', '表格可设置 Normal、Flexible、Full width 三种宽度'] },
+        { t: '与智能体协作', kids: ['页面旁的对话：适合讨论问题或较大的改动', '选中文本使用 Ask for change：改写指定段落', '在页面内或评论中输入 @ChatGPT 或 @dot 加指令', '发布时暂不提供 Keep Updated；定时工作需在对话中设置并核对', '协作者共享页面内容，但可能使用不同的智能体与连接工具'] },
+        { t: '分享与权限', kids: ['三档权限：查看、评论、编辑', '分享 Space 即授予其下所有页面的访问权', '分享页面同时授予其子页面的访问权', '移除直接邀请不会移除从父页面或 Space 继承的权限', '能看页面的人不一定能打开页面中链接的源文件'] },
+        { t: '企业管理', kids: ['通过 Share Library files and folders 在工作区与角色层级控制分享', '关闭分享会阻止新的分享，但已有共享仍然有效', '删除页面或 Space 会连同子页面一起移入回收站', '导出或删除文件需要 Compliance API 权限', '默认不使用 ChatGPT Enterprise 数据训练模型'] }
+      ] }
+  ] },
+  { t: 'Codex', en: '编程智能体', key: 'codex',
+    sum: 'Codex 的三项更新：更快的 Astra Ultrafast 模式、可复用的云端开发环境，以及以研究预览形式推出的云端安全扫描插件。',
+    kids: [
+    { t: 'Astra Ultrafast', en: 'GPT-6 Astra Ultrafast in Codex',
+      sum: '在 Codex 和 ChatGPT Work 中使用 GPT-6 Astra Ultrafast，token 生成速度最高可达 Astra 标准模式的 8 倍。适用于 Pro $500/月方案及符合条件的 Enterprise、Edu 方案；企业所有者控制开通范围；要求在美国以外进行推理驻留的工作区不可用。',
+      links: [L('Ultrafast 模式', LC+'/docs/agent-configuration/speed#ultrafast-mode'), L('方案与用量', LC+'/docs/pricing')],
+      kids: [
+        { t: '速度', kids: ['token 生成速度最高为 GPT-6 Astra 标准模式的 8 倍', '该指标衡量的是生成速度，不代表计费倍率或任务总耗时'] },
+        { t: '可用方案', kids: ['Pro $500/月', '符合条件的 Enterprise（按额度或按美元用量计费的协议）', '符合条件的 Edu（使用额度）', '其他自助方案即使购买额度，发布时也无法使用', '旧版按速率限制计费的 Enterprise 不支持', '要求美国以外推理驻留的工作区不可用；仅工作区所在地不决定资格'] },
+        { t: '计费', kids: ['订阅包含额度：按标准速率的 8 倍消耗', '购买的额度与企业按量付费：按标准速率的 6 倍计费', 'Pro $500 先消耗包含额度，用完后再使用额度点数', '使用 API Key 登录 Codex 时按 API token 价格计费，不适用上述倍率'] },
+        { t: '企业控制', kids: ['企业工作区默认关闭', '所有者可在工作区权限中为指定用户或全员开启', '已有的人均消费上限对 Ultrafast 同样生效'] },
+        { t: '对比 Fast 模式', kids: ['CLI 中用 /fast 切换，config.toml 中可设为默认', '支持 GPT-6.1 Sol、GPT-6 Astra、GPT-6 Sol、GPT-6 Luna', '订阅额度按 2.5 倍消耗，购买额度按 2 倍计费', 'GPT-6.1 Sol 的 Ultrafast 支持将在之后推出'] },
+        { t: '相关时间点', kids: ['GPT-5.5 将于 2026-10-14 从 ChatGPT、ChatGPT Work 与 Codex 下线，API 不受影响', '付费方案建议改用 GPT-6 Sol，Free 与 Go 建议改用 GPT-6 Luna'] }
+      ] },
+    { t: '可复用云端环境', en: 'Reusable cloud environments',
+      sum: '描述你的开发环境，由 Codex 负责准备并测试，然后发布该环境。新任务在隔离的工作区中基于已准备好的文件系统启动。你的电脑休眠时，也可以在网页、移动端或桌面端继续云端任务。',
+      links: [L('云端环境文档', LC+'/docs/environments/cloud-environments')],
+      kids: [
+        { t: '创建流程', kids: ['新任务中选择 Work in > Cloud > Create environment', '选择要检出的 GitHub 仓库，按提示连接 GitHub', 'Codex 检查仓库、安装依赖与工具并测试流程', '按提示补充缺失的权限或信息，也可指定版本、命令或服务', '审阅配置报告与文件后点击 Publish'] },
+        { t: '自动生成的配置', kids: ['Install script：安装依赖、准备开发资源', 'Start skill：启动服务并检查是否就绪', '无需手写安装脚本，在对话中调整即可'] },
+        { t: '状态复用', kids: ['新任务从已发布环境的文件系统启动', '已有任务保留自身文件，包括未提交的修改与已安装工具', '仓库在后台自动刷新，保留依赖缓存，不重跑安装', '修改环境后 Republish，新任务使用新配置', '保存的状态不能替代版本控制，重要成果仍需提交'] },
+        { t: '变量与密钥', kids: ['环境变量：程序直接读取的值', '网络密钥：程序只拿到占位符，由代理在 HTTPS 443 请求中替换为真实值', '个人保险库：共享环境时，每个人提供自己的变量与密钥', '指定环境的值优先于通用默认值'] },
+        { t: '网络访问', kids: ['域名白名单：包管理器预设（npm、PyPI、crates、Go、Maven 等）或自定义', 'VPN 私有网络：目前支持 Tailscale，仅 IPv4，不含私有 DNS 与 SSH', 'OIDC：为任务签发云资源短期凭证，企业按需开通', '按来源 IP 过滤的服务可使用官方出口 IP 列表'] },
+        { t: '共享与发起', kids: ['企业内可将环境共享给整个工作区', '每个任务的工作文件相互独立，共享环境不等于共享他人任务', '在 Slack 或 Teams 中 @ChatGPT 即可对仓库发起云端任务', '同一任务可在网页、移动端、桌面端之间续接'] },
+        { t: 'VM 规格', kids: ['Plus、Edu Plus：2 vCPU、8 GiB 内存、8 GiB 磁盘', 'Pro、Business、Enterprise、Edu、Edu Pro：4 vCPU、16 GiB 内存、32 GiB 磁盘', '任务的 VM 状态在最后一次使用后最多保留 7 天', 'Enterprise 可申请更大或定制规格'] },
+        { t: '当前限制', kids: ['暂不支持电脑操作与浏览器操作', '暂不支持 GitLab 与自托管 GitHub Enterprise Server', '仓库内的 skills 可用；本地个人 skills 不同步到云端', '旧版 Codex Cloud 仍负责 Code Review 与 Linear、GitHub 集成，计划废弃'] }
+      ] },
+    { t: 'Codex Security Cloud', en: 'Security Cloud · 研究预览',
+      sum: '以研究预览形式推出的 Security Cloud 插件，可扫描已连接的 GitHub 仓库或持续监控新提交。在创建 draft PR 之前，可以先审阅发现的问题、验证证据与补丁。',
+      links: [L('设置 Security Cloud', LC+'/docs/security/setup'), L('威胁模型', LC+'/docs/security/threat-model')],
+      kids: [
+        { t: '使用步骤', kids: ['在插件市场安装并启用 Codex Security Cloud', '确认工作区已开通 Codex cloud，连接 GitHub 并授权仓库', 'New scan：选择仓库与云端环境，扫描范围选 Repository', '在 Scans 中跟踪进度，在 Findings 中查看问题'] },
+        { t: '问题与修复', kids: ['每条发现包含受影响代码、验证证据与修复建议', 'Fix with Codex 生成补丁', '审阅补丁后 Create draft pull request'] },
+        { t: '提交监控', kids: ['What to scan 选择 Commit changes 后创建', '在 Monitoring settings 中切换云端环境、设置回溯天数、暂停或启用'] },
+        { t: '威胁模型', kids: ['首版由 Codex Security 根据代码自动生成', '内容包括入口与不可信输入、信任边界与鉴权假设、敏感数据路径、优先审查区域', '用于指导后续提交扫描并为发现排序', '架构或优先级变化时，在 Project context 中编辑，对后续扫描生效'] },
+        { t: '区分', kids: ['Security Cloud 在 Codex 云端运行，扫描 GitHub 仓库', '扫描本地仓库请使用另一个插件 Codex Security（桌面端或 CLI）'] }
+      ] }
+  ] },
+  { t: '插件与站点', en: 'Sites & plugins · 面向开发者', key: 'plugins',
+    sum: '面向开发者开放的五项接入能力：用 ChatGPT 账号登录第三方应用、在 Sites 中读取访客自己的应用数据、扩展 ChatGPT 界面、订阅 MCP 事件，以及定制网页标注。',
+    kids: [
+    { t: 'Sign in with ChatGPT', en: '使用 ChatGPT 登录',
+      sum: '让用户使用 ChatGPT 账号登录你的应用；符合条件的 Plus 与 Pro 用户还可以用自己的 ChatGPT 方案承担应用内的 AI 请求。商业登录目前以有限试用形式向部分合作伙伴开放；ChatGPT 方案用量面向开源合作伙伴与部分私有客户开放。',
+      links: [L('快速开始', 'https://developers.openai.com/siwc/quickstart'), L('开源应用接入', 'https://developers.openai.com/siwc/token-sharing-open-source')],
+      kids: [
+        { t: '三种接入方式', kids: ['网站登录：用户以已有的 ChatGPT 身份注册或登录', 'ChatGPT 插件内登录：减少 OAuth 流程中的操作', '开源应用：用户用自己的 ChatGPT 方案发起 AI 请求，无需提供 API Key'] },
+        { t: '开放状态', kids: ['商业登录：限定合作伙伴的有限试用', 'ChatGPT 方案用量：所有开源合作伙伴与部分私有客户', '付费或远程托管应用需提交意向表单'] },
+        { t: '授权与范围', kids: ['基于 OpenID Connect + PKCE', '身份范围 openid profile email：获得稳定账号 ID、姓名、邮箱、头像', '使用用户方案需额外申请 Responses API 范围', '不能访问用户的 ChatGPT 对话或 API Key'] },
+        { t: '开源应用要点', kids: ['动态注册客户端，无需 client secret 或合作方 API Key', '每台运行主机需生成并持久化 ext_agent_host_id', '推荐使用 JWK 指纹 URI，也支持 urn:uuid 与 did:key', '同一用户的多台主机可共用一个 client_id 与用量设置'] },
+        { t: '界面规范', kids: ['按钮文案统一为 Continue with ChatGPT', '与其他登录方式并列，视觉显著度相当，使用官方品牌素材', '账号已存在时提供明确的关联确认流程'] }
+      ] },
+    { t: 'Sites 连接数据', en: 'Sites with connected data',
+      sum: '构建可使用每位访客自己已连接应用数据的 Site。Sites 中的插件功能仅适用于已启用该功能的工作区私有 Site；访客自行选择账号并授权访问。',
+      links: [L('用插件构建', LC+'/docs/sites#load-visitor-data-via-plugins'), L('分享与访问控制', LC+'/docs/sites#control-access-and-secrets')],
+      kids: [
+        { t: '效果', kids: ['同一个 Site，每位访客看到的是自己的数据', '示例：问题看板中，你看到分配给你的问题，同事看到分配给他的', '也可构建文档检索页，或汇总工单与消息的项目总览'] },
+        { t: '构建方式', kids: ['让 ChatGPT Work 或 Codex 构建 Site，并指明插件与用途', '预览时直接使用真实数据', '发布到工作区并分享链接'] },
+        { t: '数据读写', kids: ['页面加载时以访客自己的连接与权限读取数据', 'Sites 负责缓存与刷新，可要求添加手动刷新按钮', '连接器返回游标时默认提供 Load more 分页', '写入应用需开启写权限、访客同意且由用户明确操作'] },
+        { t: '访客授权', kids: ['访客用 ChatGPT 登录，查看 Site 请求的权限，选择账号与授权范围', '分享 Site 不会共享你本人的已连接账号', '访客可拒绝授权，但相关功能将不可用'] },
+        { t: '访问控制', kids: ['新 Site 默认仅所有者与工作区管理员可访问', '可选：指定用户或分组、外部受邀查看者、全工作区、公开', '企业版默认关闭公开发布，需管理员开启', '同工作区成员可被设为编辑者，但不能修改受众或首次发布'] },
+        { t: 'Sites 基础', kids: ['公开测试版，适用 Plus、Pro、Business、Enterprise、Edu', '每次部署都是正式环境；可先保存版本，确认后再部署'] }
+      ] },
+    { t: 'Plugin Extensions', en: 'OpenAI MCP Extensions',
+      sum: '为 ChatGPT 添加侧边栏应用、对话面板、文件查看与编辑器以及表单，并与插件的工具和 skills 一起打包。Composer 提及仅在桌面 App 中可用；Free 与 Go 用户的网页版扩展即将推出。',
+      links: [L('构建扩展', LC+'/plugins/build/extensions'), L('打包插件', LC+'/plugins/build/plugins')],
+      kids: [
+        { t: '扩展类型', kids: ['Sidebar apps：从全局侧边栏全屏打开你的应用', 'Conversation panels：在对话旁打开应用', 'Plugin settings：在 ChatGPT 内配置插件设置', 'File viewers and editors：按文件扩展名用你的界面打开、编辑、保存', 'Display modes：控制应用在对话中的显示位置与方式', 'Deep links：直达侧边栏应用中的指定页面', 'Model-App Context：ChatGPT 与 MCP App 双向同步上下文', 'Composer mentions：在桌面端输入框中搜索并引用插件内容', 'Rich forms：结构化输入与带缩略图的选项'] },
+        { t: '开发方式', kids: ['提供 TypeScript SDK、Python SDK 与协议规范', '在 MCP App 工具的 _meta 中声明 entrypoints，类型为 global、thread 或 file', '示例插件 Bits & Bolts 覆盖全部扩展'] },
+        { t: '已落地案例', kids: ['Canva：侧边栏中创建与预览设计', 'Figma：在桌面端输入框中搜索并提及文件', 'Adobe：在 ChatGPT 内用 Acrobat 与 Photoshop 编辑文件'] },
+        { t: '打包发布', kids: ['根目录 plugin.json，声明 Agent Plugins schema', '可包含 skills/、mcp.json、资源文件与生命周期 hooks', 'OpenAI 专属配置放在 extensions.com.openai 下', '公开插件发布到 ChatGPT 与 Codex 共用的插件目录', '可用内置的 @plugin-creator 快速生成骨架'] }
+      ] },
+    { t: 'MCP Events', en: '事件订阅',
+      sum: '用户可以让 ChatGPT 监听你的 MCP 服务器上的更新，并在匹配事件到达时执行动作。ChatGPT 要求 MCP 2.0，支持 MCP Events 草案规范中的 webhook 投递。',
+      links: [L('构建事件订阅', LC+'/plugins/build/mcp-events')],
+      kids: [
+        { t: '场景示例', kids: ['监听 #product-feedback 频道的 bug 报告，自动提交带修复和测试的 draft PR（message.created）', '监听文档评论，自动完成其中要求的修改（comment.created）'] },
+        { t: '工作流程', kids: ['服务器声明支持的事件', '用户告诉 ChatGPT 监听什么、如何响应', 'ChatGPT 提供回调 URL 与签名密钥完成订阅', '服务器将匹配事件推送到回调 URL', 'ChatGPT 在对应对话中按用户指令处理'] },
+        { t: '服务端实现', kids: ['协议版本 2026-07-28（MCP 2.0），在 capabilities 中声明 events', '实现 events/list、events/subscribe、events/unsubscribe', '订阅需幂等：按主体、回调、事件名与参数生成确定性 ID', '回调在投递数据前需先通过 challenge 校验', '使用 Standard Webhooks 签名，单个事件不超过 256 KiB', '仅允许 HTTPS 回调，屏蔽内网地址且不跟随重定向'] },
+        { t: '不支持', kids: ['轮询与流式投递', '草案中的 gap 与 terminated 控制通知'] }
+      ] },
+    { t: '网站标注', en: 'Website annotations',
+      sum: '由你的网站决定用户可以选中哪些内容、附带哪些上下文，以及在把反馈发送给 ChatGPT 之前可用哪些控件预览修改。Browser Annotation API 在受支持的桌面 App 内置浏览器中可用。',
+      links: [L('Annotations Extensibility', LC+'/docs/annotations-extensibility')],
+      kids: [
+        { t: '默认行为', kids: ['无需改代码即可标注任意网页', '用户选中页面区域、填写评论，发送到 Codex 或 ChatGPT Work 作为上下文'] },
+        { t: '可定制项', kids: ['选择目标：让整张卡片作为一个对象被选中', '文本选择容器：允许拖选一句话或一段文字', '选择元数据：附带页面上看不到的上下文', '从自己的按钮发起标注并预填评论', '针对精确文本范围请求反馈', '编辑器默认值与自定义控件：预览属性或收集选择', 'Canvas 内对象的选择', '从网站侧开关标注模式'] },
+        { t: '技术要点', kids: ['入口：document.oai.annotation', '仅在 HTTPS 或 localhost 的顶层页面可用', 'HTML 属性：oai-annotation-container、oai-annotatable、oai-annotation-metadata', '元数据最多 6 个字段，序列化后不超过 2,048 字节', '打开标注不会自动发送，只有用户可以提交'] },
+        { t: '限制', kids: ['暂不支持 ChatGPT Enterprise 与 Edu 工作区', '需 DevDay 2026 版本及以后的 ChatGPT 桌面 App'] }
+      ] }
+  ] },
+  { t: 'API', en: '开发者平台', key: 'api',
+    sum: 'API 侧的两项更新：新模型 GPT-6.1 Sol（附带多智能体测试版），以及 Responses API 中的 Astra Ultrafast 服务层级。',
+    kids: [
+    { t: 'GPT-6.1 Sol', en: 'gpt-6.1-sol',
+      sum: '以更低的成本提供接近 Astra 的性能，适合复杂编码与专业工作。可在 API 与 Codex 中使用（视可用情况）。支持 Responses 中的多智能体测试版，以及 Standard、Flex、Batch 处理的欧盟数据驻留。',
+      links: [L('API 模型页', LC+'/api/docs/models/gpt-6.1-sol'), L('Codex 中的可用性', LC+'/docs/models#gpt-61-sol'), L('多智能体测试版', LC+'/api/docs/guides/responses-multi-agent')],
+      kids: [
+        { t: '定位', kids: ['接近 Astra 的性能，标准价格约为 Astra 的五分之一', '适合重复、长时间运行的代码、应用与文档工作', '模型梯队：Astra 最强，6.1 Sol 性价比，Luna 处理大批量简单任务'] },
+        { t: 'API 价格（每百万 token）', kids: ['Standard：输入 $2.00 / 缓存输入 $0.10 / 输出 $10.00', 'Batch 与 Flex：输入 $1.00 / 输出 $5.00', 'Fast：输入 $4.00 / 输出 $20.00', '长上下文价格翻倍，例如 Standard 输入 $4.00 / 输出 $15.00', '对照 GPT-6 Astra Standard：输入 $10.00 / 输出 $50.00'] },
+        { t: '在 ChatGPT 中', kids: ['覆盖 Plus、Pro、Business、Enterprise、Edu 的 Codex（桌面端与 CLI）和 ChatGPT Work（网页与移动端）', 'Enterprise 与 Edu 默认关闭，需管理员启用', 'Free 与 Go 发布时不包含', '仅在 Work 与 Codex 中可用，Chat 中不可用', '支持 Standard 与 Fast，Ultrafast 之后推出', '推理强度从 Light 到 Ultra，Max 与 Ultra 取决于设置', 'CLI 命令：codex -m gpt-6.1-sol'] },
+        { t: '多智能体测试版', kids: ['根智能体并行派生子智能体，汇总结果后给出最终回复', '开启方式：multi_agent.enabled: true，并传入 responses_multi_agent=v1', 'max_concurrent_subagents 默认 3，对树深与总数无固定上限', '6 个内置协作动作：spawn_agent、send_message、followup_task、wait_agent、interrupt_agent、list_agents', '所有子智能体共享请求中的模型与工具', '工具密集或长时间任务推荐使用 WebSocket', '支持 GPT-6.1 Sol 与全部 GPT-5.6 模型'] },
+        { t: '适用判断', kids: ['适合：可拆分的独立任务、并行调研、多方案比较、分模块实现', '不适合：步骤强依赖、频繁写共享状态、需要固定执行图', '子智能体会增加 token 消耗'] },
+        { t: '数据驻留', kids: ['支持欧盟数据驻留', '覆盖 Standard、Flex、Batch 三种处理方式', '区域处理端点加收 10%'] }
+      ] },
+    { t: 'API 中的 Astra Ultrafast', en: 'service_tier: ultrafast',
+      sum: '在 Responses API 中使用 GPT-6 Astra Ultrafast，缩短输出 token 之间的间隔。受速率限制约束，支持全球处理与美国数据驻留。',
+      links: [L('Ultrafast 指南', LC+'/api/docs/guides/ultrafast-mode'), L('价格', LC+'/api/docs/pricing?latest-pricing=ultrafast')],
+      kids: [
+        { t: '调用方式', kids: ['model 设为 gpt-6-astra，service_tier 设为 ultrafast', '强烈推荐 WebSocket，多轮与工具调用复用同一连接', '也支持 HTTP，但频繁工具调用时网络开销会抵消部分收益', '所有 API 用户均可使用，默认速率限制较低'] },
+        { t: '价格（每百万 token）', kids: ['短上下文：输入 $60 / 缓存输入 $6 / 缓存写入 $75 / 输出 $300', '长上下文：输入 $120 / 输出 $450', '约为 Astra Standard 的 6 倍'] },
+        { t: '默认速率限制', kids: ['Tier 1–3：500,000 TPM', 'Tier 4：1,000,000 TPM', 'Tier 5：5,000,000 TPM', '可联系客户团队申请更高额度'] },
+        { t: '限制', kids: ['仅支持美国数据驻留与全球处理，不支持欧盟等其他区域', 'GPT-5.6 Sol 的 Ultrafast 需申请预览'] }
+      ] }
+  ] },
+  { t: '企业版', en: 'Enterprise', key: 'ent',
+    sum: '面向企业管理员的四项更新：把 @ChatGPT 接入 Slack 与 Teams、以团队身份运行定时或事件任务、统一管理公司账号连接，以及集中配置智能体安全策略。',
+    kids: [
+    { t: 'Slack 与 Teams 中的 ChatGPT', en: '@ChatGPT in Slack and Teams',
+      sum: '将 ChatGPT 带入已批准的对话中，使用部署所连接的工具。可配置每个部署的使用者，以及它能访问的频道。',
+      links: [L('Slack 与 Teams 指南', LC+'/docs/enterprise/chatgpt-slack-and-teams')],
+      kids: [
+        { t: '能力', kids: ['@ChatGPT 总结信息、起草回复、使用已批准的工具', '可在 Slack 或 Teams 中对仓库发起 Codex 云端任务'] },
+        { t: '访问机制', kids: ['使用服务账号配置的插件与工作区连接', '不继承提问者个人的文件、应用或私有频道权限', '个人插件需单独授权', '回复对对话所有参与者可见'] },
+        { t: '配置流程', kids: ['管理后台 Agents 中连接 Slack 并审阅权限', '每个 Slack 工作区建一个 surface，Enterprise Grid 每个工作区各一个', '可选 Selected channels only 限定频道，但不影响私信', '先在频道与私信中测试，再添加公司连接'] },
+        { t: '角色分工', kids: ['ChatGPT 管理员：连接平台、创建 surface、选择插件与连接', 'Slack 或 Teams 管理员：审批权限、安装应用', '连接负责人：准备公司账号并核实权限', '试点负责人：确定试点人群与测试场景'] },
+        { t: '注意事项', kids: ['已在使用 ChatGPT Slack 应用的组织，需 Slack 管理员批准新增权限', '从 Slack 发起 Codex 任务时，服务账号只负责查找环境，任务以提问者身份运行'] }
+      ] },
+    { t: 'Team Tasks', en: '团队任务',
+      sum: '通过团队的服务账号与已批准的连接，运行定时或由事件触发的工作。',
+      links: [L('设置 Team Tasks', LC+'/docs/enterprise/teams')],
+      kids: [
+        { t: '示例', kids: ['发布频道有新消息时，汇总进展、里程碑变化与阻塞项', '每周一汇总上周客户动态、跟进事项与待解决问题', '成交时生成客户入职简报', '每天早上汇总项目进度、阻塞与临近截止事项'] },
+        { t: '创建任务', kids: ['Scheduled > + New Task，打开 Team 开关并选择团队', '触发器：定时（注意时区）或受支持的事件', '在 Instructions 中写明目标、产出、成功标准与约束', '任务不继承创建者的个人记忆、自定义指令与聊天记录', '创建后用 Run now 试运行并在 Previous runs 中检查'] },
+        { t: '团队管理', kids: ['Settings > Teams > Create team', '所需权限：Create teams、Create and manage team automations', '团队所有者不因此获得工作区管理员权限', '新成员可看到团队全部历史运行与生成文件', '团队成员无法与工作区分组或 Slack、Teams 频道同步'] }
+      ] },
+    { t: '工作区连接', en: 'Workspace connections',
+      sum: '为受支持的团队与工作流连接公司统一管理的账号。每个连接都以所连账号的权限运行。',
+      links: [L('管理共享连接', LC+'/docs/enterprise/shared-connections')],
+      kids: [
+        { t: '作用', kids: ['Team Tasks 与 @ChatGPT 可使用公司账号，无需每人连接个人账号', '一个连接可在多个团队与工作流中复用'] },
+        { t: '创建步骤', kids: ['Admin Console > Workspace connections > +，选择应用', '按应用提供的方式认证指定账号', '为连接命名以说明其权限，例如「项目报表：只读」', '授予用户、团队或服务账号使用权，使用与管理权限分开设置'] },
+        { t: '各应用说明', kids: ['Google Drive：账号授权，或使用服务账号 JSON key', 'Gmail：授权专用邮箱；可配置域级委派', 'GitHub：发布时使用组织批准的用户账号登录', 'Notion 与 Linear：需要对方平台管理员参与'] },
+        { t: '原则', kids: ['使用专用账号或服务身份，只授予必要权限', '避免依赖某位员工的个人账号'] }
+      ] },
+    { t: 'Agent Security', en: '智能体安全策略',
+      sum: '控制智能体可以使用哪些工具，以及如何访问文件与网络。为本地执行与 Codex Cloud 执行设置工作区策略；Work Cloud 有单独的控制项。',
+      links: [L('Agent Security', LC+'/docs/enterprise/agent-security'), L('托管配置', LC+'/docs/enterprise/managed-configuration'), L('Work 同步', LC+'/docs/enterprise/cloud-local-access')],
+      kids: [
+        { t: '结构', kids: ['取代原来的 Policies & Configuration', '每条策略以 Global 为基线，可针对 Local 与 Codex Cloud 覆盖', '旧策略迁移后保留原有分配与排序'] },
+        { t: '编排层控制（仅 Global）', kids: ['审批策略与自动审查', '允许的网页搜索模式', '可用的应用、MCP 服务器与插件', '命令规则：可运行、需审批、禁止', '托管 hooks'] },
+        { t: '执行层控制（可按环境覆盖）', kids: ['是否允许登录 shell', '允许的沙箱模式', '文件系统权限', '托管执行网络'] },
+        { t: 'Requirements 与 Defaults', kids: ['Requirements：用户无法覆盖的限制', 'Defaults：在限制范围内的初始值'] },
+        { t: '优先级与管理', kids: ['本地执行时，MDM 与旧版设备策略优先于 Agent Security', 'Work Cloud 容器使用其自有策略，本地限制不会带入', 'Global 可通过策略 API 或 Terraform 管理，Local 与 Codex Cloud 在界面中管理'] }
+      ] }
+  ] }
+  ]
+};
+
+
+/* ================= 图标 ================= */
+const I = {
+  spark: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
+  branch: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 12h10M7 12c5 0 5-7 10-7M7 12c5 0 5 7 10 7"/></svg>',
+  ask: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  send: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  logo: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="1" y="1" width="22" height="22" rx="6" fill="var(--ink)"/><circle cx="7.5" cy="12" r="2.2" fill="var(--panel)"/><circle cx="17" cy="7" r="1.8" fill="var(--panel)"/><circle cx="17" cy="17" r="1.8" fill="var(--panel)"/><path d="M9.5 12c3 0 3-5 6-5M9.5 12c3 0 3 5 6 5" stroke="var(--panel)" stroke-width="1.5"/></svg>'
+};
+
+/* ================= 数据层 ================= */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CODE_RE = /([A-Za-z_][\w.-]*(?:[_=/.][\w=-]+)+|events\/\w+)/g;
+const fmt = s => esc(s).replace(CODE_RE, m => /[_/=]/.test(m) && !/^https?/.test(m) ? '<code>' + m + '</code>' : m);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+let UID = 0;
+function buildTree(raw, depth = 0, parent = null, key = null) {
+  const r = typeof raw === 'string' ? { t: raw } : raw;
+  const n = { id: ++UID, t: r.t, en: r.en, sum: r.sum, links: r.links, key: key || r.key || null, depth, parent, kids: [], ai: !!r.ai };
+  (r.kids || []).forEach(k => n.kids.push(buildTree(k, depth + 1, n, key || r.key)));
+  return n;
+}
+const MAPS = {};
+function registerMap(id, raw, meta) {
+  const root = buildTree(raw);
+  MAPS[id] = Object.assign({ id, root, chat: [], explain: {}, collapsed: null }, meta);
+  return MAPS[id];
+}
+registerMap('devday-2026', DATA, { title: 'OpenAI DevDay 2026', desc: DATA.sum, source: 'learn.chatgpt.com/docs/whats-new/devday-2026', date: '2026-09-29', pages: 34, views: '1.2 万' });
+
+const walk = (n, f) => { f(n); n.kids.forEach(k => walk(k, f)); };
+const all = m => { const a = []; walk(m.root, n => a.push(n)); return a; };
+const pathOf = n => { const p = []; for (let c = n; c; c = c.parent) p.unshift(c); return p; };
+const featureOf = n => pathOf(n).find(p => p.depth === 2);
+const catOf = n => pathOf(n)[1];
+const colorOf = n => n.key ? `var(--c-${n.key})` : 'var(--ink)';
+const plain = s => String(s).replace(/\*\*|`/g, '');
+
+/* ================= 模拟 AI（原型：预置回复 + 基于导图结构的生成） ================= */
+const PRESET = {
+  'ChatGPT 插件内登录：减少 OAuth 流程中的操作': {
+    explain: `**结论：省掉的是「在你的应用里注册或登录」这一步。**
+
+**以前的流程**（用户在 ChatGPT 中连接你的插件）：
+1. 在 ChatGPT 中点击连接，跳转到你的网站
+2. 没有账号时先注册：填写邮箱、设置密码、验证邮件
+3. 登录后在授权页确认权限
+4. 跳回 ChatGPT，插件完成连接
+
+**接入 Sign in with ChatGPT 之后**：
+1. 在 ChatGPT 中点击连接，跳转到你的网站
+2. 登录方式选择 **Continue with ChatGPT**；用户已处于 ChatGPT 登录状态，一次确认即可
+3. 你的服务端用授权码换取 OpenAI 的 ID token，校验后自动创建或关联本地账号
+4. 同一流程内把**插件的授权码**交还给 ChatGPT，连接完成
+
+**需要注意的边界**：
+- 插件连接器的权限与凭据，和 OpenAI 身份令牌是两套东西，互不替代
+- 身份范围只提供账号 ID、姓名、邮箱、头像，拿不到用户的对话内容
+- 企业要求单点登录时，应引导用户走原有的企业登录
+
+**一句话**：用户不必为了用你的插件再记一套账号密码，转化率主要提升在这里。`,
+    expand: ['以前：跳转到你的网站后先注册账号、设置密码', '现在：选择 Continue with ChatGPT，一次确认完成登录', '服务端：用授权码换取并校验 OpenAI ID token，自动建号或关联', '同一流程内把插件授权码交还 ChatGPT', '边界：连接器权限与身份令牌相互独立']
+  },
+  '网络密钥：程序只拿到占位符，由代理在 HTTPS 443 请求中替换为真实值': {
+    explain: `**这是一种「密钥不落地」的做法。**
+
+假设你的项目需要访问私有 npm 仓库 \`packages.example.com\`，需要一个令牌：
+
+- **用环境变量**：程序能直接读到完整令牌。任务里的任何代码、任何日志都可能把它打印出来。
+- **用网络密钥**：程序读到的只是一个占位字符串。请求发往 \`packages.example.com\` 时，出口代理识别出占位符，把它替换成真实令牌再转发。
+
+**生效条件**：
+- 目标域名必须在这个密钥的 Allowed domains 里
+- 必须是 HTTPS、443 端口
+- 保存网络密钥会自动把它的域名加入网络白名单
+
+**什么时候不能用**：程序需要拿到原始值做计算（例如本地签名）时，只能用环境变量。`,
+    expand: ['环境变量：程序可直接读取完整值', '网络密钥：程序只拿到占位符', '代理在发往允许域名的 HTTPS 443 请求中替换真实值', '保存网络密钥会把其域名加入白名单', '需要原始值参与计算时只能用环境变量']
+  },
+  '订阅包含额度：按标准速率的 8 倍消耗': {
+    explain: `**含义：同样一段工作，开 Ultrafast 会多用 8 倍的订阅额度。**
+
+举例：一个任务在 Astra 标准模式下消耗你本周期额度的 2%，切换到 Ultrafast 后会消耗约 16%。
+
+**几个容易混淆的点**：
+- 8 倍是**计费倍率**，不是速度倍率。速度是「token 生成最高快 8 倍」，两者数字相同只是巧合
+- 订阅额度用完后（仅 Pro $500），会转为消耗购买的额度，按 **6 倍**计费
+- 企业按量付费也按 6 倍计费，具体以合同为准
+- 用 API Key 登录 Codex 则走 API 价格（Ultrafast 输出 $300 / 百万 token），不适用这些倍率
+
+**适合开的场景**：需要快速迭代、等待时间成本高的交互式编码；批量或后台任务不建议开。`,
+    expand: ['示例：标准模式耗 2% 额度的任务，开启后约耗 16%', '8 倍是计费倍率，与速度倍率是两回事', '额度用完后转用购买额度，按 6 倍计费', '适合交互式编码，不适合批量后台任务']
+  },
+  '6 个内置协作动作：spawn_agent、send_message、followup_task、wait_agent、interrupt_agent、list_agents': {
+    explain: `**这 6 个动作由 Responses API 托管执行，你的应用不需要实现，也不要提交它们的输出。**
+
+- \`spawn_agent\`：创建子智能体并分配初始任务
+- \`send_message\`：给已有智能体排队发消息，不触发新一轮
+- \`followup_task\`：给已有的非根智能体追加任务，并启动或恢复它的一轮
+- \`wait_agent\`：等待自己邮箱里的更新
+- \`interrupt_agent\`：打断另一个智能体正在进行的一轮，保留其上下文
+- \`list_agents\`：返回当前智能体树、各自状态与最近一次任务消息
+
+**你的应用只需要处理**：任何智能体发出的普通 \`function_call\`，执行后提交对应的 \`function_call_output\`。`,
+    expand: ['spawn_agent：创建子智能体并分配任务', 'send_message：排队发消息，不触发新一轮', 'followup_task：追加任务并启动或恢复', 'wait_agent：等待邮箱更新', 'interrupt_agent：打断但保留上下文', 'list_agents：查看智能体树与状态']
+  },
+  '回调在投递数据前需先通过 challenge 校验': {
+    explain: `**目的：确认回调地址确实属于 ChatGPT、并且愿意接收这个订阅的事件，防止你的服务器被利用去轰炸任意地址。**
+
+**流程**：
+1. ChatGPT 调用 \`events/subscribe\`，带上回调 URL 和签名密钥
+2. 你的服务器生成一次性、短时有效的随机 challenge
+3. 用订阅密钥签名后 POST 给回调：\`{"type":"verification","challenge":"…"}\`
+4. ChatGPT 原样返回 challenge，你用常量时间比较
+5. 一致才激活投递；失败返回错误码 \`-32015\`
+
+**实现建议**：同一主体和回调 URL 的校验结果可缓存一段时间，避免重复订阅时反复校验。`,
+    expand: ['服务器生成一次性 challenge 并签名发送', 'ChatGPT 原样返回 challenge', '常量时间比较一致后才激活投递', '失败返回 -32015 CallbackEndpointError', '校验结果可按主体与回调地址缓存']
+  }
+};
+
+function explainText(m, n) {
+  if (PRESET[n.t]) return PRESET[n.t].explain;
+  if (m.generated) return `「${plain(n.t)}」位于「${pathOf(n).map(p => plain(p.t)).join(' › ')}」。\n\n**正式版本中**，这里会基于你输入的内容给出具体解释：先用一句话说明结论，再列出关键事实与数字，最后标注来源文档的出处。\n\n**当前为结构示意**，可以打开示例导图「OpenAI DevDay 2026」体验完整的解释效果。`;
+  const f = featureOf(n), c = catOf(n);
+  if (n.depth === 0) return `**${n.t}** 共 ${n.kids.reduce((a, k) => a + k.kids.length, 0)} 项发布，可以按「谁需要关心」来理解：\n\n` +
+    n.kids.map(k => `- **${k.t}**（${k.kids.length} 项）：${k.kids.map(x => x.t).join('、')}`).join('\n') +
+    `\n\n**建议阅读顺序**：先看 ChatGPT 了解产品方向，开发者重点看「插件与站点」和「API」，企业管理员直接看「企业版」。`;
+  if (n.depth === 1) return `「${n.t}」这条线包含 ${n.kids.length} 项更新。\n\n` + n.kids.map(k => `- **${k.t}**：${firstSentence(k.sum)}`).join('\n') +
+    `\n\n**共同点**：${n.sum}`;
+  if (n.depth === 2) {
+    const asp = n.kids.slice(0, 4).map(a => `- **${a.t}**：${plain(a.kids[0] ? a.kids[0].t : '')}`).join('\n');
+    return `**一句话**：${firstSentence(n.sum)}\n\n**最值得关注的几点**：\n${asp}\n\n**适合谁关注**：${audienceOf(c)}\n\n点击导图中的子节点，可以继续让我解释任何一条细节。`;
+  }
+  if (n.depth === 3) return `「${n.t}」说明的是 **${f.t}** 的这一方面，共 ${n.kids.length} 条：\n\n` + n.kids.map(k => `- ${plain(k.t)}`).join('\n') +
+    `\n\n**要点归纳**：${insightOf(n)}`;
+  const sib = n.parent ? n.parent.kids.filter(k => k !== n).slice(0, 2) : [];
+  return `**这一条在说什么**：${restate(n.t)}\n\n**放在上下文里**：它属于「${f ? f.t : ''} › ${n.parent ? n.parent.t : ''}」。同一组里还提到：\n${sib.map(s => `- ${plain(s.t)}`).join('\n')}\n\n**为什么重要**：${whyOf(n, f)}${f && f.links ? `\n\n**原文出处**：${f.links[0][0]}` : ''}`;
+}
+const firstSentence = s => (s || '').split(/(?<=。)/)[0];
+const audienceOf = c => !c ? '' : ({ chatgpt: 'ChatGPT 的日常用户与团队使用者。', codex: '使用 Codex 编程的开发者与工程团队。', plugins: '要把产品接入 ChatGPT 的开发者与产品负责人。', api: '直接调用 OpenAI API 的开发者。', ent: '负责部署与治理的企业管理员。' })[c.key] || '';
+function restate(t) {
+  const i = t.indexOf('：');
+  return i > 0 ? `关于「${t.slice(0, i)}」，结论是：${t.slice(i + 1)}。` : `${t}。`;
+}
+function insightOf(n) {
+  const t = n.t;
+  if (/可用|范围|方案/.test(t)) return '先确认自己的方案与地区是否在列，再看默认开关状态，企业版通常需要管理员手动开启。';
+  if (/计费|价格/.test(t)) return '区分「订阅额度倍率」「购买额度倍率」和「API 单价」三套口径，它们不能互相换算。';
+  if (/限制|不支持|注意/.test(t)) return '这些是上线前最容易踩到的坑，规划时应当优先核对。';
+  if (/流程|步骤|创建|配置|使用/.test(t)) return '按顺序完成即可，其中涉及权限授予的步骤通常需要管理员配合。';
+  return '这一组条目共同描述了该功能的边界与能力，结合父节点的官方概述阅读更容易理解。';
+}
+function whyOf(n, f) {
+  const t = n.t;
+  if (/默认关闭|需管理员|启用/.test(t)) return '这意味着功能不会自动出现，需要先在管理后台开启。';
+  if (/不支持|不可用|不含|暂不/.test(t)) return '这是一条明确的限制，选型或排期前需要先确认是否影响你。';
+  if (/\$|倍|TPM|vCPU|GiB/.test(t)) return '这是可以直接用于预算与容量规划的具体数字。';
+  return `它是理解「${f ? f.t : ''}」实际能做什么的关键细节之一。`;
+}
+function expandItems(n) {
+  if (PRESET[n.t]) return PRESET[n.t].expand;
+  if (M.generated) return ['具体内容（正式版本按输入生成）', '关键数据', '注意事项'];
+  const f = featureOf(n);
+  const sib = n.parent ? n.parent.kids.filter(k => k !== n && !k.ai).slice(0, 2) : [];
+  const out = [`官方表述：${firstSentence(f ? f.sum : n.t)}`];
+  sib.forEach(s => out.push(`相关：${plain(s.t)}`));
+  out.push(`影响：${whyOf(n, f)}`);
+  if (f && f.links) out.push(`出处：${f.links[0][0]}`);
+  return out;
+}
+
+/* 对话：意图匹配 + 在导图中检索 */
+function grams(s) { s = s.toLowerCase().replace(/[\s，。？！、：；,.?!:;「」（）()]/g, ''); const g = new Set(); for (let i = 0; i < s.length - 1; i++) g.add(s.slice(i, i + 2)); return g; }
+function search(m, q, limit = 4) {
+  const g = grams(q); if (!g.size) return [];
+  return all(m).filter(n => n.depth > 0).map(n => {
+    const txt = n.t + ' ' + (n.en || '') + ' ' + (n.depth === 2 ? n.sum : '');
+    const tg = grams(txt); let s = 0; g.forEach(x => { if (tg.has(x)) s++; });
+    return { n, s: s / Math.sqrt(tg.size + 4) + (n.depth === 2 ? .05 : 0) };
+  }).filter(x => x.s > 0.12).sort((a, b) => b.s - a.s).slice(0, limit).map(x => x.n);
+}
+const findT = (m, t) => all(m).find(n => n.t === t);
+function reply(m, q, ctx) {
+  const ql = q.toLowerCase();
+  const refsOf = ts => ts.map(t => findT(m, t)).filter(Boolean);
+  if (ctx) {
+    return { text: `针对「${plain(ctx.t)}」：\n\n` + explainText(m, ctx), refs: [ctx] };
+  }
+  const exp = q.match(/^(展开|打开|收起|折叠)(.+)$/);
+  if (exp) {
+    const target = search(m, exp[2], 1)[0] || all(m).find(n => n.t.includes(exp[2].trim()));
+    if (target) {
+      const open = /展开|打开/.test(exp[1]);
+      return { text: `已${open ? '展开' : '收起'}「${target.t}」。`, refs: [target], act: { type: open ? 'expandAll' : 'collapse', node: target } };
+    }
+  }
+  if (/plus/.test(ql) && /能用|可用|哪些|什么/.test(q)) return {
+    text: `按官方文档，**Plus 用户**可以用到的更新：\n\n- **GPT-6.1 Sol**：在 Codex 与 ChatGPT Work 中可用（Chat 中不可用）\n- **可复用云端环境**：可用，VM 为 2 vCPU / 8 GiB 内存\n- **Sites**：公开测试版覆盖 Plus，可邀请外部查看者\n- **Sign in with ChatGPT**：可用自己的方案为接入的开源应用承担 AI 请求\n\n**Plus 用不了的**：\n- **Dots**：仅 Pro、Business Premium、Enterprise\n- **Astra Ultrafast**：仅 Pro $500 与符合条件的企业、教育方案`,
+    refs: refsOf(['GPT-6.1 Sol', '可复用云端环境', 'Sites 连接数据', 'Sign in with ChatGPT', 'Dots 常驻智能体', 'Astra Ultrafast'])
+  };
+  if (/价格|多少钱|计费|收费|成本|贵/.test(q)) return {
+    text: `涉及价格的发布有两组：\n\n**API 单价（每百万 token，短上下文）**\n- GPT-6.1 Sol：输入 $2 / 输出 $10\n- GPT-6 Astra：输入 $10 / 输出 $50\n- Astra Ultrafast：输入 $60 / 输出 $300\n\n**ChatGPT 订阅内的倍率**\n- Ultrafast：订阅额度 8 倍，购买额度 6 倍\n- Fast：订阅额度 2.5 倍，购买额度 2 倍\n\n两套口径不能互相换算：用 API Key 登录 Codex 时走 API 单价。`,
+    refs: refsOf(['API 价格（每百万 token）', '计费', '价格（每百万 token）'])
+  };
+  if (/企业|管理员|admin/.test(ql)) return {
+    text: `企业管理员需要关注的事项：\n\n- **默认关闭、需手动开启**：Dots、Astra Ultrafast、GPT-6.1 Sol\n- **新的管理入口**：Agent Security 取代 Policies & Configuration\n- **新能力**：Slack 与 Teams 中的 @ChatGPT、Team Tasks、工作区连接\n- **合规**：Dots 的消息可通过 Compliance API 审计`,
+    refs: refsOf(['Agent Security', 'Slack 与 Teams 中的 ChatGPT', 'Team Tasks', '工作区连接', '管理员配置'])
+  };
+  if (/开发者|接入|集成/.test(q)) return {
+    text: `面向开发者的接入能力集中在「插件与站点」：\n\n- **Sign in with ChatGPT**：用户用 ChatGPT 账号登录你的应用\n- **Plugin Extensions**：把你的界面放进 ChatGPT 侧边栏、对话面板、文件查看器\n- **MCP Events**：让 ChatGPT 订阅你服务器上的事件并自动处理\n- **网站标注**：定制用户在你网站上选中与反馈的方式\n\nAPI 侧另有 **GPT-6.1 Sol** 与 **多智能体测试版**。`,
+    refs: refsOf(['Sign in with ChatGPT', 'Plugin Extensions', 'MCP Events', '网站标注', '多智能体测试版'])
+  };
+  const hits = search(m, q);
+  if (hits.length) return {
+    text: `在这张导图中找到 ${hits.length} 处相关内容：\n\n` + hits.map(h => `- **${plain(h.t)}**（${pathOf(h).slice(1, -1).map(p => p.t).join(' › ') || '顶层'}）`).join('\n') +
+      `\n\n点击下方节点可在导图中定位；也可以在节点上点「解释」获得详细说明。`,
+    refs: hits
+  };
+  return { text: `这张导图中没有找到与「${q}」直接相关的内容。\n\n正式版本会在导图之外检索原始文档并联网补充。当前可以尝试询问：某个方案能用哪些功能、价格与计费、企业管理员需要做什么。`, refs: [] };
+}
+
+/* ================= 小工具 ================= */
+function md(src) {
+  const lines = src.split('\n'); let h = '', list = null;
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const close = () => { if (list) { h += `</${list}>`; list = null; } };
+  for (const ln of lines) {
+    let mm;
+    if ((mm = ln.match(/^- (.*)/))) { if (list !== 'ul') { close(); h += '<ul>'; list = 'ul'; } h += `<li>${inline(mm[1])}</li>`; }
+    else if ((mm = ln.match(/^\d+\. (.*)/))) { if (list !== 'ol') { close(); h += '<ol>'; list = 'ol'; } h += `<li>${inline(mm[1])}</li>`; }
+    else if (!ln.trim()) close();
+    else { close(); h += `<p>${inline(ln)}</p>`; }
+  }
+  close(); return h;
+}
+let streamSeq = 0;
+async function streamInto(el, text, onTick) {
+  const my = ++streamSeq; el._seq = my;
+  el.classList.add('caret');
+  let i = 0;
+  await sleep(380);
+  while (i < text.length) {
+    if (el._seq !== my || !el.isConnected) return false;
+    i = Math.min(text.length, i + 2 + Math.floor(Math.random() * 4));
+    el.innerHTML = md(text.slice(0, i));
+    onTick && onTick();
+    await sleep(14);
+  }
+  el.classList.remove('caret');
+  return true;
+}
+let toastT;
+function toast(s) {
+  let el = document.querySelector('.toast');
+  if (!el) { el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
+  el.textContent = s; el.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 2200);
+}
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (_) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} }
+};
+
+/* ================= 路由 ================= */
+const app = document.getElementById('app');
+function route() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [page, id] = h.split('/');
+  if (page === 'map' && MAPS[id]) mountMap(MAPS[id]);
+  else mountHome();
+}
+addEventListener('hashchange', route);
+
+/* ================= 首页 ================= */
+function miniSvg(m) {
+  const cats = m.root.kids; let s = '';
+  const H = 92, W = 300, rx = 40, ry = H / 2;
+  cats.forEach((c, i) => {
+    const y = 12 + i * ((H - 24) / Math.max(1, cats.length - 1));
+    s += `<path d="M${rx} ${ry} C${rx + 40} ${ry} ${rx + 40} ${y} ${rx + 80} ${y}" fill="none" stroke="${colorOf(c)}" stroke-width="1.6" opacity=".8"/>`;
+    s += `<rect x="${rx + 80}" y="${y - 4}" width="44" height="8" rx="4" fill="${colorOf(c)}"/>`;
+    c.kids.slice(0, 4).forEach((f, j) => {
+      const fy = y - 6 + j * 4;
+      s += `<path d="M${rx + 124} ${y} C${rx + 140} ${y} ${rx + 140} ${fy} ${rx + 156} ${fy}" fill="none" stroke="${colorOf(c)}" stroke-width=".8" opacity=".5"/>`;
+      s += `<rect x="${rx + 156}" y="${fy - 1.2}" width="${30 + (j * 13) % 40}" height="2.4" rx="1.2" fill="${colorOf(c)}" opacity=".45"/>`;
+    });
+  });
+  s += `<rect x="${rx - 28}" y="${ry - 7}" width="40" height="14" rx="5" fill="var(--root)"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${s}</svg>`;
+}
+function mountHome() {
+  document.title = '思维导图 · 交互原型';
+  const mine = store.get('proto.mine', []).filter(x => MAPS[x.id] || restoreGen(x));
+  const featured = Object.values(MAPS).filter(m => !m.generated);
+  app.innerHTML = `
+  <header class="top">
+    <a class="logo" href="#/">${I.logo}<span>思维导图</span></a><span class="tag">交互原型</span>
+    <span class="grow"></span>
+    <button class="btn hide-s" type="button" id="hSample">查看示例导图</button>
+  </header>
+  <main class="home"><div class="home-in">
+    <section class="hero">
+      <h1>把一篇复杂的内容，整理成可以逐层展开的思维导图</h1>
+      <p>输入一个链接、一个主题或一段文本。系统会连同页面中引用的子文档一起读取，按信息本身的结构组织成导图；任何节点都可以让 AI 解释或继续展开，也可以针对整张图提问。</p>
+      <form class="composer" id="genForm">
+        <textarea id="genIn" rows="2" placeholder="请输入链接、主题或粘贴文本，例如 https://learn.chatgpt.com/docs/whats-new/devday-2026"></textarea>
+        <div class="row">
+          <span class="chip on" data-mode="url">链接</span><span class="chip" data-mode="topic">主题</span><span class="chip" data-mode="text">文本</span>
+          <label class="depth">读取深度
+            <select id="genDepth"><option value="1">仅当前页面</option><option value="2" selected>包含一层链接</option><option value="3">包含两层链接</option></select>
+          </label>
+          <span class="grow"></span>
+          <button class="btn primary" type="submit">生成导图</button>
+        </div>
+      </form>
+      <div class="examples">
+        <button type="button" data-ex="https://learn.chatgpt.com/docs/whats-new/devday-2026">OpenAI DevDay 2026 发布内容</button>
+        <button type="button" data-ex="Sign in with ChatGPT 接入方案">Sign in with ChatGPT 接入方案</button>
+        <button type="button" data-ex="2026 年个人所得税专项附加扣除">2026 年个人所得税专项附加扣除</button>
+      </div>
+    </section>
+    <section>
+      <div class="sec-h"><h2>精选导图</h2><span>公开页面，可被搜索引擎收录</span></div>
+      <div class="cards">${featured.map(cardHtml).join('')}</div>
+    </section>
+    <section>
+      <div class="sec-h"><h2>我的导图</h2><span>${mine.length ? mine.length + ' 张' : ''}</span></div>
+      ${mine.length ? `<div class="cards">${mine.map(x => cardHtml(MAPS[x.id])).join('')}</div>` : '<div class="empty-note">尚未生成导图。在上方输入内容后点击「生成导图」即可创建。</div>'}
+    </section>
+  </div></main>`;
+  const form = app.querySelector('#genForm'), inp = app.querySelector('#genIn');
+  app.querySelectorAll('[data-mode]').forEach(c => c.onclick = () => {
+    app.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x === c));
+    inp.placeholder = { url: '请输入链接，例如 https://learn.chatgpt.com/docs/whats-new/devday-2026', topic: '请输入主题，例如「2026 年个人所得税专项附加扣除」', text: '请粘贴需要整理的文本' }[c.dataset.mode];
+    inp.focus();
+  });
+  app.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => { inp.value = b.dataset.ex; inp.focus(); });
+  app.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { location.hash = '#/map/' + b.dataset.open; });
+  app.querySelector('#hSample').onclick = () => { location.hash = '#/map/devday-2026'; };
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+  form.onsubmit = e => { e.preventDefault(); const v = inp.value.trim(); if (!v) { toast('请输入链接、主题或文本'); inp.focus(); return; } generate(v, +app.querySelector('#genDepth').value); };
+}
+function cardHtml(m) {
+  const feats = all(m).filter(n => n.depth === 2).length, leaves = all(m).filter(n => !n.kids.length).length;
+  return `<button class="card" type="button" data-open="${m.id}">
+    <div class="mini">${miniSvg(m)}</div>
+    <h3>${esc(m.title)}</h3>
+    <p>${esc(m.desc || '')}</p>
+    <div class="meta"><span>${feats || m.root.kids.length} 个主题</span><span>${leaves} 条细节</span>${m.pages ? `<span>${m.pages} 篇来源</span>` : ''}${m.views ? `<span>${m.views} 次浏览</span>` : ''}</div>
+  </button>`;
+}
+
+/* 生成：原型中链接含 devday 时打开完整示例，其余输入生成结构示意 */
+async function generate(input, depth) {
+  const isUrl = /^https?:\/\//i.test(input);
+  const devday = /devday/i.test(input);
+  const box = document.createElement('div');
+  box.className = 'gen';
+  box.innerHTML = `<div class="gen-box" role="status"><h3>正在生成导图</h3><div class="src">${esc(input.slice(0, 120))}</div><div class="bar"><i></i></div><div class="now"></div></div>`;
+  document.body.appendChild(box);
+  const bar = box.querySelector('.bar i'), now = box.querySelector('.now');
+  const steps = isUrl
+    ? ['读取页面内容', depth > 1 ? `读取页面中引用的 ${devday ? 33 : 12} 篇子文档` : '解析页面结构', '提取关键事实与数据', '组织层级结构', '生成导图']
+    : ['检索相关资料', '提取关键事实与数据', '组织层级结构', '生成导图'];
+  for (let i = 0; i < steps.length; i++) {
+    now.textContent = steps[i];
+    bar.style.width = ((i + 1) / steps.length * 100) + '%';
+    await sleep(i === 1 ? 900 : 550);
+  }
+  box.remove();
+  if (devday) { location.hash = '#/map/devday-2026'; return; }
+  const id = 'g' + Date.now().toString(36);
+  const rec = { id, input };
+  restoreGen(rec);
+  const mine = store.get('proto.mine', []); mine.unshift(rec); store.set('proto.mine', mine.slice(0, 20));
+  location.hash = '#/map/' + id;
+}
+function restoreGen(rec) {
+  if (MAPS[rec.id]) return true;
+  const topic = rec.input.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40);
+  const B = (t, kids) => ({ t, kids });
+  registerMap(rec.id, {
+    t: topic, en: '结构示意', key: 'gen', sum: `「${topic}」的导图结构示意。`,
+    kids: [
+      B('背景与定义', ['是什么：核心概念的定义', '为什么出现：要解决的问题', '适用对象与范围']),
+      B('核心内容', [B('要点一', ['具体规则或机制', '关键数字']), B('要点二', ['具体规则或机制', '关键数字']), B('要点三', ['具体规则或机制'])]),
+      B('关键数据', ['时间节点', '金额、比例与限额', '适用条件']),
+      B('操作指引', ['办理或使用步骤', '所需材料或前置条件', '常见问题']),
+      B('风险与限制', ['不适用的情形', '容易误解的地方']),
+      B('延伸阅读', ['官方原文', '相关主题'])
+    ].map(x => Object.assign(x, { key: 'gen' }))
+  }, { title: topic, desc: '结构示意：正式版本将根据输入内容生成真实节点。', generated: true, input: rec.input });
+  return true;
+}
+
+/* ================= 导图页 ================= */
+let actsOff = false;
+let M, view, sel, nodesEl, wiresEl, worldEl, stageEl, actEl, sideEl, ctxNode = null, mode = 'canvas', layoutBounds = { w: 0, h: 0 };
+function mountMap(m) {
+  M = m; sel = m.root; ctxNode = null; mode = 'canvas';
+  document.title = m.title + ' · 思维导图';
+  if (!m.collapsed) { m.collapsed = new Set(); walk(m.root, n => { if (n.kids.length && n.depth >= (m.generated ? 3 : 2)) m.collapsed.add(n.id); }); }
+  view = { x: 40, y: 40, s: 1 };
+  app.innerHTML = `
+  <header class="top">
+    <a class="logo" href="#/">${I.logo}<span class="hide-s">思维导图</span></a>
+    <div class="crumb"><span>/</span><b>${esc(m.title)}</b></div>
+    <span class="grow"></span>
+    <div class="seg" role="group" aria-label="查看方式"><button type="button" class="on" data-mode="canvas">导图</button><button type="button" data-mode="outline">大纲</button></div>
+    <button class="btn hide-s" type="button" id="share">复制链接</button>
+  </header>
+  <div class="mapview">
+    <div class="stage" id="stage">
+      <div class="world" id="world"><svg id="wires"></svg><div id="nodes"></div></div>
+      <div class="actions" id="acts" hidden></div>
+      ${m.generated ? '<div class="notice"><b>结构示意</b>：原型中只有示例链接会生成真实内容。正式版本会读取你输入的内容并生成具体节点；节点上的「解释」「展开」与右侧对话均可体验。</div>' : ''}
+      <div class="zoombar"><button class="btn" type="button" id="zFit">适应屏幕</button><button class="btn" type="button" id="zAll">全部展开</button><button class="btn" type="button" id="zOut" aria-label="缩小">－</button><button class="btn" type="button" id="zIn" aria-label="放大">＋</button></div>
+    </div>
+    <div class="outline" id="outline" hidden></div>
+    <aside class="side" id="side">
+      <div class="tabs"><button type="button" class="on" data-tab="node">节点详情</button><button type="button" data-tab="chat">AI 对话</button><button type="button" class="x" id="sideMin">收起</button></div>
+      <div class="pane" id="paneNode"></div>
+      <div class="pane" id="paneChat" hidden></div>
+    </aside>
+  </div>`;
+  stageEl = app.querySelector('#stage'); worldEl = app.querySelector('#world'); nodesEl = app.querySelector('#nodes'); wiresEl = app.querySelector('#wires'); actEl = app.querySelector('#acts'); sideEl = app.querySelector('#side');
+  app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  app.querySelector('#sideMin').onclick = e => { sideEl.classList.toggle('min'); e.target.textContent = sideEl.classList.contains('min') ? '展开' : '收起'; };
+  app.querySelector('#share').onclick = () => { const u = location.href; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => toast('链接已复制'), () => toast(u)); };
+  app.querySelector('#zFit').onclick = () => fit(true);
+  app.querySelector('#zAll').onclick = () => { M.collapsed.clear(); render(); fit(true); };
+  app.querySelector('#zIn').onclick = () => zoomCenter(1.2);
+  app.querySelector('#zOut').onclick = () => zoomCenter(1 / 1.2);
+  bindStage();
+  renderChat();
+  render(); fit(false); select(m.root);
+}
+function setMode(md_) {
+  mode = md_;
+  app.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === md_));
+  stageEl.hidden = md_ !== 'canvas';
+  const ol = app.querySelector('#outline'); ol.hidden = md_ !== 'outline';
+  if (md_ === 'outline') renderOutline(ol); else { render(); positionActs(); }
+}
+function setTab(t) {
+  app.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  app.querySelector('#paneNode').hidden = t !== 'node';
+  app.querySelector('#paneChat').hidden = t !== 'chat';
+  sideEl.classList.remove('min'); app.querySelector('#sideMin').textContent = '收起';
+  if (t === 'chat') { const ta = app.querySelector('#chatIn'); ta && ta.focus(); const ms = app.querySelector('#msgs'); ms && (ms.scrollTop = ms.scrollHeight); }
+}
+
+/* ---------- 布局与渲染 ---------- */
+function visibleNodes() { const out = []; (function w(n) { out.push(n); if (!M.collapsed.has(n.id)) n.kids.forEach(w); })(M.root); return out; }
+let born = new Set();
+function render() {
+  if (mode !== 'canvas') return;
+  const vis = visibleNodes();
+  nodesEl.innerHTML = vis.map(n => {
+    const open = n.kids.length && !M.collapsed.has(n.id);
+    const tog = n.kids.length ? `<span class="tog" aria-hidden="true">${open ? '−' : n.kids.length}</span>` : '';
+    const en = n.en && n.depth <= 2 ? `<span class="en">${esc(n.en)}</span>` : '';
+    const d = Math.min(n.depth, 6);
+    return `<button type="button" class="node n${d}${open ? ' open' : ''}${n === sel ? ' sel' : ''}${n.ai ? ' ai' : ''}${born.has(n.id) ? ' born' : ''}" data-id="${n.id}" style="--bc:${colorOf(n)}"${n.kids.length ? ` aria-expanded="${open}"` : ''}><span><span class="lab">${d >= 4 ? fmt(n.t) : esc(n.t)}</span>${en}</span>${tog}</button>`;
+  }).join('');
+  born = new Set();
+  const byId = {};
+  nodesEl.querySelectorAll('.node').forEach(el => { byId[el.dataset.id] = el; });
+  vis.forEach(n => { n.el = byId[n.id]; n.w = n.el.offsetWidth; n.h = n.el.offsetHeight; });
+  const vgap = d => [0, 26, 14, 8, 5, 5, 5][Math.min(d, 6)], hgap = d => [56, 48, 38, 30, 26, 24, 24][Math.min(d, 6)];
+  const sh = n => {
+    const ks = M.collapsed.has(n.id) ? [] : n.kids;
+    if (!ks.length) return (n._sh = n.h);
+    return (n._sh = Math.max(n.h, ks.reduce((a, k) => a + sh(k), 0) + vgap(n.depth + 1) * (ks.length - 1)));
+  };
+  sh(M.root);
+  const place = (n, x, top) => {
+    n.x = x; n.y = top + n._sh / 2 - n.h / 2;
+    const ks = M.collapsed.has(n.id) ? [] : n.kids;
+    if (!ks.length) return;
+    const block = ks.reduce((a, k) => a + k._sh, 0) + vgap(n.depth + 1) * (ks.length - 1);
+    let y = top + (n._sh - block) / 2;
+    ks.forEach(k => { place(k, x + n.w + hgap(n.depth), y); y += k._sh + vgap(n.depth + 1); });
+  };
+  place(M.root, 0, 0);
+  let mx = 0, my = 0, paths = '';
+  vis.forEach(n => {
+    const tf = `translate(${n.x}px, ${n.y}px)`;
+    n.el.style.transform = tf; n.el.style.setProperty('--tf', tf);
+    mx = Math.max(mx, n.x + n.w); my = Math.max(my, n.y + n.h);
+    if (n.parent) {
+      const p = n.parent, x1 = p.x + p.w, y1 = p.y + p.h / 2, x2 = n.x, y2 = n.y + n.h / 2, c = (x1 + x2) / 2;
+      paths += `<path d="M${x1} ${y1} C${c} ${y1} ${c} ${y2} ${x2} ${y2}" fill="none" stroke="${n.ai ? 'var(--ai)' : colorOf(n)}" stroke-opacity="${n.depth >= 4 ? .45 : .7}" stroke-width="${n.depth === 1 ? 2.4 : n.depth === 2 ? 1.8 : 1.3}"${n.ai ? ' stroke-dasharray="4 3"' : ''}/>`;
+    }
+  });
+  wiresEl.setAttribute('width', mx); wiresEl.setAttribute('height', my); wiresEl.innerHTML = paths;
+  worldEl.style.width = mx + 'px'; worldEl.style.height = my + 'px';
+  layoutBounds = { w: mx, h: my };
+  positionActs();
+}
+function apply(anim) {
+  worldEl.classList.toggle('anim', !!anim);
+  worldEl.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.s})`;
+  positionActs(anim);
+}
+function fit(anim) {
+  const r = stageEl.getBoundingClientRect(), pad = 32;
+  const s = Math.min((r.width - pad * 2) / layoutBounds.w, (r.height - pad * 2) / layoutBounds.h, 1.1);
+  view.s = Math.max(s, r.width < 600 ? .6 : .72);
+  view.x = Math.max(pad, (r.width - layoutBounds.w * view.s) / 2);
+  view.y = layoutBounds.h * view.s < r.height - pad * 2 ? (r.height - layoutBounds.h * view.s) / 2 : pad;
+  apply(anim);
+}
+function zoomAt(f, cx, cy) {
+  const ns = Math.min(2.2, Math.max(.2, view.s * f));
+  view.x = cx - (cx - view.x) * (ns / view.s); view.y = cy - (cy - view.y) * (ns / view.s); view.s = ns; apply();
+}
+function zoomCenter(f) { const r = stageEl.getBoundingClientRect(); worldEl.classList.add('anim'); zoomAt(f, r.width / 2, r.height / 2); }
+function reveal(n, anim) {
+  if (!n.el) return;
+  const r = stageEl.getBoundingClientRect();
+  let maxR = n.x + n.w, maxB = n.y + n.h, minT = n.y;
+  if (!M.collapsed.has(n.id)) n.kids.forEach(k => { if (k.el) { maxR = Math.max(maxR, k.x + k.w); maxB = Math.max(maxB, k.y + k.h); minT = Math.min(minT, k.y); } });
+  const L = view.x + n.x * view.s, R = view.x + maxR * view.s, T = view.y + minT * view.s, B = view.y + maxB * view.s;
+  let dx = 0, dy = 0;
+  if (R > r.width - 24) dx = r.width - 24 - R;
+  if (L + dx < 24) dx = 24 - L;
+  if (B - T < r.height - 100) { if (T < 70) dy = 70 - T; else if (B > r.height - 60) dy = r.height - 60 - B; }
+  else { const cy = view.y + (n.y + n.h / 2) * view.s; dy = r.height / 2 - cy; }
+  view.x += dx; view.y += dy; apply(anim);
+}
+function focusNode(n) {
+  if (mode !== 'canvas') setMode('canvas');
+  pathOf(n).slice(0, -1).forEach(p => M.collapsed.delete(p.id));
+  select(n, true); render(); reveal(n, true);
+  if (n.el) { n.el.classList.add('hit'); setTimeout(() => n.el && n.el.classList.remove('hit'), 1400); }
+}
+
+/* ---------- 浮动操作条 ---------- */
+function positionActs(anim) {
+  if (!actEl) return;
+  if (actsOff || !sel || !sel.el || !sel.el.isConnected || mode !== 'canvas') { actEl.hidden = true; return; }
+  actEl.innerHTML = `<button type="button" data-a="explain">${I.spark}解释</button><button type="button" data-a="expand">${I.branch}${sel.kids.length && M.collapsed.has(sel.id) ? '展开' : sel.kids.length ? 'AI 补充' : 'AI 展开'}</button><span class="sep"></span><button type="button" data-a="ask">${I.ask}提问</button>`;
+  actEl.hidden = false;
+  const place = () => {
+    const sx = view.x + sel.x * view.s, sy = view.y + sel.y * view.s;
+    const aw = actEl.offsetWidth, ah = actEl.offsetHeight, r = stageEl.getBoundingClientRect();
+    let x = sx, y = sy - ah - 8;
+    if (y < 6) y = sy + sel.h * view.s + 8;
+    x = Math.max(6, Math.min(x, r.width - aw - 6));
+    actEl.style.left = x + 'px'; actEl.style.top = y + 'px';
+  };
+  if (anim) { actEl.style.opacity = '0'; setTimeout(() => { place(); actEl.style.opacity = '1'; }, 310); } else { place(); actEl.style.opacity = '1'; }
+}
+
+/* ---------- 交互 ---------- */
+function bindStage() {
+  const pts = new Map(); let moved = false, start = null, pinch = null;
+  stageEl.addEventListener('pointerdown', e => {
+    if (e.target.closest('.actions, .zoombar, .notice')) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
+    if (pts.size === 1) start = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: view.s }; }
+  });
+  stageEl.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const r = stageEl.getBoundingClientRect();
+    if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()]; zoomAt(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d / view.s, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); moved = true; return; }
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (!moved && Math.hypot(dx, dy) < 5) return;
+    if (!moved) { try { stageEl.setPointerCapture(e.pointerId); } catch (_) {} }
+    moved = true; stageEl.classList.add('dragging');
+    view.x = start.vx + dx; view.y = start.vy + dy; apply();
+  });
+  const end = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { start = null; stageEl.classList.remove('dragging'); } };
+  stageEl.addEventListener('pointerup', end); stageEl.addEventListener('pointercancel', end);
+  stageEl.addEventListener('click', e => {
+    if (moved) { moved = false; return; }
+    const a = e.target.closest('[data-a]');
+    if (a) { act(a.dataset.a, sel); return; }
+    const el = e.target.closest('.node');
+    if (!el) { actsOff = true; positionActs(); return; }
+    const n = findId(+el.dataset.id);
+    select(n);
+    if (n.kids.length) toggle(n);
+  });
+  stageEl.addEventListener('dblclick', e => { const el = e.target.closest('.node'); if (el) act('explain', findId(+el.dataset.id)); });
+  stageEl.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = stageEl.getBoundingClientRect();
+    if (e.ctrlKey || e.metaKey || (Math.abs(e.deltaY) >= 40 && Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.deltaMode === 0 && !e.shiftKey)) zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0015)), e.clientX - r.left, e.clientY - r.top);
+    else { view.x -= e.deltaX; view.y -= e.deltaY; apply(); }
+  }, { passive: false });
+  addEventListener('resize', onResize);
+}
+let rsT; function onResize() { if (!stageEl || !stageEl.isConnected) return; clearTimeout(rsT); rsT = setTimeout(() => { render(); positionActs(); }, 150); }
+const findId = id => all(M).find(n => n.id === id);
+function toggle(n) {
+  const bx = view.x + n.x * view.s, by = view.y + n.y * view.s;
+  if (M.collapsed.has(n.id)) { M.collapsed.delete(n.id); n.kids.forEach(k => born.add(k.id)); } else M.collapsed.add(n.id);
+  render();
+  view.x = bx - n.x * view.s; view.y = by - n.y * view.s; apply(); reveal(n, true);
+}
+function select(n, quiet) {
+  sel = n; actsOff = false;
+  nodesEl.querySelectorAll('.node.sel').forEach(el => el.classList.remove('sel'));
+  if (n.el) n.el.classList.add('sel');
+  renderDetail();
+  positionActs();
+}
+
+/* ---------- AI 动作 ---------- */
+async function act(a, n) {
+  if (!n) return;
+  if (a === 'explain') { select(n, true); setTab('node'); explain(n); }
+  else if (a === 'expand') expand(n);
+  else if (a === 'ask') { ctxNode = n; setTab('chat'); renderCtx(); }
+}
+async function explain(n, force) {
+  setTab('node');
+  const box = app.querySelector('#aiOut');
+  if (!box) return;
+  if (M.explain[n.id] && !force) { box.innerHTML = md(M.explain[n.id]); return; }
+  const text = explainText(M, n);
+  app.querySelector('#aiBox').hidden = false;
+  app.querySelector('#aiBtns').hidden = true;
+  const ok = await streamInto(box, text);
+  if (ok) { M.explain[n.id] = text; const rb = app.querySelector('#aiRe'); rb && (rb.hidden = false); }
+}
+let expanding = false;
+async function expand(n) {
+  if (expanding) return;
+  if (n.kids.length && M.collapsed.has(n.id)) { select(n); toggle(n); return; }
+  if (n.kids.some(k => k.ai)) { toast('该节点已由 AI 展开'); return; }
+  expanding = true;
+  const items = expandItems(n);
+  select(n, true);
+  if (n.el) n.el.classList.add('hit');
+  toast('AI 正在展开「' + plain(n.t).slice(0, 18) + (n.t.length > 18 ? '…' : '') + '」');
+  await sleep(700);
+  M.collapsed.delete(n.id);
+  for (const t of items) {
+    const k = { id: ++UID, t, key: n.key, depth: n.depth + 1, parent: n, kids: [], ai: true };
+    n.kids.push(k); born.add(k.id);
+    const bx = view.x + n.x * view.s, by = view.y + n.y * view.s;
+    render(); view.x = bx - n.x * view.s; view.y = by - n.y * view.s; apply();
+    await sleep(160);
+  }
+  reveal(n, true);
+  renderDetail();
+  expanding = false;
+}
+
+/* ---------- 详情栏 ---------- */
+function renderDetail() {
+  const pane = app.querySelector('#paneNode'); if (!pane) return;
+  const n = sel, bc = n.depth === 0 ? 'var(--ink)' : colorOf(n);
+  pane.style.setProperty('--bc', bc);
+  const crumbs = pathOf(n).slice(0, -1).map(p => `<button type="button" data-go="${p.id}">${esc(plain(p.t))}</button><span>›</span>`).join('');
+  const c = catOf(n), f = featureOf(n);
+  let h = `<div class="detail">`;
+  if (crumbs) h += `<div class="crumbs">${crumbs}</div>`;
+  h += `<div>${c && n.depth > 1 ? `<span class="pill">${esc(c.t)}</span>` : ''}<h2 style="margin-top:${c && n.depth > 1 ? 8 : 0}px">${n.depth >= 4 ? fmt(n.t) : esc(n.t)}</h2>${n.en ? `<div class="en">${esc(n.en)}</div>` : ''}</div>`;
+  const cached = M.explain[n.id];
+  h += `<div class="aibox" style="--bc:var(--ai)">
+    <div class="hd">${I.spark}<span>AI 解释</span><span class="grow"></span><button type="button" id="aiRe"${cached ? '' : ' hidden'}>重新生成</button></div>
+    <div class="aibtns" id="aiBtns"${cached ? ' hidden' : ''}>
+      <button class="btn" type="button" data-a2="explain">${I.spark}解释这个节点</button>
+      <button class="btn" type="button" data-a2="expand">${I.branch}${n.kids.length && M.collapsed.has(n.id) ? '展开子节点' : 'AI 展开下一层'}</button>
+      <button class="btn" type="button" data-a2="ask">${I.ask}就此提问</button>
+    </div>
+    <div id="aiBox"${cached ? '' : ' hidden'}><div class="md" id="aiOut">${cached ? md(cached) : ''}</div></div>
+  </div>`;
+  if (n.depth <= 1 && n.kids.length) {
+    if (n.sum) h += `<p class="sum">${esc(n.sum)}</p>`;
+    const groups = n.depth === 0 ? n.kids : [n];
+    groups.forEach(g => {
+      if (n.depth === 0) h += `<div class="label" style="color:${colorOf(g)}">${esc(g.t)}</div>`;
+      h += `<div class="stack">` + g.kids.map(k => `<button class="jump" type="button" data-go="${k.id}" style="--bc:${colorOf(k)}"><b>${esc(k.t)}</b>${k.sum ? `<span>${esc(k.sum)}</span>` : ''}</button>`).join('') + `</div>`;
+    });
+  } else if (f) {
+    if (n.depth === 2 && f.sum) h += `<div><div class="label">官方概述</div><p class="sum">${esc(f.sum || '')}</p></div>`;
+    const groups = n.depth === 2 ? n.kids.filter(k => k.kids.length || !k.ai) : n.kids.length ? [n] : n.parent && n.parent.depth >= 2 ? [n.parent] : [];
+    groups.forEach(g => {
+      if (!g.kids.length) return;
+      h += `<section><h3>${esc(plain(g.t))}</h3><ul>` + g.kids.map(l => `<li${l === n ? ' style="font-weight:600"' : ''}>${l.ai ? '<span style="color:var(--ai);font-size:11px;font-family:var(--f-mono)">AI </span>' : ''}${fmt(l.t)}</li>`).join('') + `</ul></section>`;
+    });
+    if (n.depth > 2) h += `<button class="jump" type="button" data-go="${f.id}"><b>查看「${esc(f.t)}」全部内容</b></button>`;
+    if (f.links) h += `<div><div class="label">来源文档</div><div class="links">` + f.links.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join('') + `</div></div>`;
+  } else if (n.kids.length) {
+    h += `<section><h3>子节点</h3><ul>` + n.kids.map(k => `<li>${fmt(k.t)}</li>`).join('') + `</ul></section>`;
+  }
+  if (n.depth === 0 && M.source) h += `<div><div class="label">来源</div><div class="links"><a href="https://${M.source}" target="_blank" rel="noopener">${esc(M.source)} ↗</a></div><p class="sum" style="color:var(--muted);font-size:12.5px;margin-top:8px">共读取 ${M.pages} 篇文档 · 发布日期 ${M.date}</p></div>`;
+  h += `</div>`;
+  pane.innerHTML = h;
+  pane.scrollTop = 0;
+  pane.querySelectorAll('[data-go]').forEach(b => b.onclick = () => focusNode(findId(+b.dataset.go)));
+  pane.querySelectorAll('[data-a2]').forEach(b => b.onclick = () => act(b.dataset.a2, sel));
+  const re = pane.querySelector('#aiRe'); if (re) re.onclick = () => { delete M.explain[sel.id]; explain(sel, true); };
+}
+
+/* ---------- 对话 ---------- */
+const SUGG = { dev: ['Plus 用户能用哪些新功能？', '这次发布涉及哪些价格变化？', '企业管理员需要做什么？', '展开插件与站点'], gen: ['这个主题的核心要点是什么？', '有哪些容易误解的地方？'] };
+function renderChat() {
+  const pane = app.querySelector('#paneChat');
+  pane.innerHTML = `<div class="chat">
+    <div class="msgs" id="msgs"></div>
+    <div class="chat-foot">
+      <div class="sugg" id="sugg">${(M.generated ? SUGG.gen : SUGG.dev).map(s => `<button type="button">${esc(s)}</button>`).join('')}</div>
+      <div class="ctxbar" id="ctxbar" hidden></div>
+      <form class="inrow" id="chatForm"><textarea id="chatIn" rows="1" placeholder="针对整张导图提问，或在节点上点「提问」"></textarea><button class="send" type="submit" aria-label="发送">${I.send}</button></form>
+    </div></div>`;
+  const msgs = pane.querySelector('#msgs');
+  if (!M.chat.length) M.chat.push({ role: 'bot', text: M.generated ? `你好。这张导图是「${M.title}」的结构示意，可以针对它提问。` : `你好。我已读取这张导图及其 ${M.pages} 篇来源文档，可以回答关于 **${M.title}** 的任何问题，也可以按你的要求展开或收起分支。`, refs: [] });
+  M.chat.forEach(m => msgs.appendChild(msgEl(m)));
+  const form = pane.querySelector('#chatForm'), ta = pane.querySelector('#chatIn');
+  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); } });
+  form.onsubmit = e => { e.preventDefault(); const v = ta.value.trim(); if (!v) return; ta.value = ''; ta.style.height = 'auto'; ask(v); };
+  pane.querySelector('#sugg').querySelectorAll('button').forEach(b => b.onclick = () => ask(b.textContent));
+  renderCtx();
+}
+function renderCtx() {
+  const bar = app.querySelector('#ctxbar'); if (!bar) return;
+  if (!ctxNode) { bar.hidden = true; return; }
+  bar.hidden = false;
+  bar.innerHTML = `关于节点<span>${esc(plain(ctxNode.t))}</span><button type="button" aria-label="移除节点上下文">×</button>`;
+  bar.querySelector('button').onclick = () => { ctxNode = null; renderCtx(); };
+  const ta = app.querySelector('#chatIn'); ta.placeholder = '请输入关于这个节点的问题，直接发送将获得解释'; ta.focus();
+}
+function msgEl(m) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + m.role;
+  if (m.role === 'me') d.innerHTML = (m.ctx ? `<span class="ctx">关于「${esc(plain(m.ctx).slice(0, 24))}」</span>` : '') + esc(m.text);
+  else {
+    d.innerHTML = `<div class="who">AI</div><div class="md">${md(m.text)}</div>`;
+    if (m.refs && m.refs.length) d.appendChild(refsEl(m.refs));
+    if (m.done) d.insertAdjacentHTML('beforeend', `<div class="done-act">${esc(m.done)}</div>`);
+  }
+  return d;
+}
+function refsEl(refs) {
+  const w = document.createElement('div'); w.className = 'refs';
+  refs.forEach(n => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ref'; b.style.setProperty('--bc', colorOf(n)); b.textContent = plain(n.t).slice(0, 26) + (n.t.length > 26 ? '…' : ''); b.onclick = () => focusNode(n); w.appendChild(b); });
+  return w;
+}
+let chatting = false;
+async function ask(q) {
+  if (chatting) return;
+  chatting = true;
+  setTab('chat');
+  const msgs = app.querySelector('#msgs');
+  const ctx = ctxNode; ctxNode = null; renderCtx();
+  const me = { role: 'me', text: q, ctx: ctx ? ctx.t : null };
+  M.chat.push(me); msgs.appendChild(msgEl(me));
+  const r = reply(M, q, ctx);
+  const d = document.createElement('div'); d.className = 'msg bot';
+  d.innerHTML = `<div class="who">AI</div><div class="md"></div>`;
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+  await streamInto(d.querySelector('.md'), r.text, () => { msgs.scrollTop = msgs.scrollHeight; });
+  const rec = { role: 'bot', text: r.text, refs: r.refs };
+  if (r.refs.length) d.appendChild(refsEl(r.refs));
+  if (r.act) {
+    if (r.act.type === 'expandAll') { walk(r.act.node, n => M.collapsed.delete(n.id)); pathOf(r.act.node).forEach(p => M.collapsed.delete(p.id)); }
+    else M.collapsed.add(r.act.node.id);
+    if (mode !== 'canvas') setMode('canvas');
+    render(); select(r.act.node, true); reveal(r.act.node, true);
+    rec.done = '已在导图中执行';
+    d.insertAdjacentHTML('beforeend', `<div class="done-act">已在导图中执行</div>`);
+  }
+  M.chat.push(rec);
+  msgs.scrollTop = msgs.scrollHeight;
+  chatting = false;
+}
+
+/* ---------- 大纲视图（对应正式版中服务端渲染、可被搜索引擎收录的页面） ---------- */
+function renderOutline(el) {
+  const r = M.root;
+  const li = n => `<li>${n.ai ? '<span style="color:var(--ai);font-size:11px;font-family:var(--f-mono)">AI </span>' : ''}${fmt(n.t)}${n.kids.length ? `<ul>${n.kids.map(li).join('')}</ul>` : ''}</li>`;
+  let h = `<div class="outline-in"><div class="seo">/map/${esc(M.id)} · 公开页面</div><h1>${esc(M.title)}</h1><p class="lead">${esc(M.desc || '')}</p>`;
+  r.kids.forEach(c => {
+    h += `<h2 style="--bc:${colorOf(c)}">${esc(c.t)}</h2>`;
+    c.kids.forEach(f => {
+      h += `<div style="--bc:${colorOf(f)}"><h3>${esc(f.t)}${f.en ? ` <span style="font-weight:400;color:var(--muted);font-size:13px">${esc(f.en)}</span>` : ''}</h3>${f.sum ? `<p>${esc(f.sum)}</p>` : ''}`;
+      f.kids.forEach(a => { if (a.kids.length) h += `<h4>${esc(a.t)}</h4><ul>${a.kids.map(li).join('')}</ul>`; else h += `<ul>${li(a)}</ul>`; });
+      h += `</div>`;
+    });
+  });
+  h += `</div>`;
+  el.innerHTML = h;
+  el.style.setProperty('--bc', 'var(--ink)');
+}
+
+/* ================= 启动 ================= */
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(route);
+</script>
+</body>
+</html>

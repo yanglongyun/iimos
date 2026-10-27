@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevDay 2026 · 组织架构</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f); -webkit-font-smoothing: antialiased; }
+.stage { position: fixed; inset: 0; cursor: grab; touch-action: none; overflow: hidden; }
+.stage.drag { cursor: grabbing; }
+.world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.world.anim { transition: transform .32s cubic-bezier(.2,.7,.2,1); }
+.world svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.node { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px; white-space: nowrap; user-select: none; line-height: 1.4; }
+.node.has { cursor: pointer; }
+.node.rev { flex-direction: row-reverse; }
+.node .t { display: block; }
+.node .t i { display: block; font-style: normal; }
+.node.born { animation: born .38s ease both; }
+@keyframes born { from { opacity: 0; } }
+.tog { flex: none; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+.hud { position: fixed; left: 16px; right: 16px; top: 12px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; pointer-events: none; z-index: 3; }
+.hud > * { pointer-events: auto; }
+.hud-t { display: flex; align-items: baseline; gap: 10px; }
+.hud-t b { font-size: 15px; font-weight: 700; }
+.hud-t span { font-size: 12px; color: var(--muted); }
+.hud-n { margin-left: auto; display: flex; gap: 2px; background: var(--hud); border: 1px solid var(--line); border-radius: 999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.hud-n a { text-decoration: none; color: var(--muted); font-size: 12.5px; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+.hud-n a:hover { color: var(--ink); }
+.hud-n a.on { background: var(--ink); color: var(--bg); }
+.ctl { position: fixed; right: 16px; bottom: 14px; display: flex; gap: 6px; z-index: 3; }
+.ctl button { border: 1px solid var(--line); background: var(--hud); color: var(--ink); border-radius: 8px; padding: 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.ctl button:hover { border-color: var(--muted); }
+.tip { position: fixed; left: 16px; bottom: 18px; font-size: 12px; color: var(--muted); z-index: 3; pointer-events: none; }
+:focus-visible { outline: 2px solid var(--c, var(--ink)); outline-offset: 3px; }
+@media (max-width: 760px) { .tip { display: none; } .hud-n { margin-left: 0; max-width: 100%; overflow-x: auto; } }
+@media (prefers-reduced-motion: reduce) { .node.born { animation: none; } .world.anim { transition: none; } }
+
+:root { --bg: #F6F7F9; --ink: #1B2430; --muted: #687384; --line: #DCE1E7; --hud: rgba(255,255,255,.94);
+  --f: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; }
+body { background-color: var(--bg); background-image: linear-gradient(#E9ECF0 1px, transparent 1px), linear-gradient(90deg, #E9ECF0 1px, transparent 1px); background-size: 32px 32px; }
+.d0 { background: #1B2430; color: #fff; padding: 13px 22px; border-radius: 10px; font-size: 18px; font-weight: 700; box-shadow: 0 6px 18px rgba(27,36,48,.2); }
+.d0 .t i { font-size: 11px; font-weight: 400; opacity: .6; font-family: var(--mono); }
+.d1 { background: var(--c); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 15px; font-weight: 700; min-width: 150px; justify-content: space-between; box-shadow: 0 4px 12px color-mix(in srgb, var(--c) 30%, transparent); }
+.d1 .t i { font-size: 11px; font-weight: 400; opacity: .8; }
+.d2 { background: #fff; border: 1px solid #DCE1E7; border-radius: 9px; padding: 9px 12px; font-size: 14px; font-weight: 600; min-width: 210px; justify-content: space-between; box-shadow: inset 3px 0 0 var(--c), 0 1px 2px rgba(27,36,48,.05); }
+.d2 .t i { font-family: var(--mono); font-size: 10.5px; font-weight: 400; color: var(--muted); }
+.d3 { font-size: 12.5px; font-weight: 600; color: color-mix(in srgb, var(--c) 80%, #1B2430); padding: 3px 8px; border-radius: 6px; background: color-mix(in srgb, var(--c) 9%, #fff); }
+.d4 { font-size: 12.5px; color: #3A4555; white-space: normal; max-width: 260px; padding: 3px 4px; line-height: 1.5; }
+.tog { min-width: 20px; height: 18px; padding: 0 5px; border-radius: 5px; font-family: var(--mono); font-size: 10.5px; border: 1px solid var(--line); color: var(--muted); background: #F6F7F9; }
+.open > .tog { color: var(--ink); }
+.d0 .tog, .d1 .tog { border-color: rgba(255,255,255,.4); color: #fff; background: rgba(255,255,255,.12); }
+.node.sel { outline: 2px solid var(--c); outline-offset: 2px; border-radius: 9px; }
+</style>
+</head>
+<body>
+<script>
+const L = (t, u) => [t, u];
+const LC = 'https://learn.chatgpt.com';
+const DATA = {
+  t: 'DevDay 2026', en: 'OpenAI · 2026-09-29',
+  sum: '本次 DevDay 共发布 17 项更新，分为五条主线：ChatGPT 本体（常驻智能体 dots、Work 跨设备、Space 协作）、Codex（Ultrafast、云端环境、安全扫描）、插件与站点（开放给开发者的接入能力）、API（新模型 GPT-6.1 Sol 与 Ultrafast），以及企业版（Slack/Teams、团队任务、共享连接、安全策略）。',
+  kids: [
+  { t: 'ChatGPT', en: '面向个人用户的产品', key: 'chatgpt',
+    sum: '面向终端用户的三项更新：可以长期托管工作的个人智能体 dots、可在多设备间续接的 Work 任务，以及由 Library 升级而来的协作空间 Space。',
+    kids: [
+    { t: 'Dots 常驻智能体', en: 'Meet your dot',
+      sum: '常驻运行的个人智能体。为它设定目标与可自主执行的范围后，它会在自己的云端电脑上跨已连接应用持续推进工作，对话结束后也不会停止，完成后带回结果供你审阅，需要你判断时会主动联系你。目前向符合条件的账号逐步开放。',
+      links: [L('Dots 使用指南', LC+'/docs/dots'), L('可用范围', LC+'/docs/dots#access'), L('管理员指南', LC+'/docs/enterprise/o-admin-guide')],
+      kids: [
+        { t: '核心定位', kids: ['由 GPT-6 Astra 驱动，拥有独立的云端电脑与浏览器', '你的电脑关机后仍可继续工作', '可调研、分析数据、准备文档、开发软件', '自行决定何时暂停、何时唤醒，无需为每次跟进设定固定日程', '可调用后台智能体并行处理多项工作，同时继续和你对话'] },
+        { t: '创建与个性化', kids: ['在 ChatGPT 桌面 App 或桌面浏览器中创建，移动网页版不支持', '可自定义名称、形状、颜色、眼睛、眼镜与配饰，随时可修改', '默认账号形如 @yourname-dot，命名后变为 @tibo-alfred 这类格式'] },
+        { t: '沟通渠道', kids: ['ChatGPT 桌面端与移动 App 中直接对话', '语音通话：对话页点击电话按钮，通话结束后已分配的工作继续执行', 'Slack：私信，或在已添加的频道中 @ 它', 'Microsoft Teams：目前为邀请制 alpha', '所有渠道是同一个 dot，切换渠道不会重置记忆', '可指定分工：日常进度发到 ChatGPT，待决策事项发到 Slack', '加入 Slack 频道不等于开始监控，需明确告诉它关注哪些频道与事件'] },
+        { t: '记忆与上下文', kids: ['信息来源：当前对话 + ChatGPT 记忆 + 它自己保存的笔记', '笔记记录你的偏好、决策与进行中的工作，跨对话、跨渠道延续', '主动调研为只读，据此执行后续动作需要相应权限', '在私人对话中获得的信息，分享给他人前会确认你是否允许'] },
+        { t: '电脑与应用', kids: ['云端电脑可随时点击 Take over 接管，完成后 Return control 交还', '可连接一台个人电脑，访问其本地文件、代码与应用；电脑需在线且 ChatGPT 处于打开状态', '可使用已启用的插件，例如 Gmail 查邮件、Google Drive 处理文档、GitHub 排查代码', '网站登录通过私密表单完成，凭据不进入对话；可选择保存到 Passwords', '云端浏览器被网站拦截时，可改用已连接的本地电脑', '连接消息渠道不会同时授予邮箱、其他应用或本地电脑的访问权限'] },
+        { t: '任务管理', kids: ['可发起云端线程，或在已连接电脑上创建 Work 与 Codex 任务', '可接续本地已有的 Codex 任务，可使用你创建的 Codex 云端环境', '桌面端在 dot 资料页的 Activity 中查看委派任务的进度与结果', 'Pause 暂停当前主任务；委派任务在 Activity 中停止，定时任务在 Scheduled 中取消', '停止任务不会撤销已完成的操作'] },
+        { t: '权限与审批', kids: ['默认生效：内置安全机制 + 已有应用权限 + 自动审批检查', '影响账户或对外分享之前，先判定是直接执行、请你批准还是交由你操作', '可添加指令（如「发送前先给我看草稿」）和自定义规则', '指令与自定义规则都不能覆盖内置安全要求'] },
+        { t: '可用范围与计费', kids: ['Pro 100 / 200 / 500：18 岁以上，不含欧洲经济区、英国与瑞士', 'Business Premium：全球逐步开放', 'Enterprise：全球逐步开放，默认关闭，需管理员启用', '与 dot 对话不计入 ChatGPT 用量限制', 'dot 发起的 Work 或 Codex 任务按对应产品正常计量', '发布后首月提供扩展额度'] },
+        { t: '管理员配置', kids: ['角色权限：Use dots、Add dots to Slack、Allow local computer access、Use custom rules for dots', '云端能力：Cloud browser use、Cloud network access、Cloud computer use、Use password manager', '授予权限不会自动连接服务，Slack 与本地电脑需成员自行完成设置', '企业模型控制与默认模型设置不适用于 dots', '任一云策略启用 enforce_residency 时，dots 无法访问本地电脑', '可通过 Compliance API 审计用户消息与 dot 回复，通过 Analytics API 查看采用情况'] }
+      ] },
+    { t: 'Work 跨设备续接', en: 'Work across devices',
+      sum: '在桌面端新建开启同步的 ChatGPT Work 任务，之后可在网页或手机上继续。需要本地文件和工具的步骤，由一台在线的已连接电脑执行。已有任务保持原来的模式。',
+      links: [L('ChatGPT Work 入门', LC+'/docs/get-started-with-work#continue-work-across-devices'), L('同步设置（管理员）', LC+'/docs/enterprise/cloud-local-access')],
+      kids: [
+        { t: '工作机制', kids: ['开启同步后，使用 Local computer access with Work Cloud 的任务由云端负责协调', '具体执行仍可使用已授权的本地文件与工具', '示例：在笔记本上用某个文件夹启动任务，之后在手机上查看结果、追加指令', '需要本地文件的步骤执行时，电脑须保持在线'] },
+        { t: '使用须知', kids: ['开启同步后需新建任务；已有任务保持仅本地或仅云端', '电脑离线时，新的一轮可在云容器中继续，但无法访问本地文件与工具', '同一轮内不能从本地执行切换到云端执行', '关闭该功能会中断正在运行的轮次'] },
+        { t: '未开启同步时', kids: ['在桌面输入框中选择本地或云端 Work', '本地 Work：使用电脑上的资源', '云端 Work：适合定时调研、检查网站等任务，电脑无需保持唤醒'] },
+        { t: '企业管理', kids: ['企业版 App 内的 Local/Cloud 切换及默认值在发布时保持不变', '协调在 OpenAI 云端，执行留在已连接电脑', '本地执行时 MDM 与旧版设备策略优先级高于 Agent Security', 'Work 与 dots 的本地电脑访问需分别开启'] },
+        { t: 'ChatGPT Work 概念', kids: ['Chat 用于问答、解释、头脑风暴与短草稿', 'Work 用于交付成果：简报、演示文稿、分析、定期更新、文件', '模型选择：GPT-6 Astra 处理高难度任务，GPT-6.1 Sol 以更低成本处理复杂任务，Luna 处理简单任务', 'ChatGPT Work 与 Codex 共用同一套定价、额度与用量限制'] }
+      ] },
+    { t: 'ChatGPT Space', en: 'ChatGPT Space（原 Library）',
+      sum: '把文件与 Pages 汇集到一处。可以与 ChatGPT 一起起草和修改，也可以直接编辑，并邀请协作者查看、评论或编辑。',
+      links: [L('入门', LC+'/docs/space/getting-started'), L('Pages', LC+'/docs/space/pages'), L('与智能体协作', LC+'/docs/space/agents'), L('协作', LC+'/docs/space/collaboration'), L('管理员指南', LC+'/docs/enterprise/chatgpt-space')],
+      kids: [
+        { t: '基本结构', kids: ['All 汇总全部内容，可按 Your items、Shared with you 筛选或搜索', 'Page：可直接编辑或由 ChatGPT 编辑的文档', 'Space：把同一主题或团队的多个页面归到一起', '可从已有对话直接生成页面'] },
+        { t: 'Pages 编辑能力', kids: ['页面由块组成，输入 / 打开插入菜单', '支持表格、代码、高亮、图片、可下载文件、子页面、页面链接', 'Generate：在页面内直接生成初稿，可接受、修改或撤销', 'Visualize：生成可交互的计算器、流程图、界面稿', 'Prompt 块：保存一条请求，读者可一键发起对话', 'Task 块与 Agent Instructions：为 Codex 或智能体留下任务与指引', '@ 提及人员、智能体、文件与对话，引用来源而不复制内容', '选中文字后可 Ask for change 或发起评论', '表格可设置 Normal、Flexible、Full width 三种宽度'] },
+        { t: '与智能体协作', kids: ['页面旁的对话：适合讨论问题或较大的改动', '选中文本使用 Ask for change：改写指定段落', '在页面内或评论中输入 @ChatGPT 或 @dot 加指令', '发布时暂不提供 Keep Updated；定时工作需在对话中设置并核对', '协作者共享页面内容，但可能使用不同的智能体与连接工具'] },
+        { t: '分享与权限', kids: ['三档权限：查看、评论、编辑', '分享 Space 即授予其下所有页面的访问权', '分享页面同时授予其子页面的访问权', '移除直接邀请不会移除从父页面或 Space 继承的权限', '能看页面的人不一定能打开页面中链接的源文件'] },
+        { t: '企业管理', kids: ['通过 Share Library files and folders 在工作区与角色层级控制分享', '关闭分享会阻止新的分享，但已有共享仍然有效', '删除页面或 Space 会连同子页面一起移入回收站', '导出或删除文件需要 Compliance API 权限', '默认不使用 ChatGPT Enterprise 数据训练模型'] }
+      ] }
+  ] },
+  { t: 'Codex', en: '编程智能体', key: 'codex',
+    sum: 'Codex 的三项更新：更快的 Astra Ultrafast 模式、可复用的云端开发环境，以及以研究预览形式推出的云端安全扫描插件。',
+    kids: [
+    { t: 'Astra Ultrafast', en: 'GPT-6 Astra Ultrafast in Codex',
+      sum: '在 Codex 和 ChatGPT Work 中使用 GPT-6 Astra Ultrafast，token 生成速度最高可达 Astra 标准模式的 8 倍。适用于 Pro $500/月方案及符合条件的 Enterprise、Edu 方案；企业所有者控制开通范围；要求在美国以外进行推理驻留的工作区不可用。',
+      links: [L('Ultrafast 模式', LC+'/docs/agent-configuration/speed#ultrafast-mode'), L('方案与用量', LC+'/docs/pricing')],
+      kids: [
+        { t: '速度', kids: ['token 生成速度最高为 GPT-6 Astra 标准模式的 8 倍', '该指标衡量的是生成速度，不代表计费倍率或任务总耗时'] },
+        { t: '可用方案', kids: ['Pro $500/月', '符合条件的 Enterprise（按额度或按美元用量计费的协议）', '符合条件的 Edu（使用额度）', '其他自助方案即使购买额度，发布时也无法使用', '旧版按速率限制计费的 Enterprise 不支持', '要求美国以外推理驻留的工作区不可用；仅工作区所在地不决定资格'] },
+        { t: '计费', kids: ['订阅包含额度：按标准速率的 8 倍消耗', '购买的额度与企业按量付费：按标准速率的 6 倍计费', 'Pro $500 先消耗包含额度，用完后再使用额度点数', '使用 API Key 登录 Codex 时按 API token 价格计费，不适用上述倍率'] },
+        { t: '企业控制', kids: ['企业工作区默认关闭', '所有者可在工作区权限中为指定用户或全员开启', '已有的人均消费上限对 Ultrafast 同样生效'] },
+        { t: '对比 Fast 模式', kids: ['CLI 中用 /fast 切换，config.toml 中可设为默认', '支持 GPT-6.1 Sol、GPT-6 Astra、GPT-6 Sol、GPT-6 Luna', '订阅额度按 2.5 倍消耗，购买额度按 2 倍计费', 'GPT-6.1 Sol 的 Ultrafast 支持将在之后推出'] },
+        { t: '相关时间点', kids: ['GPT-5.5 将于 2026-10-14 从 ChatGPT、ChatGPT Work 与 Codex 下线，API 不受影响', '付费方案建议改用 GPT-6 Sol，Free 与 Go 建议改用 GPT-6 Luna'] }
+      ] },
+    { t: '可复用云端环境', en: 'Reusable cloud environments',
+      sum: '描述你的开发环境，由 Codex 负责准备并测试，然后发布该环境。新任务在隔离的工作区中基于已准备好的文件系统启动。你的电脑休眠时，也可以在网页、移动端或桌面端继续云端任务。',
+      links: [L('云端环境文档', LC+'/docs/environments/cloud-environments')],
+      kids: [
+        { t: '创建流程', kids: ['新任务中选择 Work in > Cloud > Create environment', '选择要检出的 GitHub 仓库，按提示连接 GitHub', 'Codex 检查仓库、安装依赖与工具并测试流程', '按提示补充缺失的权限或信息，也可指定版本、命令或服务', '审阅配置报告与文件后点击 Publish'] },
+        { t: '自动生成的配置', kids: ['Install script：安装依赖、准备开发资源', 'Start skill：启动服务并检查是否就绪', '无需手写安装脚本，在对话中调整即可'] },
+        { t: '状态复用', kids: ['新任务从已发布环境的文件系统启动', '已有任务保留自身文件，包括未提交的修改与已安装工具', '仓库在后台自动刷新，保留依赖缓存，不重跑安装', '修改环境后 Republish，新任务使用新配置', '保存的状态不能替代版本控制，重要成果仍需提交'] },
+        { t: '变量与密钥', kids: ['环境变量：程序直接读取的值', '网络密钥：程序只拿到占位符，由代理在 HTTPS 443 请求中替换为真实值', '个人保险库：共享环境时，每个人提供自己的变量与密钥', '指定环境的值优先于通用默认值'] },
+        { t: '网络访问', kids: ['域名白名单：包管理器预设（npm、PyPI、crates、Go、Maven 等）或自定义', 'VPN 私有网络：目前支持 Tailscale，仅 IPv4，不含私有 DNS 与 SSH', 'OIDC：为任务签发云资源短期凭证，企业按需开通', '按来源 IP 过滤的服务可使用官方出口 IP 列表'] },
+        { t: '共享与发起', kids: ['企业内可将环境共享给整个工作区', '每个任务的工作文件相互独立，共享环境不等于共享他人任务', '在 Slack 或 Teams 中 @ChatGPT 即可对仓库发起云端任务', '同一任务可在网页、移动端、桌面端之间续接'] },
+        { t: 'VM 规格', kids: ['Plus、Edu Plus：2 vCPU、8 GiB 内存、8 GiB 磁盘', 'Pro、Business、Enterprise、Edu、Edu Pro：4 vCPU、16 GiB 内存、32 GiB 磁盘', '任务的 VM 状态在最后一次使用后最多保留 7 天', 'Enterprise 可申请更大或定制规格'] },
+        { t: '当前限制', kids: ['暂不支持电脑操作与浏览器操作', '暂不支持 GitLab 与自托管 GitHub Enterprise Server', '仓库内的 skills 可用；本地个人 skills 不同步到云端', '旧版 Codex Cloud 仍负责 Code Review 与 Linear、GitHub 集成，计划废弃'] }
+      ] },
+    { t: 'Codex Security Cloud', en: 'Security Cloud · 研究预览',
+      sum: '以研究预览形式推出的 Security Cloud 插件，可扫描已连接的 GitHub 仓库或持续监控新提交。在创建 draft PR 之前，可以先审阅发现的问题、验证证据与补丁。',
+      links: [L('设置 Security Cloud', LC+'/docs/security/setup'), L('威胁模型', LC+'/docs/security/threat-model')],
+      kids: [
+        { t: '使用步骤', kids: ['在插件市场安装并启用 Codex Security Cloud', '确认工作区已开通 Codex cloud，连接 GitHub 并授权仓库', 'New scan：选择仓库与云端环境，扫描范围选 Repository', '在 Scans 中跟踪进度，在 Findings 中查看问题'] },
+        { t: '问题与修复', kids: ['每条发现包含受影响代码、验证证据与修复建议', 'Fix with Codex 生成补丁', '审阅补丁后 Create draft pull request'] },
+        { t: '提交监控', kids: ['What to scan 选择 Commit changes 后创建', '在 Monitoring settings 中切换云端环境、设置回溯天数、暂停或启用'] },
+        { t: '威胁模型', kids: ['首版由 Codex Security 根据代码自动生成', '内容包括入口与不可信输入、信任边界与鉴权假设、敏感数据路径、优先审查区域', '用于指导后续提交扫描并为发现排序', '架构或优先级变化时，在 Project context 中编辑，对后续扫描生效'] },
+        { t: '区分', kids: ['Security Cloud 在 Codex 云端运行，扫描 GitHub 仓库', '扫描本地仓库请使用另一个插件 Codex Security（桌面端或 CLI）'] }
+      ] }
+  ] },
+  { t: '插件与站点', en: 'Sites & plugins · 面向开发者', key: 'plugins',
+    sum: '面向开发者开放的五项接入能力：用 ChatGPT 账号登录第三方应用、在 Sites 中读取访客自己的应用数据、扩展 ChatGPT 界面、订阅 MCP 事件，以及定制网页标注。',
+    kids: [
+    { t: 'Sign in with ChatGPT', en: '使用 ChatGPT 登录',
+      sum: '让用户使用 ChatGPT 账号登录你的应用；符合条件的 Plus 与 Pro 用户还可以用自己的 ChatGPT 方案承担应用内的 AI 请求。商业登录目前以有限试用形式向部分合作伙伴开放；ChatGPT 方案用量面向开源合作伙伴与部分私有客户开放。',
+      links: [L('快速开始', 'https://developers.openai.com/siwc/quickstart'), L('开源应用接入', 'https://developers.openai.com/siwc/token-sharing-open-source')],
+      kids: [
+        { t: '三种接入方式', kids: ['网站登录：用户以已有的 ChatGPT 身份注册或登录', 'ChatGPT 插件内登录：减少 OAuth 流程中的操作', '开源应用：用户用自己的 ChatGPT 方案发起 AI 请求，无需提供 API Key'] },
+        { t: '开放状态', kids: ['商业登录：限定合作伙伴的有限试用', 'ChatGPT 方案用量：所有开源合作伙伴与部分私有客户', '付费或远程托管应用需提交意向表单'] },
+        { t: '授权与范围', kids: ['基于 OpenID Connect + PKCE', '身份范围 openid profile email：获得稳定账号 ID、姓名、邮箱、头像', '使用用户方案需额外申请 Responses API 范围', '不能访问用户的 ChatGPT 对话或 API Key'] },
+        { t: '开源应用要点', kids: ['动态注册客户端，无需 client secret 或合作方 API Key', '每台运行主机需生成并持久化 ext_agent_host_id', '推荐使用 JWK 指纹 URI，也支持 urn:uuid 与 did:key', '同一用户的多台主机可共用一个 client_id 与用量设置'] },
+        { t: '界面规范', kids: ['按钮文案统一为 Continue with ChatGPT', '与其他登录方式并列，视觉显著度相当，使用官方品牌素材', '账号已存在时提供明确的关联确认流程'] }
+      ] },
+    { t: 'Sites 连接数据', en: 'Sites with connected data',
+      sum: '构建可使用每位访客自己已连接应用数据的 Site。Sites 中的插件功能仅适用于已启用该功能的工作区私有 Site；访客自行选择账号并授权访问。',
+      links: [L('用插件构建', LC+'/docs/sites#load-visitor-data-via-plugins'), L('分享与访问控制', LC+'/docs/sites#control-access-and-secrets')],
+      kids: [
+        { t: '效果', kids: ['同一个 Site，每位访客看到的是自己的数据', '示例：问题看板中，你看到分配给你的问题，同事看到分配给他的', '也可构建文档检索页，或汇总工单与消息的项目总览'] },
+        { t: '构建方式', kids: ['让 ChatGPT Work 或 Codex 构建 Site，并指明插件与用途', '预览时直接使用真实数据', '发布到工作区并分享链接'] },
+        { t: '数据读写', kids: ['页面加载时以访客自己的连接与权限读取数据', 'Sites 负责缓存与刷新，可要求添加手动刷新按钮', '连接器返回游标时默认提供 Load more 分页', '写入应用需开启写权限、访客同意且由用户明确操作'] },
+        { t: '访客授权', kids: ['访客用 ChatGPT 登录，查看 Site 请求的权限，选择账号与授权范围', '分享 Site 不会共享你本人的已连接账号', '访客可拒绝授权，但相关功能将不可用'] },
+        { t: '访问控制', kids: ['新 Site 默认仅所有者与工作区管理员可访问', '可选：指定用户或分组、外部受邀查看者、全工作区、公开', '企业版默认关闭公开发布，需管理员开启', '同工作区成员可被设为编辑者，但不能修改受众或首次发布'] },
+        { t: 'Sites 基础', kids: ['公开测试版，适用 Plus、Pro、Business、Enterprise、Edu', '每次部署都是正式环境；可先保存版本，确认后再部署'] }
+      ] },
+    { t: 'Plugin Extensions', en: 'OpenAI MCP Extensions',
+      sum: '为 ChatGPT 添加侧边栏应用、对话面板、文件查看与编辑器以及表单，并与插件的工具和 skills 一起打包。Composer 提及仅在桌面 App 中可用；Free 与 Go 用户的网页版扩展即将推出。',
+      links: [L('构建扩展', LC+'/plugins/build/extensions'), L('打包插件', LC+'/plugins/build/plugins')],
+      kids: [
+        { t: '扩展类型', kids: ['Sidebar apps：从全局侧边栏全屏打开你的应用', 'Conversation panels：在对话旁打开应用', 'Plugin settings：在 ChatGPT 内配置插件设置', 'File viewers and editors：按文件扩展名用你的界面打开、编辑、保存', 'Display modes：控制应用在对话中的显示位置与方式', 'Deep links：直达侧边栏应用中的指定页面', 'Model-App Context：ChatGPT 与 MCP App 双向同步上下文', 'Composer mentions：在桌面端输入框中搜索并引用插件内容', 'Rich forms：结构化输入与带缩略图的选项'] },
+        { t: '开发方式', kids: ['提供 TypeScript SDK、Python SDK 与协议规范', '在 MCP App 工具的 _meta 中声明 entrypoints，类型为 global、thread 或 file', '示例插件 Bits & Bolts 覆盖全部扩展'] },
+        { t: '已落地案例', kids: ['Canva：侧边栏中创建与预览设计', 'Figma：在桌面端输入框中搜索并提及文件', 'Adobe：在 ChatGPT 内用 Acrobat 与 Photoshop 编辑文件'] },
+        { t: '打包发布', kids: ['根目录 plugin.json，声明 Agent Plugins schema', '可包含 skills/、mcp.json、资源文件与生命周期 hooks', 'OpenAI 专属配置放在 extensions.com.openai 下', '公开插件发布到 ChatGPT 与 Codex 共用的插件目录', '可用内置的 @plugin-creator 快速生成骨架'] }
+      ] },
+    { t: 'MCP Events', en: '事件订阅',
+      sum: '用户可以让 ChatGPT 监听你的 MCP 服务器上的更新，并在匹配事件到达时执行动作。ChatGPT 要求 MCP 2.0，支持 MCP Events 草案规范中的 webhook 投递。',
+      links: [L('构建事件订阅', LC+'/plugins/build/mcp-events')],
+      kids: [
+        { t: '场景示例', kids: ['监听 #product-feedback 频道的 bug 报告，自动提交带修复和测试的 draft PR（message.created）', '监听文档评论，自动完成其中要求的修改（comment.created）'] },
+        { t: '工作流程', kids: ['服务器声明支持的事件', '用户告诉 ChatGPT 监听什么、如何响应', 'ChatGPT 提供回调 URL 与签名密钥完成订阅', '服务器将匹配事件推送到回调 URL', 'ChatGPT 在对应对话中按用户指令处理'] },
+        { t: '服务端实现', kids: ['协议版本 2026-07-28（MCP 2.0），在 capabilities 中声明 events', '实现 events/list、events/subscribe、events/unsubscribe', '订阅需幂等：按主体、回调、事件名与参数生成确定性 ID', '回调在投递数据前需先通过 challenge 校验', '使用 Standard Webhooks 签名，单个事件不超过 256 KiB', '仅允许 HTTPS 回调，屏蔽内网地址且不跟随重定向'] },
+        { t: '不支持', kids: ['轮询与流式投递', '草案中的 gap 与 terminated 控制通知'] }
+      ] },
+    { t: '网站标注', en: 'Website annotations',
+      sum: '由你的网站决定用户可以选中哪些内容、附带哪些上下文，以及在把反馈发送给 ChatGPT 之前可用哪些控件预览修改。Browser Annotation API 在受支持的桌面 App 内置浏览器中可用。',
+      links: [L('Annotations Extensibility', LC+'/docs/annotations-extensibility')],
+      kids: [
+        { t: '默认行为', kids: ['无需改代码即可标注任意网页', '用户选中页面区域、填写评论，发送到 Codex 或 ChatGPT Work 作为上下文'] },
+        { t: '可定制项', kids: ['选择目标：让整张卡片作为一个对象被选中', '文本选择容器：允许拖选一句话或一段文字', '选择元数据：附带页面上看不到的上下文', '从自己的按钮发起标注并预填评论', '针对精确文本范围请求反馈', '编辑器默认值与自定义控件：预览属性或收集选择', 'Canvas 内对象的选择', '从网站侧开关标注模式'] },
+        { t: '技术要点', kids: ['入口：document.oai.annotation', '仅在 HTTPS 或 localhost 的顶层页面可用', 'HTML 属性：oai-annotation-container、oai-annotatable、oai-annotation-metadata', '元数据最多 6 个字段，序列化后不超过 2,048 字节', '打开标注不会自动发送，只有用户可以提交'] },
+        { t: '限制', kids: ['暂不支持 ChatGPT Enterprise 与 Edu 工作区', '需 DevDay 2026 版本及以后的 ChatGPT 桌面 App'] }
+      ] }
+  ] },
+  { t: 'API', en: '开发者平台', key: 'api',
+    sum: 'API 侧的两项更新：新模型 GPT-6.1 Sol（附带多智能体测试版），以及 Responses API 中的 Astra Ultrafast 服务层级。',
+    kids: [
+    { t: 'GPT-6.1 Sol', en: 'gpt-6.1-sol',
+      sum: '以更低的成本提供接近 Astra 的性能，适合复杂编码与专业工作。可在 API 与 Codex 中使用（视可用情况）。支持 Responses 中的多智能体测试版，以及 Standard、Flex、Batch 处理的欧盟数据驻留。',
+      links: [L('API 模型页', LC+'/api/docs/models/gpt-6.1-sol'), L('Codex 中的可用性', LC+'/docs/models#gpt-61-sol'), L('多智能体测试版', LC+'/api/docs/guides/responses-multi-agent')],
+      kids: [
+        { t: '定位', kids: ['接近 Astra 的性能，标准价格约为 Astra 的五分之一', '适合重复、长时间运行的代码、应用与文档工作', '模型梯队：Astra 最强，6.1 Sol 性价比，Luna 处理大批量简单任务'] },
+        { t: 'API 价格（每百万 token）', kids: ['Standard：输入 $2.00 / 缓存输入 $0.10 / 输出 $10.00', 'Batch 与 Flex：输入 $1.00 / 输出 $5.00', 'Fast：输入 $4.00 / 输出 $20.00', '长上下文价格翻倍，例如 Standard 输入 $4.00 / 输出 $15.00', '对照 GPT-6 Astra Standard：输入 $10.00 / 输出 $50.00'] },
+        { t: '在 ChatGPT 中', kids: ['覆盖 Plus、Pro、Business、Enterprise、Edu 的 Codex（桌面端与 CLI）和 ChatGPT Work（网页与移动端）', 'Enterprise 与 Edu 默认关闭，需管理员启用', 'Free 与 Go 发布时不包含', '仅在 Work 与 Codex 中可用，Chat 中不可用', '支持 Standard 与 Fast，Ultrafast 之后推出', '推理强度从 Light 到 Ultra，Max 与 Ultra 取决于设置', 'CLI 命令：codex -m gpt-6.1-sol'] },
+        { t: '多智能体测试版', kids: ['根智能体并行派生子智能体，汇总结果后给出最终回复', '开启方式：multi_agent.enabled: true，并传入 responses_multi_agent=v1', 'max_concurrent_subagents 默认 3，对树深与总数无固定上限', '6 个内置协作动作：spawn_agent、send_message、followup_task、wait_agent、interrupt_agent、list_agents', '所有子智能体共享请求中的模型与工具', '工具密集或长时间任务推荐使用 WebSocket', '支持 GPT-6.1 Sol 与全部 GPT-5.6 模型'] },
+        { t: '适用判断', kids: ['适合：可拆分的独立任务、并行调研、多方案比较、分模块实现', '不适合：步骤强依赖、频繁写共享状态、需要固定执行图', '子智能体会增加 token 消耗'] },
+        { t: '数据驻留', kids: ['支持欧盟数据驻留', '覆盖 Standard、Flex、Batch 三种处理方式', '区域处理端点加收 10%'] }
+      ] },
+    { t: 'API 中的 Astra Ultrafast', en: 'service_tier: ultrafast',
+      sum: '在 Responses API 中使用 GPT-6 Astra Ultrafast，缩短输出 token 之间的间隔。受速率限制约束，支持全球处理与美国数据驻留。',
+      links: [L('Ultrafast 指南', LC+'/api/docs/guides/ultrafast-mode'), L('价格', LC+'/api/docs/pricing?latest-pricing=ultrafast')],
+      kids: [
+        { t: '调用方式', kids: ['model 设为 gpt-6-astra，service_tier 设为 ultrafast', '强烈推荐 WebSocket，多轮与工具调用复用同一连接', '也支持 HTTP，但频繁工具调用时网络开销会抵消部分收益', '所有 API 用户均可使用，默认速率限制较低'] },
+        { t: '价格（每百万 token）', kids: ['短上下文：输入 $60 / 缓存输入 $6 / 缓存写入 $75 / 输出 $300', '长上下文：输入 $120 / 输出 $450', '约为 Astra Standard 的 6 倍'] },
+        { t: '默认速率限制', kids: ['Tier 1–3：500,000 TPM', 'Tier 4：1,000,000 TPM', 'Tier 5：5,000,000 TPM', '可联系客户团队申请更高额度'] },
+        { t: '限制', kids: ['仅支持美国数据驻留与全球处理，不支持欧盟等其他区域', 'GPT-5.6 Sol 的 Ultrafast 需申请预览'] }
+      ] }
+  ] },
+  { t: '企业版', en: 'Enterprise', key: 'ent',
+    sum: '面向企业管理员的四项更新：把 @ChatGPT 接入 Slack 与 Teams、以团队身份运行定时或事件任务、统一管理公司账号连接，以及集中配置智能体安全策略。',
+    kids: [
+    { t: 'Slack 与 Teams 中的 ChatGPT', en: '@ChatGPT in Slack and Teams',
+      sum: '将 ChatGPT 带入已批准的对话中，使用部署所连接的工具。可配置每个部署的使用者，以及它能访问的频道。',
+      links: [L('Slack 与 Teams 指南', LC+'/docs/enterprise/chatgpt-slack-and-teams')],
+      kids: [
+        { t: '能力', kids: ['@ChatGPT 总结信息、起草回复、使用已批准的工具', '可在 Slack 或 Teams 中对仓库发起 Codex 云端任务'] },
+        { t: '访问机制', kids: ['使用服务账号配置的插件与工作区连接', '不继承提问者个人的文件、应用或私有频道权限', '个人插件需单独授权', '回复对对话所有参与者可见'] },
+        { t: '配置流程', kids: ['管理后台 Agents 中连接 Slack 并审阅权限', '每个 Slack 工作区建一个 surface，Enterprise Grid 每个工作区各一个', '可选 Selected channels only 限定频道，但不影响私信', '先在频道与私信中测试，再添加公司连接'] },
+        { t: '角色分工', kids: ['ChatGPT 管理员：连接平台、创建 surface、选择插件与连接', 'Slack 或 Teams 管理员：审批权限、安装应用', '连接负责人：准备公司账号并核实权限', '试点负责人：确定试点人群与测试场景'] },
+        { t: '注意事项', kids: ['已在使用 ChatGPT Slack 应用的组织，需 Slack 管理员批准新增权限', '从 Slack 发起 Codex 任务时，服务账号只负责查找环境，任务以提问者身份运行'] }
+      ] },
+    { t: 'Team Tasks', en: '团队任务',
+      sum: '通过团队的服务账号与已批准的连接，运行定时或由事件触发的工作。',
+      links: [L('设置 Team Tasks', LC+'/docs/enterprise/teams')],
+      kids: [
+        { t: '示例', kids: ['发布频道有新消息时，汇总进展、里程碑变化与阻塞项', '每周一汇总上周客户动态、跟进事项与待解决问题', '成交时生成客户入职简报', '每天早上汇总项目进度、阻塞与临近截止事项'] },
+        { t: '创建任务', kids: ['Scheduled > + New Task，打开 Team 开关并选择团队', '触发器：定时（注意时区）或受支持的事件', '在 Instructions 中写明目标、产出、成功标准与约束', '任务不继承创建者的个人记忆、自定义指令与聊天记录', '创建后用 Run now 试运行并在 Previous runs 中检查'] },
+        { t: '团队管理', kids: ['Settings > Teams > Create team', '所需权限：Create teams、Create and manage team automations', '团队所有者不因此获得工作区管理员权限', '新成员可看到团队全部历史运行与生成文件', '团队成员无法与工作区分组或 Slack、Teams 频道同步'] }
+      ] },
+    { t: '工作区连接', en: 'Workspace connections',
+      sum: '为受支持的团队与工作流连接公司统一管理的账号。每个连接都以所连账号的权限运行。',
+      links: [L('管理共享连接', LC+'/docs/enterprise/shared-connections')],
+      kids: [
+        { t: '作用', kids: ['Team Tasks 与 @ChatGPT 可使用公司账号，无需每人连接个人账号', '一个连接可在多个团队与工作流中复用'] },
+        { t: '创建步骤', kids: ['Admin Console > Workspace connections > +，选择应用', '按应用提供的方式认证指定账号', '为连接命名以说明其权限，例如「项目报表：只读」', '授予用户、团队或服务账号使用权，使用与管理权限分开设置'] },
+        { t: '各应用说明', kids: ['Google Drive：账号授权，或使用服务账号 JSON key', 'Gmail：授权专用邮箱；可配置域级委派', 'GitHub：发布时使用组织批准的用户账号登录', 'Notion 与 Linear：需要对方平台管理员参与'] },
+        { t: '原则', kids: ['使用专用账号或服务身份，只授予必要权限', '避免依赖某位员工的个人账号'] }
+      ] },
+    { t: 'Agent Security', en: '智能体安全策略',
+      sum: '控制智能体可以使用哪些工具，以及如何访问文件与网络。为本地执行与 Codex Cloud 执行设置工作区策略；Work Cloud 有单独的控制项。',
+      links: [L('Agent Security', LC+'/docs/enterprise/agent-security'), L('托管配置', LC+'/docs/enterprise/managed-configuration'), L('Work 同步', LC+'/docs/enterprise/cloud-local-access')],
+      kids: [
+        { t: '结构', kids: ['取代原来的 Policies & Configuration', '每条策略以 Global 为基线，可针对 Local 与 Codex Cloud 覆盖', '旧策略迁移后保留原有分配与排序'] },
+        { t: '编排层控制（仅 Global）', kids: ['审批策略与自动审查', '允许的网页搜索模式', '可用的应用、MCP 服务器与插件', '命令规则：可运行、需审批、禁止', '托管 hooks'] },
+        { t: '执行层控制（可按环境覆盖）', kids: ['是否允许登录 shell', '允许的沙箱模式', '文件系统权限', '托管执行网络'] },
+        { t: 'Requirements 与 Defaults', kids: ['Requirements：用户无法覆盖的限制', 'Defaults：在限制范围内的初始值'] },
+        { t: '优先级与管理', kids: ['本地执行时，MDM 与旧版设备策略优先于 Agent Security', 'Work Cloud 容器使用其自有策略，本地限制不会带入', 'Global 可通过策略 API 或 Terraform 管理，Local 与 Codex Cloud 在界面中管理'] }
+      ] }
+  ] }
+  ]
+};
+
+const STYLES = [{"file": "01-classic.html", "name": "经典"}, {"file": "02-ink.html", "name": "墨线"}, {"file": "03-cosmos.html", "name": "深空"}, {"file": "04-blocks.html", "name": "彩块"}, {"file": "05-org.html", "name": "架构"}];
+
+const S = {
+  file: "05-org.html", name: "组织架构",
+  layout: 'down', openDepth: 2, rootColor: '#1B2430', stackFrom: 2, indent: 22,
+  palette: ['#0F9D7A', '#5B5BD6', '#D9822B', '#D6455D', '#2B7BD6'],
+  hgap: [0, 28, 0, 0], vgap: [44, 30, 10, 6, 5],
+  label: n => lab(n, 2),
+  edge(p, c) {
+    const col = c.depth <= 1 ? '#AEB7C3' : colorOf(c);
+    if (c.depth >= 2) {
+      const x = p.x + 11, y1 = p.y + p.h, y2 = c.y + c.h / 2, r = 6;
+      return `<path d="M${x} ${y1} V${y2 - r} Q${x} ${y2} ${x + r} ${y2} H${c.x}" fill="none" stroke="${col}" stroke-opacity="${c.depth >= 3 ? .45 : .6}" stroke-width="1.4"/>`;
+    }
+    return `<path d="${P.elbowV(p.x + p.w / 2, p.y + p.h, c.x + c.w / 2, c.y, 10)}" fill="none" stroke="${col}" stroke-width="1.6"/>`;
+  }
+};
+
+/* ===== 共用内核：数据、布局（右向 / 双侧 / 径向 / 下向）、渲染、平移缩放 ===== */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const KEYS = ['chatgpt', 'codex', 'plugins', 'api', 'ent'];
+let UID = 0;
+function build(raw, depth = 0, parent = null, key = null) {
+  const r = typeof raw === 'string' ? { t: raw } : raw;
+  const n = { id: ++UID, t: r.t, en: r.en, key: key || r.key || null, depth, parent, kids: [] };
+  n.ci = n.key ? KEYS.indexOf(n.key) : -1;
+  (r.kids || []).forEach(k => n.kids.push(build(k, depth + 1, n, key || r.key)));
+  return n;
+}
+const ROOT = build(DATA);
+const ALL = []; (function w(n) { ALL.push(n); n.kids.forEach(w); })(ROOT);
+const collapsed = new Set();
+function setOpen(d) { collapsed.clear(); ALL.forEach(n => { if (n.kids.length && n.depth >= d) collapsed.add(n.id); }); }
+setOpen(S.openDepth);
+const openKids = n => collapsed.has(n.id) ? [] : n.kids;
+const colorOf = n => n.ci < 0 ? S.rootColor : S.palette[n.ci];
+const lab = (n, enMax = 1) => `<span class="t">${esc(n.t)}${n.en && n.depth <= enMax ? `<i>${esc(n.en)}</i>` : ''}</span>`;
+const gap = (arr, d) => arr[Math.min(d, arr.length - 1)];
+
+document.body.insertAdjacentHTML('afterbegin', `
+<div class="stage" id="stage"><div class="world" id="world"><svg id="wires"></svg><div id="nodes"></div></div></div>
+<header class="hud">
+  <div class="hud-t"><b>OpenAI DevDay 2026</b><span>${esc(S.name)}</span></div>
+  <nav class="hud-n">${STYLES.map(s => `<a href="${s.file}"${s.file === S.file ? ' class="on" aria-current="page"' : ''}>${esc(s.name)}</a>`).join('')}</nav>
+</header>
+<div class="ctl"><button type="button" id="cAll">全部展开</button><button type="button" id="cTwo">收起</button><button type="button" id="cFit">适应屏幕</button><button type="button" id="cOut" aria-label="缩小">－</button><button type="button" id="cIn" aria-label="放大">＋</button></div>
+<div class="tip">点击节点展开或收起 · 拖动平移 · 滚轮缩放</div>`);
+const stage = document.getElementById('stage'), world = document.getElementById('world'), nodesEl = document.getElementById('nodes'), wires = document.getElementById('wires');
+let view = { x: 0, y: 0, s: 1 }, off = { x: 0, y: 0 }, bounds = { w: 0, h: 0 }, sel = null;
+
+function visible() { const o = []; (function w(n) { o.push(n); openKids(n).forEach(w); })(ROOT); return o; }
+
+/* ---------- 布局 ---------- */
+function layoutSide() {
+  const vg = d => gap(S.vgap, d), hg = d => gap(S.hgap, d);
+  const sh = n => { const ks = openKids(n); if (!ks.length) return (n._sh = n.h); return (n._sh = Math.max(n.h, ks.reduce((a, k) => a + sh(k), 0) + vg(n.depth + 1) * (ks.length - 1))); };
+  const place = (n, near, top, dir) => {
+    n.dir = dir; n.y = top + n._sh / 2 - n.h / 2; n.x = dir > 0 ? near : near - n.w;
+    const ks = openKids(n); if (!ks.length) return;
+    const block = ks.reduce((a, k) => a + k._sh, 0) + vg(n.depth + 1) * (ks.length - 1);
+    let y = top + (n._sh - block) / 2;
+    ks.forEach(k => { place(k, dir > 0 ? n.x + n.w + hg(n.depth) : n.x - hg(n.depth), y, dir); y += k._sh + vg(n.depth + 1); });
+  };
+  const cats = openKids(ROOT); cats.forEach(sh);
+  ROOT.dir = 1; ROOT.x = -ROOT.w / 2; ROOT.y = -ROOT.h / 2;
+  let R = cats, L = [];
+  if (S.layout === 'both' && cats.length > 1) {
+    const total = cats.reduce((a, c) => a + c._sh, 0); let acc = 0, cut = cats.length;
+    for (let i = 0; i < cats.length; i++) { if (acc + cats[i]._sh / 2 > total / 2 && i > 0) { cut = i; break; } acc += cats[i]._sh; }
+    R = cats.slice(0, cut); L = cats.slice(cut).reverse();
+  }
+  const side = (list, dir) => {
+    const block = list.reduce((a, k) => a + k._sh, 0) + vg(1) * Math.max(0, list.length - 1);
+    let y = -block / 2;
+    list.forEach(k => { place(k, dir > 0 ? ROOT.x + ROOT.w + hg(0) : ROOT.x - hg(0), y, dir); y += k._sh + vg(1); });
+  };
+  if (S.layout === 'right') { ROOT.x = 0; }
+  side(R, 1); side(L, -1);
+}
+function layoutDown() {
+  const vg = d => gap(S.vgap, d), hg = d => gap(S.hgap, d), ind = S.indent || 24, stk = n => n.depth + 1 >= (S.stackFrom || 99);
+  const size = n => {
+    const ks = openKids(n);
+    if (!ks.length) { n._sw = n.w; n._sh = n.h; return; }
+    ks.forEach(size);
+    if (stk(n)) { n._sw = Math.max(n.w, ind + Math.max(...ks.map(k => k._sw))); n._sh = n.h + ks.reduce((a, k) => a + vg(n.depth + 1) + k._sh, 0); }
+    else { n._sw = Math.max(n.w, ks.reduce((a, k) => a + k._sw, 0) + hg(n.depth + 1) * (ks.length - 1)); n._sh = n.h + vg(n.depth) + Math.max(...ks.map(k => k._sh)); }
+  };
+  const place = (n, left, y) => {
+    n.dir = 1; n.y = y;
+    const ks = openKids(n);
+    if (stk(n) || (n.parent && stk(n.parent))) n.x = left; else n.x = left + n._sw / 2 - n.w / 2;
+    if (!ks.length) return;
+    if (stk(n)) { let cy = y + n.h; ks.forEach(k => { cy += vg(n.depth + 1); place(k, n.x + ind, cy); cy += k._sh; }); return; }
+    const block = ks.reduce((a, k) => a + k._sw, 0) + hg(n.depth + 1) * (ks.length - 1);
+    let x = left + (n._sw - block) / 2;
+    ks.forEach(k => { place(k, x, y + n.h + vg(n.depth)); x += k._sw + hg(n.depth + 1); });
+  };
+  size(ROOT); place(ROOT, 0, 0);
+}
+function layoutRadial() {
+  /* 前两层沿圆周排布；第三层起沿所在方向横向展开，角度按子树高度分配，避免相互挤压 */
+  const vg = d => gap(S.vgap || [0, 0, 0, 8, 5], d), hg = d => gap(S.hgap || [0, 0, 26, 22], d);
+  const sh = n => { const ks = openKids(n); if (!ks.length) return (n._sh = n.h); return (n._sh = Math.max(n.h, ks.reduce((a, k) => a + sh(k), 0) + vg(n.depth + 1) * (ks.length - 1))); };
+  const cats = openKids(ROOT);
+  cats.forEach(c => { const fs = openKids(c); fs.forEach(sh); c._wt = fs.length ? fs.reduce((a, f) => a + f._sh + gap(S.spacing, 2), 0) : 60; });
+  const sp = gap(S.spacing, 2), ex = S.ellipse || 1.25;
+  /* 顺时针：右侧自上而下，左侧自下而上；左右按高度大致均分 */
+  const total = cats.reduce((a, c) => a + c._wt, 0) || 1;
+  let acc = 0, cut = cats.length;
+  for (let i = 0; i < cats.length; i++) { if (i > 0 && acc + cats[i]._wt / 2 > total / 2) { cut = i; break; } acc += cats[i]._wt; }
+  const sides = [[cats.slice(0, cut), 1], [cats.slice(cut).reverse(), -1]];
+  const rows = sides.map(([list, dir]) => {
+    const items = [];
+    list.forEach(c => { const fs = openKids(c); const seq = dir > 0 ? fs : [...fs].reverse(); if (seq.length) seq.forEach(f => items.push({ c, f, h: f._sh + sp })); else items.push({ c, f: null, h: 56 }); });
+    return { items, dir, H: items.reduce((a, it) => a + it.h, 0) };
+  });
+  const r1 = Math.max(ROOT.w, ROOT.h) / 2 + gap(S.rings, 1) + Math.max(0, ...cats.map(c => c.w / 2));
+  const r2 = Math.max(r1 + gap(S.rings, 2) + Math.max(0, ...cats.map(c => c.w / 2)), Math.max(...rows.map(r => r.H)) / 2 * 1.04);
+  ROOT.ang = 0; ROOT.px = 0; ROOT.py = 0; ROOT.rr = 0; ROOT.dir = 1; ROOT.x = -ROOT.w / 2; ROOT.y = -ROOT.h / 2;
+  const side = (n, near, top, dir) => {
+    n.dir = dir; n.y = top + n._sh / 2 - n.h / 2; n.x = dir > 0 ? near : near - n.w;
+    n.px = dir > 0 ? n.x : n.x + n.w; n.py = n.y + n.h / 2;
+    const ks = openKids(n); if (!ks.length) return;
+    const block = ks.reduce((s2, k) => s2 + k._sh, 0) + vg(n.depth + 1) * (ks.length - 1);
+    let y = top + (n._sh - block) / 2;
+    ks.forEach(k => { side(k, dir > 0 ? n.x + n.w + hg(n.depth) : n.x - hg(n.depth), y, dir); y += k._sh + vg(n.depth + 1); });
+  };
+  const sums = new Map();
+  rows.forEach(({ items, dir, H }) => {
+    let y = -H / 2;
+    items.forEach(it => {
+      const cy = y + it.h / 2; y += it.h;
+      const cx = dir * ex * Math.sqrt(Math.max(0, r2 * r2 - cy * cy)) + dir * 6;
+      const sm = sums.get(it.c) || { x: 0, y: 0, k: 0 }; sm.x += cx; sm.y += cy; sm.k++; sums.set(it.c, sm);
+      if (!it.f) return;
+      const f = it.f; f.ang = Math.atan2(cy, cx); f.rr = Math.hypot(cx, cy);
+      side(f, dir > 0 ? cx + 9 : cx - 9, cy - f._sh / 2, dir);
+      f.px = cx; f.py = cy;
+    });
+  });
+  cats.forEach(c => {
+    const sm = sums.get(c); c.ang = Math.atan2(sm.y / sm.k, sm.x / sm.k); c.rr = r1;
+    c.px = r1 * Math.cos(c.ang); c.py = r1 * Math.sin(c.ang); c.dir = Math.cos(c.ang) >= 0 ? 1 : -1;
+    c.x = c.px - c.w / 2; c.y = c.py - c.h / 2;
+  });
+  S._rings = [0, r1, r2];
+}
+/* ---------- 连线工具 ---------- */
+const P = {
+  h(x1, y1, x2, y2) { const m = (x1 + x2) / 2; return `M${x1} ${y1} C${m} ${y1} ${m} ${y2} ${x2} ${y2}`; },
+  v(x1, y1, x2, y2) { const m = (y1 + y2) / 2; return `M${x1} ${y1} C${x1} ${m} ${x2} ${m} ${x2} ${y2}`; },
+  elbowH(x1, y1, x2, y2, r = 8) {
+    const m = x1 + (x2 - x1) / 2, sx = Math.sign(x2 - x1) || 1, sy = Math.sign(y2 - y1);
+    if (Math.abs(y2 - y1) < 1) return `M${x1} ${y1} H${x2}`;
+    const rr = Math.min(r, Math.abs(y2 - y1) / 2, Math.abs(x2 - x1) / 2);
+    return `M${x1} ${y1} H${m - sx * rr} Q${m} ${y1} ${m} ${y1 + sy * rr} V${y2 - sy * rr} Q${m} ${y2} ${m + sx * rr} ${y2} H${x2}`;
+  },
+  elbowV(x1, y1, x2, y2, r = 8) {
+    const m = y1 + (y2 - y1) / 2, sx = Math.sign(x2 - x1);
+    if (Math.abs(x2 - x1) < 1) return `M${x1} ${y1} V${y2}`;
+    const rr = Math.min(r, Math.abs(x2 - x1) / 2, (y2 - y1) / 2);
+    return `M${x1} ${y1} V${m - rr} Q${x1} ${m} ${x1 + sx * rr} ${m} H${x2 - sx * rr} Q${x2} ${m} ${x2} ${m + rr} V${y2}`;
+  },
+  /* 渐细的枝条：用填充多边形模拟由粗到细 */
+  taper(x1, y1, x2, y2, w1, w2) {
+    const m = (x1 + x2) / 2;
+    return `M${x1} ${y1 - w1 / 2} C${m} ${y1 - w1 / 2} ${m} ${y2 - w2 / 2} ${x2} ${y2 - w2 / 2} L${x2} ${y2 + w2 / 2} C${m} ${y2 + w2 / 2} ${m} ${y1 + w1 / 2} ${x1} ${y1 + w1 / 2} Z`;
+  }
+};
+/* 侧向布局的出入点 */
+function ends(p, c) {
+  const d = c.dir, ay = n => S.anchorY ? S.anchorY(n) : n.y + n.h / 2;
+  return { x1: d > 0 ? p.x + p.w : p.x, y1: ay(p), x2: d > 0 ? c.x : c.x + c.w, y2: ay(c) };
+}
+
+/* ---------- 渲染 ---------- */
+let born = new Set();
+function render() {
+  const vis = visible();
+  nodesEl.innerHTML = vis.map(n => {
+    const open = n.kids.length && !collapsed.has(n.id);
+    const tog = n.kids.length ? `<span class="tog">${open ? '−' : n.kids.length}</span>` : '';
+    return `<div class="node d${Math.min(n.depth, 4)}${open ? ' open' : ''}${n === sel ? ' sel' : ''}${n.kids.length ? ' has' : ''}${born.has(n.id) ? ' born' : ''}" data-id="${n.id}" style="--c:${colorOf(n)}" role="${n.kids.length ? 'button' : 'note'}" tabindex="${n.kids.length ? 0 : -1}"${n.kids.length ? ` aria-expanded="${!!open}"` : ''}>${S.label(n)}${tog}</div>`;
+  }).join('');
+  born = new Set();
+  const els = {}; nodesEl.querySelectorAll('.node').forEach(e => { els[e.dataset.id] = e; });
+  vis.forEach(n => { n.el = els[n.id]; });
+  vis.forEach(n => { n.w = n.el.offsetWidth; n.h = n.el.offsetHeight; });
+  if (S.layout === 'radial') layoutRadial(); else if (S.layout === 'down') layoutDown(); else layoutSide();
+  vis.forEach(n => n.el.classList.toggle('rev', n.dir < 0));
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  vis.forEach(n => { x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y); x1 = Math.max(x1, n.x + n.w); y1 = Math.max(y1, n.y + n.h); });
+  const pad = 60; off = { x: -x0 + pad, y: -y0 + pad }; bounds = { w: x1 - x0 + pad * 2, h: y1 - y0 + pad * 2 };
+  let svg = S.defs ? S.defs() : '';
+  if (S.backdrop) svg += S.backdrop(vis);
+  vis.forEach(n => { if (n.parent) svg += S.edge(n.parent, n); });
+  vis.forEach(n => { if (S.decor) svg += S.decor(n); });
+  wires.setAttribute('width', bounds.w); wires.setAttribute('height', bounds.h);
+  wires.innerHTML = `<g transform="translate(${off.x} ${off.y})">${svg}</g>`;
+  vis.forEach(n => { const tf = `translate(${n.x + off.x}px, ${n.y + off.y}px)`; n.el.style.transform = tf; n.el.style.setProperty('--tf', tf); });
+  world.style.width = bounds.w + 'px'; world.style.height = bounds.h + 'px';
+}
+
+/* ---------- 视图 ---------- */
+function apply(anim) { world.classList.toggle('anim', !!anim); world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.s})`; }
+function fit(anim) {
+  const r = stage.getBoundingClientRect(), top = 70, pad = 24;
+  const s = Math.min((r.width - pad * 2) / bounds.w, (r.height - top - pad) / bounds.h, S.maxFit || 1.15);
+  view.s = Math.max(s, r.width < 600 ? .45 : (S.minFit || .5));
+  view.x = (r.width - bounds.w * view.s) / 2;
+  view.y = bounds.h * view.s < r.height - top - pad ? top + (r.height - top - pad - bounds.h * view.s) / 2 : top;
+  apply(anim);
+}
+function zoomAt(f, cx, cy) { const ns = Math.min(2.4, Math.max(.15, view.s * f)); view.x = cx - (cx - view.x) * ns / view.s; view.y = cy - (cy - view.y) * ns / view.s; view.s = ns; apply(); }
+function toggle(n) {
+  const bx = view.x + (n.x + off.x) * view.s, by = view.y + (n.y + off.y) * view.s;
+  if (collapsed.has(n.id)) { collapsed.delete(n.id); n.kids.forEach(k => born.add(k.id)); } else collapsed.add(n.id);
+  render();
+  view.x = bx - (n.x + off.x) * view.s; view.y = by - (n.y + off.y) * view.s; apply();
+}
+function select(n) { sel = n; nodesEl.querySelectorAll('.node.sel').forEach(e => e.classList.remove('sel')); n.el && n.el.classList.add('sel'); }
+
+/* ---------- 交互 ---------- */
+(function bind() {
+  const pts = new Map(); let moved = false, start = null, pinch = null;
+  stage.addEventListener('pointerdown', e => { pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false; if (pts.size === 1) start = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: view.s }; } });
+  stage.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()]; zoomAt(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d / view.s, (a.x + b.x) / 2, (a.y + b.y) / 2); moved = true; return; }
+    if (!start) return; const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (!moved && Math.hypot(dx, dy) < 5) return;
+    if (!moved) { try { stage.setPointerCapture(e.pointerId); } catch (_) {} }
+    moved = true; stage.classList.add('drag'); view.x = start.vx + dx; view.y = start.vy + dy; apply();
+  });
+  const end = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { start = null; stage.classList.remove('drag'); } };
+  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+  stage.addEventListener('click', e => { if (moved) { moved = false; return; } const el = e.target.closest('.node'); if (!el) return; const n = ALL.find(x => x.id === +el.dataset.id); select(n); if (n.kids.length) toggle(n); });
+  stage.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const el = e.target.closest('.node'); if (!el) return; e.preventDefault(); const n = ALL.find(x => x.id === +el.dataset.id); select(n); if (n.kids.length) toggle(n); });
+  stage.addEventListener('wheel', e => { e.preventDefault(); if (e.ctrlKey || e.metaKey || (Math.abs(e.deltaY) >= 40 && Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.deltaMode === 0 && !e.shiftKey)) zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0015)), e.clientX, e.clientY); else { view.x -= e.deltaX; view.y -= e.deltaY; apply(); } }, { passive: false });
+  document.getElementById('cAll').onclick = () => { collapsed.clear(); render(); fit(true); };
+  document.getElementById('cTwo').onclick = () => { setOpen(S.openDepth); render(); fit(true); };
+  document.getElementById('cFit').onclick = () => fit(true);
+  const cz = f => { world.classList.add('anim'); zoomAt(f, innerWidth / 2, innerHeight / 2); };
+  document.getElementById('cIn').onclick = () => cz(1.2);
+  document.getElementById('cOut').onclick = () => cz(1 / 1.2);
+  let t; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => fit(false), 150); });
+})();
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => { render(); fit(false); });
+
+</script>
+</body>
+</html>

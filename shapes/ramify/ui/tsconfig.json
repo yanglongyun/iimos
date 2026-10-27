@@ -1,0 +1,15 @@
+{
+  "//": "只给编辑器和开发时的类型检查用;运行时由 esbuild 编译,不做类型检查",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": ["src"]
+}

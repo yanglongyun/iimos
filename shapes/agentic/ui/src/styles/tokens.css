@@ -1,0 +1,136 @@
+/* ═══════════════════════════════════════════════════════════════
+   AGENT 设计令牌 —— 石墨冷调 + 靛蓝紫（与 .dev/prototype 设计系统一致）
+   所有颜色只从这里取;theme.ts 把 auto 解析成具体的 light/dark
+   写在 <html data-theme> 上,样式层不感知「跟随系统」这回事。
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  /* 画布:主区白,侧栏浅灰冷调,浮层白 */
+  --surface: #ffffff;
+  --surface-side: #f3f4f9;
+  --surface-float: #ffffff;
+  --surface-2: #f6f7fb;
+  --surface-3: #eef0f6;
+
+  /* 文字档位 */
+  --text-1: #191b26;
+  --text-2: #555a6e;
+  --text-3: #8f94a8;
+  --text-4: rgba(143, 148, 168, 0.78);
+  --text-5: rgba(143, 148, 168, 0.5);
+
+  /* 主色:靛蓝紫 */
+  --accent: #5a5ff5;
+  --accent-hover: #6c70f8;
+  --accent-deep: #474de0;
+  --accent-soft: rgba(90, 95, 245, 0.09);
+  --accent-soft-2: rgba(90, 95, 245, 0.16);
+  --accent-ring: rgba(90, 95, 245, 0.28);
+  --accent-grad: linear-gradient(135deg, #6c70f8 0%, #5a5ff5 48%, #7b5cf0 100%);
+  --on-accent: #ffffff;
+
+  /* 语义色 */
+  --warn: #cf8408;
+  --warn-soft: rgba(207, 132, 8, 0.12);
+  --danger: #e5484d;
+  --danger-soft: rgba(229, 72, 77, 0.09);
+  --ok: #17a05e;
+  --ok-soft: rgba(23, 160, 94, 0.1);
+
+  /* 灰阶填充与描线（冷蓝倾向） */
+  --fill: rgba(23, 27, 54, 0.045);
+  --fill-2: rgba(23, 27, 54, 0.08);
+  --edge: rgba(23, 27, 54, 0.08);
+  --edge-soft: rgba(23, 27, 54, 0.05);
+  --edge-strong: rgba(23, 27, 54, 0.15);
+  --hover: rgba(23, 27, 54, 0.045);
+
+  /* 侧栏行要用实色:悬停操作区的渐变遮罩得复现此刻的真实底色 */
+  --row-hover: rgba(23, 27, 54, 0.05);
+  --row-on: #ffffff;
+
+  --veil: rgba(14, 16, 24, 0.4);
+
+  /* 运行中扫光文字 */
+  --sheen-base: #a2a7bb;
+  --sheen-peak: #191b26;
+
+  /* 代码块固定深色（两个主题一致，与原型一致） */
+  --code-bg: #151824;
+  --code-bg-head: #1b1f2e;
+  --code-text: #e6e9f4;
+  --code-text-dim: #8b91a7;
+  --code-border: rgba(255, 255, 255, 0.07);
+
+  /* 三层分层阴影：近处细描边 + 远处柔和投影 */
+  --shadow-1: 0 1px 2px rgba(20, 23, 45, 0.05), 0 0 0 1px rgba(20, 23, 45, 0.03);
+  --shadow-2: 0 1px 2px rgba(20, 23, 45, 0.05), 0 10px 28px -10px rgba(20, 23, 45, 0.14);
+  --shadow-3: 0 2px 8px rgba(20, 23, 45, 0.05), 0 20px 56px -14px rgba(20, 23, 45, 0.22);
+
+  /* 圆角：按钮 10 · 卡片 12–16 · 胶囊 999 */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  --font:
+    -apple-system, BlinkMacSystemFont, "SF Pro SC", "SF Pro Text", "PingFang SC", "Segoe UI",
+    "Noto Sans SC", "Microsoft YaHei UI", "Helvetica Neue", sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --swift: cubic-bezier(0.26, 0.6, 0.32, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface: #0e0f14;
+  --surface-side: #111218;
+  --surface-float: #191b24;
+  --surface-2: #13151c;
+  --surface-3: #1a1d27;
+
+  --text-1: #e7e9f1;
+  --text-2: #a4a9bd;
+  --text-3: #6d7288;
+  --text-4: rgba(109, 114, 136, 0.8);
+  --text-5: rgba(109, 114, 136, 0.5);
+
+  --accent: #7a7ef9;
+  --accent-hover: #8a8dfb;
+  --accent-deep: #5a5ff5;
+  --accent-soft: rgba(122, 126, 249, 0.13);
+  --accent-soft-2: rgba(122, 126, 249, 0.22);
+  --accent-ring: rgba(122, 126, 249, 0.38);
+  --accent-grad: linear-gradient(135deg, #7a7ef9 0%, #5a5ff5 48%, #8a63f2 100%);
+  --on-accent: #ffffff;
+
+  --warn: #e5a33c;
+  --warn-soft: rgba(229, 163, 60, 0.14);
+  --danger: #f06166;
+  --danger-soft: rgba(240, 97, 102, 0.13);
+  --ok: #3fb97c;
+  --ok-soft: rgba(63, 185, 124, 0.13);
+
+  --fill: rgba(255, 255, 255, 0.05);
+  --fill-2: rgba(255, 255, 255, 0.09);
+  --edge: rgba(255, 255, 255, 0.07);
+  --edge-soft: rgba(255, 255, 255, 0.045);
+  --edge-strong: rgba(255, 255, 255, 0.13);
+  --hover: rgba(255, 255, 255, 0.05);
+
+  --row-hover: rgba(255, 255, 255, 0.05);
+  --row-on: #1e212c;
+
+  --veil: rgba(6, 8, 14, 0.6);
+
+  --sheen-base: #6d7288;
+  --sheen-peak: #f5f7ff;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -10px rgba(0, 0, 0, 0.55);
+  --shadow-3: 0 2px 8px rgba(0, 0, 0, 0.45), 0 20px 56px -14px rgba(0, 0, 0, 0.65);
+}

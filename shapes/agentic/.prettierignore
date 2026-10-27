@@ -1,0 +1,12 @@
+node_modules/
+ui/dist/
+ui/vendor/
+**/package-lock.json
+.dev/work/
+.dev/local/
+.dev/reference/
+**/.wrangler/
+**/wrangler.jsonc
+**/.dev.vars*
+**/.secrets.json
+**/.env*

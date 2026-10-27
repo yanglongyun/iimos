@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>快速问答</title>
+<link rel="stylesheet" href="./style.css">
+<div class="wrap">
+  <form id="form" class="card composer">
+    <textarea id="text" rows="4" placeholder="问点什么…(Enter 发送,Shift+Enter 换行)"></textarea>
+    <div class="composer-foot">
+      <button id="clear" type="button" class="iconbtn" title="清空" hidden>🗑</button>
+      <button id="send" class="btn">发送</button>
+    </div>
+  </form>
+  <div id="anscard" class="anscard" hidden>
+    <div class="ans-head">
+      <span class="dim small">回答</span>
+      <button id="copy" class="ghost btn tiny" hidden>复制</button>
+    </div>
+    <div id="ans" class="ans"></div>
+  </div>
+</div>
+<script type="module" src="./main.js"></script>

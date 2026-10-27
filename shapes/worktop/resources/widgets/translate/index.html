@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>翻译</title>
+<link rel="stylesheet" href="./style.css">
+<div class="wrap">
+  <div class="langs">
+    <select id="src_lang"></select>
+    <button id="swap" class="iconbtn" title="交换">⇄</button>
+    <select id="dst_lang"></select>
+  </div>
+  <textarea id="src" rows="5" placeholder="输入或粘贴文字…(⌘/Ctrl+Enter 翻译)"></textarea>
+  <button id="go" class="btn">翻译</button>
+  <div id="outcard" class="card out" hidden>
+    <div id="out"></div>
+    <button id="copy" class="ghost btn small">复制</button>
+  </div>
+</div>
+<script type="module" src="./main.js"></script>

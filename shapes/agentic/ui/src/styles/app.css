@@ -1,0 +1,13 @@
+/* agentic 特有的补充:设置页的键值表 */
+.model-tag.warn {
+  color: var(--warn);
+}
+
+.route-error {
+  flex: 1;
+  padding: 48px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}

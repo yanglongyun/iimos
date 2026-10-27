@@ -1,0 +1,26 @@
+{
+  "name": "agentic",
+  "version": "0.9.0",
+  "private": true,
+  "type": "module",
+  "description": "agentic 形态：类 ChatGPT 的对话列表 + 对话，shell / read / write / edit / browser 五个工具",
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "test": "node --test server/tests/*.test.js",
+    "check": "node server/scripts/check.js",
+    "ui:build": "node scripts/build-ui.mjs",
+    "ui:test": "npm --prefix ui test",
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown .",
+    "setup": "npm ci && npm ci --prefix ui"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "prettier": "3.6.2"
+  }
+}

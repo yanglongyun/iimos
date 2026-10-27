@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+*.db
+*.db-*
+.data/
+# launcher 的记录(在 workspace 里跑时才有)
+.iimos/

@@ -1,0 +1,8 @@
+{
+  "marked": {
+    "version": "16.4.2",
+    "file": "marked.js",
+    "source": "https://esm.sh/marked@16?external=react,react-dom&target=es2022",
+    "at": "2026-10-21T03:16:51.052Z"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "翻译",
+  "icon": "🌐",
+  "description": "多语种互译,左右选语言,中间交换",
+  "permissions": [
+    "ai"
+  ],
+  "position": 5
+}

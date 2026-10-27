@@ -1,0 +1,104 @@
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-form label,
+.settings-form .settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.settings-prompt {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.55;
+}
+.secret-field {
+  position: relative;
+}
+.secret-field .field-input {
+  padding-right: 54px;
+}
+.secret-field button {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.settings-kv {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.settings-kv > div {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+}
+.settings-kv span {
+  flex: none;
+  width: 68px;
+  color: var(--text-3);
+}
+.settings-kv b {
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.settings-page {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 42px 28px 80px;
+}
+.settings-panel {
+  width: min(680px, 100%);
+  margin: 0 auto;
+}
+.settings-heading {
+  margin-bottom: 28px;
+}
+.settings-heading h1 {
+  margin: 0 0 7px;
+  font-size: 24px;
+  line-height: 32px;
+}
+.settings-heading p {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.settings-section {
+  padding: 22px 0;
+  border-top: 1px solid var(--edge-soft);
+}
+.settings-section-title {
+  font-size: 14px;
+  font-weight: 650;
+  margin-bottom: 16px;
+}
+.settings-actions {
+  display: flex;
+  justify-content: flex-start;
+  border-top: 1px solid var(--edge-soft);
+  padding-top: 20px;
+}

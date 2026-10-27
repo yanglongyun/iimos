@@ -1,0 +1,13 @@
+{
+  "name": "RSS",
+  "icon": "📰",
+  "description": "RSS 阅读器:自带几个源,想看什么自己加订阅",
+  "permissions": [
+    "net",
+    "sql"
+  ],
+  "hosts": [
+    "*"
+  ],
+  "position": 7
+}

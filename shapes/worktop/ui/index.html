@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <title>worktop</title>
+    <script>
+      // 首帧前定妆:读主题偏好写 data-theme,避免深色用户开屏闪白
+      (function () {
+        try {
+          var pref = localStorage.getItem("worktop.theme") || "system";
+          var dark = pref === "dark" || (pref === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+        } catch (e) { /* 读不到就浅色 */ }
+      })();
+    </script>
+    <link rel="stylesheet" href="/dist/main.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/dist/main.js"></script>
+  </body>
+</html>

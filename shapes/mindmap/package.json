@@ -1,0 +1,33 @@
+{
+  "name": "mindmap",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "mindmap 形态：整个 iimos 就是一张会生长的思维导图 —— 对话在左，主题树在右",
+  "author": "woodchange",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanglongyun/iimos.git",
+    "directory": "shapes/mindmap"
+  },
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "build": "node scripts/build-ui.mjs",
+    "start": "node main.js"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "0.28.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3"
+  }
+}

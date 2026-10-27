@@ -1,0 +1,121 @@
+/* ═══════════════════════════════════════════════════════════════
+   信息 设计令牌 —— 照着 macOS「信息」:白底、浅灰侧栏、iMessage 蓝气泡、灰气泡
+   所有颜色只从这里取;theme.ts 把系统主题写到 <html data-theme>。
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  --surface: #ffffff;
+  --surface-side: #f5f5f7;
+  --surface-float: #ffffff;
+  --surface-2: #f2f2f7;
+  --surface-3: #e9e9ee;
+
+  --text-1: #1d1d1f;
+  --text-2: #4b4b50;
+  --text-3: #8e8e93;
+  --text-4: #aeaeb2;
+
+  /* iMessage 蓝 */
+  --accent: #0a84ff;
+  --accent-hover: #2b95ff;
+  --accent-soft: rgba(10, 132, 255, 0.1);
+  --accent-ring: rgba(10, 132, 255, 0.3);
+  --on-accent: #ffffff;
+
+  /* 气泡 */
+  --bubble-me: linear-gradient(180deg, #2f9bff 0%, #0a7bff 100%);
+  --bubble-me-text: #ffffff;
+  --bubble-them: #e9e9eb;
+  --bubble-them-text: #1d1d1f;
+
+  /* 列表选中行:蓝底白字(macOS 信息) */
+  --row-on: #0a84ff;
+  --row-on-text: #ffffff;
+  --row-on-sub: rgba(255, 255, 255, 0.78);
+  --row-hover: rgba(0, 0, 0, 0.045);
+
+  --danger: #ff3b30;
+  --danger-soft: rgba(255, 59, 48, 0.1);
+  --warn: #ff9f0a;
+  --ok: #30d158;
+
+  --fill: rgba(0, 0, 0, 0.05);
+  --fill-2: rgba(0, 0, 0, 0.09);
+  --edge: rgba(0, 0, 0, 0.1);
+  --edge-soft: rgba(0, 0, 0, 0.06);
+  --edge-strong: rgba(0, 0, 0, 0.18);
+  --hover: rgba(0, 0, 0, 0.05);
+  --veil: rgba(0, 0, 0, 0.35);
+
+  --code-bg: rgba(0, 0, 0, 0.06);
+  --code-text: #1d1d1f;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.08), 0 12px 32px -12px rgba(0, 0, 0, 0.2);
+  --shadow-3: 0 2px 8px rgba(0, 0, 0, 0.1), 0 24px 60px -16px rgba(0, 0, 0, 0.3);
+
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+  --radius-bubble: 18px;
+  --radius-pill: 999px;
+
+  --font:
+    -apple-system, BlinkMacSystemFont, "SF Pro SC", "SF Pro Text", "PingFang SC", "Segoe UI",
+    "Noto Sans SC", "Microsoft YaHei UI", "Helvetica Neue", sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --swift: cubic-bezier(0.26, 0.6, 0.32, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface: #1e1e1e;
+  --surface-side: #262626;
+  --surface-float: #2c2c2e;
+  --surface-2: #2a2a2c;
+  --surface-3: #363638;
+
+  --text-1: #f2f2f7;
+  --text-2: #c7c7cc;
+  --text-3: #8e8e93;
+  --text-4: #636366;
+
+  --accent: #0a84ff;
+  --accent-hover: #2b95ff;
+  --accent-soft: rgba(10, 132, 255, 0.16);
+  --accent-ring: rgba(10, 132, 255, 0.4);
+
+  --bubble-me: linear-gradient(180deg, #2f9bff 0%, #0a7bff 100%);
+  --bubble-me-text: #ffffff;
+  --bubble-them: #3b3b3d;
+  --bubble-them-text: #f2f2f7;
+
+  --row-on: #0a84ff;
+  --row-on-text: #ffffff;
+  --row-on-sub: rgba(255, 255, 255, 0.78);
+  --row-hover: rgba(255, 255, 255, 0.06);
+
+  --danger: #ff453a;
+  --danger-soft: rgba(255, 69, 58, 0.14);
+  --warn: #ffd60a;
+  --ok: #30d158;
+
+  --fill: rgba(255, 255, 255, 0.06);
+  --fill-2: rgba(255, 255, 255, 0.1);
+  --edge: rgba(255, 255, 255, 0.1);
+  --edge-soft: rgba(255, 255, 255, 0.06);
+  --edge-strong: rgba(255, 255, 255, 0.18);
+  --hover: rgba(255, 255, 255, 0.06);
+  --veil: rgba(0, 0, 0, 0.55);
+
+  --code-bg: rgba(255, 255, 255, 0.08);
+  --code-text: #f2f2f7;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --shadow-3: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 60px -16px rgba(0, 0, 0, 0.7);
+}

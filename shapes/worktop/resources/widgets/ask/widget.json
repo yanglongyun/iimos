@@ -1,0 +1,9 @@
+{
+  "name": "快速问答",
+  "icon": "💬",
+  "description": "上面提问下面答,一问一答,不留会话",
+  "permissions": [
+    "ai"
+  ],
+  "position": 4
+}

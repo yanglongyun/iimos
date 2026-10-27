@@ -1,0 +1,339 @@
+/* ═══════════════════════════════════════════════════════════════
+   壳:左侧栏(可收起,可拖动调宽)
+   ═══════════════════════════════════════════════════════════════ */
+.sidebar {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--sidebar-width, 240px);
+  max-width: calc(100vw - 320px);
+  height: 100%;
+  background: var(--surface-side);
+  border-right: 1px solid var(--edge-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 10px 10px;
+}
+.side-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 34px;
+  padding: 0 6px;
+  margin-bottom: 10px;
+}
+.side-brand {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* 新对话：浮起的描边卡，悬停描上主色 */
+.side-new {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--edge-strong);
+  background: var(--surface-float);
+  box-shadow: var(--shadow-1);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-1);
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.1s;
+}
+.side-new:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.side-new:active {
+  transform: scale(0.985);
+}
+.side-new svg {
+  color: var(--accent);
+}
+
+.side-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: var(--text-4);
+  padding: 16px 12px 5px;
+}
+.side-empty {
+  padding: 18px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.side-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-right: -10px;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.side-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* 一行对话:标题为主,悬停露操作;正在跑的行画呼吸点 */
+.conv {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 33px;
+  padding: 0 10px;
+  border-radius: var(--radius-m);
+  border: 1px solid transparent;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.conv:hover {
+  background: var(--row-hover);
+}
+.conv.on {
+  background: var(--row-on);
+  border-color: var(--edge);
+  box-shadow: var(--shadow-1);
+}
+.conv-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-2);
+}
+.conv.on .conv-title {
+  color: var(--text-1);
+  font-weight: 550;
+}
+.conv-live {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  position: relative;
+}
+.conv-live::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  animation: conv-pulse 1.8s ease-out infinite;
+}
+@keyframes conv-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* 操作区悬停出现,渐变遮罩盖住被压的文字 —— 遮罩要复现此刻这行的实际底色 */
+.conv-ops {
+  display: none;
+  align-items: center;
+  gap: 1px;
+  position: absolute;
+  right: 4px;
+  top: 0;
+  bottom: 0;
+  padding-left: 16px;
+  background: linear-gradient(90deg, transparent, var(--surface-side) 30%);
+}
+.conv:hover .conv-ops {
+  display: inline-flex;
+  background: linear-gradient(90deg, transparent, var(--row-hover) 30%);
+}
+.conv.on .conv-ops,
+.conv.on:hover .conv-ops {
+  background: linear-gradient(90deg, transparent, var(--row-on) 30%);
+}
+.conv-ops .op {
+  width: 25px;
+  height: 25px;
+  border-radius: var(--radius-s);
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.conv-ops .op:hover {
+  background: var(--hover);
+  color: var(--text-1);
+}
+.conv-ops .op.danger:hover {
+  color: var(--danger);
+}
+/* 「更多」菜单打开时，这一行的按钮保持可见 */
+.conv.menu-open .conv-ops {
+  display: inline-flex;
+  background: linear-gradient(90deg, transparent, var(--row-hover) 30%);
+}
+.conv.on.menu-open .conv-ops {
+  background: linear-gradient(90deg, transparent, var(--row-on) 30%);
+}
+.conv-menu-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+.conv-menu {
+  position: fixed;
+  z-index: 91;
+  min-width: 148px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--surface-float);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-3);
+  transform: translateX(-100%);
+}
+.conv-menu.up {
+  transform: translate(-100%, -100%);
+}
+.conv-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-s);
+  font-size: 13px;
+  color: var(--text-1);
+  text-align: left;
+}
+.conv-menu button svg {
+  color: var(--text-2);
+}
+.conv-menu button:hover {
+  background: var(--hover);
+}
+.conv-menu button.danger,
+.conv-menu button.danger svg {
+  color: var(--danger);
+}
+.conv-menu button.danger:hover {
+  background: var(--danger-soft);
+}
+/* 置顶组拖拽：被拖的行变淡，落点画一条强调色细线 */
+.conv[draggable="true"] {
+  cursor: grab;
+}
+.conv.dragging {
+  opacity: 0.45;
+}
+.conv.drop-before {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+.conv.drop-after {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.side-foot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--edge-soft);
+}
+.side-settings {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: var(--radius-m);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: 13px;
+  text-align: left;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.side-settings:hover {
+  background: var(--hover);
+  color: var(--text-1);
+}
+.side-settings.on {
+  background: var(--row-on);
+  border-color: var(--edge);
+  color: var(--text-1);
+  font-weight: 550;
+  box-shadow: var(--shadow-1);
+}
+
+.side-new,
+.side-settings,
+.conv-title {
+  text-decoration: none;
+}
+.conv-title {
+  line-height: 33px;
+}
+
+.sidebar.folded {
+  display: none;
+}
+
+/* 侧栏右边缘的拖动条 */
+.column-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 7px;
+  cursor: col-resize;
+  z-index: 60;
+}
+.column-resizer::after {
+  content: "";
+  position: absolute;
+  inset: 0 3px;
+}
+.column-resizer:hover::after,
+body.column-resizing .column-resizer::after {
+  background: var(--accent);
+}
+body.column-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+body.column-resizing::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  cursor: col-resize;
+}

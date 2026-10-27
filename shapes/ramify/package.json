@@ -1,0 +1,33 @@
+{
+  "name": "ramify",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ramify 形态：整个 iimos 就是一块创意画布 —— 一句话长成 N 个方案，从任一方案继续分叉",
+  "author": "woodchange",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanglongyun/iimos.git",
+    "directory": "shapes/ramify"
+  },
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "build": "node scripts/build-ui.mjs",
+    "start": "node main.js"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "0.28.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,17 @@
+node_modules/
+*.log
+.DS_Store
+/.claude/
+/.wrangler/
+/app/desktop/runtime/
+/app/release/
+/.dev/work/
+/.dev/local/
+**/.wrangler/
+**/wrangler.jsonc
+**/.dev.vars
+**/.dev.vars.*
+**/.secrets.json
+**/.env
+**/.env.*
+!**/.env.example

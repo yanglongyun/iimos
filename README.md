@@ -74,6 +74,8 @@ client/       The desktop app (Electron)
 extension/    Chrome / Edge extension: lets the agent drive the browser, connected to the launcher via native messaging
 site/         iimos.ai: home, downloads, the shapes gallery, Google sign-in, and the API agents call
               (described in /agent.md). One Cloudflare Worker + D1 + R2.
+shapes/       Source for agentic, worktop, ramify, messages, and mindmap shapes (one repository).
+references/   Source references used while building shapes; not installable shapes.
 ```
 
 More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>汇率</title>
+<link rel="stylesheet" href="./style.css">
+<div class="wrap">
+  <div class="pair">
+    <select id="from"></select>
+    <button id="swap" class="iconbtn" title="对调">⇄</button>
+    <select id="to"></select>
+  </div>
+  <div class="card panel">
+    <input id="amount" type="number" value="100" min="0" step="any">
+    <div class="arrow">=</div>
+    <div id="result" class="result">—</div>
+  </div>
+  <div class="meta"><span id="rate" class="dim small"></span><span id="date" class="dim small"></span></div>
+  <div id="grid" class="grid"></div>
+</div>
+<script type="module" src="./main.js"></script>

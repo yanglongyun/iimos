@@ -1,0 +1,20 @@
+{
+  "react-router": {
+    "version": "8.4.0",
+    "file": "react-router.js",
+    "source": "https://esm.sh/react-router@8.4.0?external=react,react-dom&target=es2022",
+    "at": "2026-10-21T03:16:48.618Z"
+  },
+  "zustand": {
+    "version": "5.0.15",
+    "file": "zustand.js",
+    "source": "https://esm.sh/zustand@5?external=react,react-dom&target=es2022",
+    "at": "2026-10-21T03:16:49.460Z"
+  },
+  "marked": {
+    "version": "16.4.2",
+    "file": "marked.js",
+    "source": "https://esm.sh/marked@16?external=react,react-dom&target=es2022",
+    "at": "2026-10-21T03:16:51.052Z"
+  }
+}

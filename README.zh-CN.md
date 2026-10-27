@@ -72,6 +72,8 @@ client/       桌面客户端(Electron)
 extension/    Chrome / Edge 插件:让 agent 控制浏览器,经原生消息连到 launcher
 site/         iimos.ai:首页、下载、形态墙、谷歌登录,和给 agent 调的接口(说明在 /agent.md)。
               一个 Cloudflare Worker + D1 + R2。
+shapes/       agentic、worktop、ramify、messages、mindmap 五个形态的源码，共用本仓库。
+references/   形态开发时参考的旧源码，不是可直接换上的形态。
 ```
 
 更多见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。

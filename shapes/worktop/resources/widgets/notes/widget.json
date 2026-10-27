@@ -1,0 +1,9 @@
+{
+  "name": "便签",
+  "icon": "📌",
+  "description": "随手记几句,按时间倒序放着",
+  "permissions": [
+    "sql"
+  ],
+  "position": 1
+}
