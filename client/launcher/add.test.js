@@ -9,7 +9,7 @@ import * as seed from './seed.js';
 import { addPackage, parseSpec, vendorFile } from './add.js';
 import { buildUI } from './build.js';
 
-const APP = path.resolve(import.meta.dirname, '..', 'app');
+const APP = path.resolve(import.meta.dirname, '..', '..', 'shapes', 'published', 'terminal');
 
 const FILES = {
     '/tiny-fmt@1': '/* esm.sh - tiny-fmt@1.2.3 */\nexport * from "/tiny-fmt@1.2.3/es2022/tiny-fmt.mjs";\nexport { default } from "/tiny-fmt@1.2.3/es2022/tiny-fmt.mjs";\n',

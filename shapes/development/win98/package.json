@@ -1,0 +1,19 @@
+{
+  "name": "win98",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Windows 98 经典桌面形态：窗口、任务栏、开始菜单、本地助手、文件浏览和记事本。",
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "node ../../../client/launcher/cli-build.js .",
+    "test": "node --test test/*.test.js",
+    "start": "node main.js",
+    "check": "node ../../../client/node_modules/typescript/bin/tsc -p tsconfig.json"
+  }
+}

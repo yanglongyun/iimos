@@ -1,0 +1,19 @@
+{
+  "name": "radio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "通过 RSS 主题频道收听简报的本地电台",
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "node ../../../client/launcher/cli-build.js .",
+    "test": "node --test test/*.test.js",
+    "start": "node main.js",
+    "check": "node ../../../client/node_modules/typescript/bin/tsc -p tsconfig.json"
+  }
+}

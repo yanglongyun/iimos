@@ -1,4 +1,4 @@
-// 播种与升级:出厂的应用(seed,也就是仓库里的 app/ 目录)怎么进到用户的 workspace 里。
+// 播种与升级:出厂的应用(seed,仓库里的 shapes/published/terminal/)怎么进到用户的 workspace 里。
 //
 // 首次运行:把 seed 整个拷进 workspace,git init,打 seed-v<版本> 与 good。
 // 装了新版本:

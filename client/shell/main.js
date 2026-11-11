@@ -13,8 +13,8 @@ import { createSurfaces } from './surface.js';
 const paths = launcherPaths();
 const dev = !app.isPackaged;
 const root = path.resolve(import.meta.dirname, '..');
-// 开发时(npm run app)仓库里的 app/ 就是 seed;打包后 seed 在 resources/seed
-const seedDir = process.env.IIMOS_SEED || (dev ? path.join(root, 'app') : path.join(process.resourcesPath, 'seed'));
+// 开发时使用 shapes/published/terminal 出厂种子;打包后 seed 在 resources/seed
+const seedDir = process.env.IIMOS_SEED || (dev ? path.resolve(root, '..', 'shapes', 'published', 'terminal') : path.join(process.resourcesPath, 'seed'));
 const version = seed.readSeedVersion(seedDir, app.getVersion());
 // 界面编译工具链(esbuild、React):开发时就是仓库的 node_modules;打包后在 resources/toolchain(真实目录,不在 asar 里)
 const toolchain = dev ? path.join(root, 'node_modules') : path.join(process.resourcesPath, 'toolchain', 'node_modules');

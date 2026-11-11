@@ -1,0 +1,19 @@
+{
+  "name": "macos9",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mac OS 9 Platinum 风格的本地 Agent 桌面",
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "node ../../../client/launcher/cli-build.js .",
+    "test": "node --test test/*.test.js",
+    "start": "node main.js",
+    "check": "node ../../../client/node_modules/typescript/bin/tsc -p tsconfig.json"
+  }
+}

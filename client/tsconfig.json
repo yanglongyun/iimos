@@ -1,0 +1,24 @@
+{
+  "extends": "../shapes/published/terminal/ui/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/*": [
+        "./node_modules/@types/react/*"
+      ],
+      "react-dom/*": [
+        "./node_modules/@types/react-dom/*"
+      ]
+    }
+  },
+  "include": [
+    "../shapes/published/terminal/ui/src",
+    "../shapes/published/retro/ui/src",
+    "../shapes/development/win98/ui/src",
+    "../shapes/development/macos9/ui/src",
+    "../shapes/development/dungeon/ui/src",
+    "../shapes/development/radio/ui/src"
+  ]
+}

@@ -1,0 +1,196 @@
+/* iimos —— 拟物终端。米色仪器机箱里嵌一块琥珀色 CRT 屏,整个对话是屏上的一份执行日志。 */
+:root {
+  /* 机箱:米色烤漆 + 拉丝金属;屏幕:暗棕玻璃 + 琥珀荧光 */
+  --case: #d6ccb4; --case-2: #c9bea4; --case-3: #b9ad92; --case-hi: #ece5d3; --case-shadow: rgba(60, 45, 20, .45);
+  --engrave: #6c6252; --engrave-2: #8c826f;
+  --bg: #120d07; --bg-2: #1b140a; --ink: #ffc46b; --ink-2: #e2a94f; --dim: #9a7435; --faint: #3a2a12;
+  --acc: #ffb340; --cyan: #ffd98a; --warn: #ff9a3c; --bad: #ff6a4d; --bad-soft: rgba(255, 106, 77, .14);
+  --glow: rgba(255, 180, 64, .55);
+  --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, "PingFang SC", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  color: var(--ink); font: 13.5px/1.75 var(--mono); display: flex; flex-direction: column; overflow: hidden; -webkit-font-smoothing: antialiased;
+  background: linear-gradient(180deg, var(--case-hi) 0, var(--case) 60px, var(--case-2) 100%);
+  padding: 0 14px 14px;
+}
+#root { display: contents; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+::selection { background: rgba(255, 179, 64, .3); }
+/* 拉丝纹理,盖在机箱上,很淡 */
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 3px); }
+
+/* ── 顶部:铭牌 + 指示灯,整条可拖窗口 ───────────────── */
+.bar {
+  position: relative; z-index: 1; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4px 0 78px; color: var(--engrave); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; -webkit-app-region: drag;
+}
+.bar .where { padding: 2px 10px; border-radius: 3px; background: linear-gradient(180deg, var(--case-3), var(--case-2)); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35), 0 1px 0 var(--case-hi); text-shadow: 0 1px 0 rgba(255, 255, 255, .4); }
+.bar b { color: #3f3729; font-weight: 700; }
+.bar .right { display: flex; align-items: center; gap: 14px; }
+.ctx { color: var(--engrave-2); text-shadow: 0 1px 0 rgba(255, 255, 255, .4); }
+.ctx.high { color: #a0541d; }
+/* 模型按钮:一枚圆形 LED + 刻字 */
+.model { -webkit-app-region: no-drag; color: var(--engrave); padding: 3px 10px; border-radius: 4px; text-shadow: 0 1px 0 rgba(255, 255, 255, .4); display: flex; align-items: center; }
+.model:hover { background: rgba(0, 0, 0, .06); }
+.model::before {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px;
+  background: radial-gradient(circle at 35% 35%, #ff9d8f, #c0231a 60%, #6e0d08);
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, .6), 0 0 6px rgba(220, 40, 30, .6), 0 1px 0 rgba(255, 255, 255, .5);
+}
+.model.on::before {
+  background: radial-gradient(circle at 35% 35%, #c8ffd0, #1fb85a 60%, #0a5a2a);
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, .5), 0 0 10px rgba(60, 230, 120, .75), 0 1px 0 rgba(255, 255, 255, .5);
+}
+
+/* 窗口钮(Windows/Linux 无框窗口):三颗小按键 */
+.winbtns { display: flex; align-items: center; gap: 6px; margin-left: 12px; -webkit-app-region: no-drag; }
+.winbtns button { width: 26px; height: 20px; display: grid; place-items: center; border-radius: 3px; color: var(--engrave); font-size: 11px; line-height: 1; padding: 0; -webkit-app-region: no-drag; background: linear-gradient(180deg, var(--case-hi), var(--case-2)); box-shadow: 0 1px 0 rgba(0, 0, 0, .35), inset 0 1px 0 #fff; }
+.winbtns button:active { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .3); }
+.winbtns button.close:hover { color: #a0251a; }
+
+/* ── 屏幕:嵌在机箱里的一块 CRT ─────────────────────── */
+.crt {
+  position: relative; z-index: 1; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #1a120a 0, var(--bg) 70%);
+  border-radius: 14px; border: 2px solid #2a2016;
+  box-shadow: inset 0 0 0 4px #0a0704, inset 0 0 60px rgba(0, 0, 0, .9), 0 0 0 6px #4a3f2e, 0 0 0 8px var(--case-3), 0 6px 18px -4px var(--case-shadow);
+}
+/* 玻璃:扫描线 + 一道斜的反光,盖在屏上不动 */
+.crt::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2; border-radius: 12px;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .07) 0, rgba(255, 255, 255, .02) 30%, transparent 45%), repeating-linear-gradient(0deg, rgba(0, 0, 0, .16) 0 1px, transparent 1px 3px);
+}
+.scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: var(--faint) transparent; padding: 6px 8px; }
+/* 荧光:屏上文字带一点光晕 */
+.scroll, .scroll * { text-shadow: 0 0 5px rgba(255, 180, 64, .25); }
+
+/* ── 初始状态 ───────────────────────────────────────── */
+.fresh-view { margin: auto; width: min(640px, 90%); padding: 24px 0 40px; animation: boot .5s ease-out both; }
+.logo { color: var(--acc); font-size: 11px; line-height: 1; margin-bottom: 26px; text-shadow: 0 0 14px var(--glow); white-space: pre; }
+.boot p { color: var(--dim); animation: boot .35s ease-out both; }
+.boot p:nth-child(2) { animation-delay: .12s; } .boot p:nth-child(3) { animation-delay: .24s; }
+.boot p b { color: var(--ink); font-weight: 500; }
+.boot .ok::before { content: "[ ok ] "; color: var(--acc); }
+.boot .warn::before { content: "[ !! ] "; color: var(--warn); }
+.boot .warn { color: var(--ink-2); }
+.boot .warn a { color: var(--warn); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.slot { margin-top: 26px; }
+@keyframes boot { from { opacity: 0; transform: translateY(4px); } }
+body:not(.fresh) .fresh-view { margin: 0 auto; width: min(760px, 92%); padding: 26px 0 6px; animation: none; }
+body:not(.fresh) .slot { display: none; }
+body:not(.fresh) .boot p { animation: none; }
+
+/* ── 输入:屏下方一条键盘托盘,里面是提示符 ────────────── */
+.prompt { display: flex; align-items: flex-start; gap: 10px; }
+.prompt .caret { color: var(--acc); text-shadow: 0 0 10px var(--glow); line-height: 1.6; }
+.prompt textarea {
+  flex: 1; resize: none; background: none; border: 0; outline: none; color: var(--ink); caret-color: var(--acc);
+  font: inherit; line-height: 1.6; max-height: 200px; padding: 0;
+}
+.prompt textarea::placeholder { color: #5a4420; }
+/* 停止:一颗红色实体按钮 */
+.prompt .stop {
+  flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff;
+  background: radial-gradient(circle at 40% 35%, #ff8a7a, #c62b1f 55%, #7a140c); border: 2px solid #3a2a1c;
+  box-shadow: 0 2px 0 #2a1d12, 0 0 8px rgba(220, 50, 40, .5);
+}
+.prompt .stop:active { transform: translateY(2px); box-shadow: 0 0 0 #2a1d12; }
+.prompt .stop svg { width: 12px; height: 12px; fill: currentColor; }
+#fresh-slot .prompt { font-size: 17px; }
+.bottom {
+  position: relative; z-index: 1; flex-shrink: 0; margin-top: 14px; padding: 12px 0 12px; border-radius: 10px;
+  background: linear-gradient(180deg, #2b2218, #1c1610); border: 2px solid #4a3f2e; box-shadow: inset 0 2px 6px rgba(0, 0, 0, .7), 0 1px 0 var(--case-hi);
+}
+.bottom .prompt { width: min(760px, 92%); margin: 0 auto; }
+body.fresh .bottom { display: none; }
+body.running .prompt .caret { animation: blink 1s steps(2) infinite; }
+
+/* ── 对话:执行日志 ─────────────────────────────────── */
+.log { width: min(760px, 92%); margin: 0 auto; padding: 18px 0 28px; }
+body.fresh .log { display: none; }
+#items > :first-child { margin-top: 4px; }
+.u { color: var(--ink); margin-top: 24px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.u::before { content: "› "; color: var(--acc); }
+.a { margin-top: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
+.a p { margin: 8px 0; } .a p:first-child { margin-top: 0; } .a p:last-child { margin-bottom: 0; }
+.a ul, .a ol { margin: 6px 0 6px 22px; }
+.a li::marker { color: var(--dim); }
+.a h3 { color: var(--ink); font-size: inherit; margin: 14px 0 4px; }
+.a h3::before { content: "## "; color: var(--dim); }
+.a b { color: var(--ink); font-weight: 600; }
+.a code { color: var(--acc); }
+.a a { color: var(--cyan); }
+.a pre { background: var(--bg-2); border: 1px solid var(--faint); border-radius: 6px; padding: 10px 12px; margin: 10px 0; overflow-x: auto; }
+.a pre code { color: var(--ink-2); }
+.live:empty::before { content: "⠋"; color: var(--acc); animation: spin .8s steps(1) infinite; }
+.live:not(:empty)::after { content: "█"; color: var(--acc); margin-left: 1px; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes spin {
+  0% { content: "⠋"; } 12% { content: "⠙"; } 25% { content: "⠹"; } 37% { content: "⠸"; }
+  50% { content: "⠼"; } 62% { content: "⠴"; } 75% { content: "⠦"; } 87% { content: "⠧"; }
+}
+
+/* 工具调用:缩进一格,左边一道细线;点开看输出 */
+.t { margin: 8px 0 0 14px; border-left: 1px solid var(--faint); padding-left: 12px; font-size: 12.5px; color: var(--dim); }
+.t summary { list-style: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t summary::-webkit-details-marker { display: none; }
+.t summary b { color: var(--cyan); font-weight: 500; margin-right: 8px; }
+.t summary .n { color: var(--dim); margin-left: 8px; }
+.t summary:hover { color: var(--ink-2); }
+.t.pending { border-left-color: var(--acc); }
+.t.pending summary b::after { content: "⠋"; color: var(--acc); margin-left: 6px; animation: spin .8s steps(1) infinite; }
+.t.failed { border-left-color: rgba(255, 106, 77, .5); }
+.t.failed summary b { color: var(--bad); }
+.retry { margin-top: 8px; color: var(--warn); font-size: 12px; }
+.retry::before { content: "[ .. ] "; }
+.t pre { color: #7d6235; white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 2px; max-height: 280px; overflow: auto; font: inherit; font-size: 12px; }
+
+.err { margin-top: 10px; color: var(--bad); }
+.err::before { content: "[ err ] "; }
+.note { margin-top: 10px; color: var(--dim); }
+.restarted { margin: 18px 0 6px; color: var(--dim); font-size: 12px; display: flex; align-items: center; gap: 10px; }
+.restarted::before { content: "↻"; color: var(--acc); }
+.restarted::after { content: ""; flex: 1; border-top: 1px dashed var(--faint); }
+.cmp { margin: 22px 0 4px; color: var(--dim); font-size: 12px; }
+.cmp summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.cmp summary::-webkit-details-marker { display: none; }
+.cmp summary::before, .cmp summary::after { content: ""; flex: 1; border-top: 1px dashed var(--faint); }
+.cmp summary:hover { color: var(--ink-2); }
+.cmp pre { white-space: pre-wrap; font: inherit; color: #b08a4a; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--faint); border-radius: 6px; background: var(--bg-2); }
+.cmp.pending summary { color: var(--acc); }
+.note::before { content: "■ "; color: var(--dim); }
+
+/* ── 模型配置:机箱上掀开的一块小面板 ───────────────── */
+.sheet { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 20px; background: rgba(40, 30, 15, .55); animation: boot .2s ease-out both; }
+.setup {
+  width: min(520px, 100%); border-radius: 10px; padding: 0 0 18px; color: var(--engrave);
+  background: linear-gradient(180deg, var(--case-hi), var(--case) 40%, var(--case-2)); border: 2px solid var(--case-3);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .7), inset 0 1px 0 #fff;
+}
+.setup-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--case-3); color: var(--engrave); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+.setup-bar .x { color: var(--engrave); font-size: 11px; border-radius: 3px; padding: 0 8px; background: linear-gradient(180deg, var(--case-hi), var(--case-2)); box-shadow: 0 1px 0 rgba(0, 0, 0, .35), inset 0 1px 0 #fff; }
+.setup-bar .x:active { transform: translateY(1px); box-shadow: none; }
+.setup .hint { color: var(--engrave-2); font-size: 12px; padding: 14px 18px 4px; text-shadow: 0 1px 0 rgba(255, 255, 255, .4); }
+.setup label { display: flex; align-items: center; gap: 10px; padding: 8px 18px 0; }
+.setup label span { color: var(--engrave); white-space: pre; flex-shrink: 0; width: 82px; text-shadow: 0 1px 0 rgba(255, 255, 255, .4); }
+/* 输入框:嵌进面板的一条小液晶屏 */
+.setup input { flex: 1; min-width: 0; outline: none; color: var(--ink); font: inherit; padding: 3px 8px; caret-color: var(--acc); background: var(--bg); border: 1px solid #2a2016; border-radius: 4px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .8), 0 1px 0 #fff; text-shadow: 0 0 5px rgba(255, 180, 64, .3); }
+.setup input:focus { box-shadow: inset 0 2px 4px rgba(0, 0, 0, .8), 0 0 0 2px rgba(255, 179, 64, .35); }
+.setup input::placeholder { color: #5a4420; }
+.setup input.saved::placeholder { color: var(--ink-2); letter-spacing: .02em; }
+.setup label em { font-style: normal; color: var(--engrave-2); font-size: 11.5px; }
+.setup .hint.small { padding: 6px 18px 0 110px; font-size: 11.5px; }
+.setup input[type=number]::-webkit-inner-spin-button { display: none; }
+/* 连接:一枚实体按键 */
+.setup .go { margin: 18px 18px 0; padding: 6px 16px; border-radius: 5px; color: #2d2519; font-weight: 700; letter-spacing: .06em; background: linear-gradient(180deg, var(--case-hi), var(--case-2)); box-shadow: 0 3px 0 var(--case-3), 0 4px 6px rgba(0, 0, 0, .25), inset 0 1px 0 #fff; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+.setup .go:active { transform: translateY(3px); box-shadow: 0 0 0 var(--case-3), inset 0 1px 0 #fff; }
+
+@media (max-width: 600px) { .bar { padding-left: 4px; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+.bar.frameless { padding-left: 4px; }

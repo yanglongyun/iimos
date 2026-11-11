@@ -20,10 +20,10 @@
   },
   "scripts": {
     "app": "npm run build:ui && electron shell/main.js",
-    "app:direct": "npm run build:ui && node app/main.js",
+    "app:direct": "npm run build:ui && node ../shapes/published/terminal/main.js",
     "build:ui": "node launcher/cli-build.js",
-    "typecheck": "tsc -p app/ui/tsconfig.json",
-    "test": "npm run build:ui && node --test \"launcher/**/*.test.js\" \"app/test/*.test.js\"",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "npm run build:ui && node --test \"launcher/**/*.test.js\" \"../shapes/published/terminal/test/*.test.js\" \"../shapes/published/retro/test/*.test.js\" \"../shapes/development/win98/test/*.test.js\" \"../shapes/development/macos9/test/*.test.js\" \"../shapes/development/dungeon/test/*.test.js\" \"../shapes/development/radio/test/*.test.js\"",
     "build:app": "npm run build:ui && node scripts/pack.mjs",
     "release:mac": "npm run build:ui && electron-builder",
     "ship:mac": "node scripts/release-mac.mjs",
@@ -58,7 +58,7 @@
     ],
     "extraResources": [
       {
-        "from": "app",
+        "from": "../shapes/published/terminal",
         "to": "seed",
         "filter": [
           "**/*",

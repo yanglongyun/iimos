@@ -12,8 +12,8 @@ node_modules/
 *.db-shm
 *.db-wal
 *.log
-# 单独跑 client/app/server 时的数据目录
-client/app/.data/
+# 单独跑形态时的数据目录
+shapes/*/*/.data/
 
 # 打包产物
 /client/dist/

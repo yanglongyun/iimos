@@ -49,10 +49,10 @@ test('播种:整份拷进来、打 good;依赖目录、系统垃圾不进 worksp
     assert.equal(await seed.plant({ seedDir, workspace, version: '1.0.0' }), null);
 });
 
-test('真实的出厂 app/ 能播种,入口在', async () => {
+test('真实的出厂 terminal 形态能播种,入口在', async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-'));
     const workspace = path.join(root, 'workspace');
-    const appDir = path.resolve(import.meta.dirname, '..', 'app');
+    const appDir = path.resolve(import.meta.dirname, '..', '..', 'shapes', 'published', 'terminal');
     await seed.plant({ seedDir: appDir, workspace, version: seed.readSeedVersion(appDir, '0') });
     for (const file of ['main.js', 'server/index.js', 'server/agent/index.js', 'ui/index.html', 'ui/src/main.tsx', 'ui/dist/main.js', 'AGENT.md']) {
         assert.ok(fs.existsSync(path.join(workspace, file)), `缺 ${file}`);

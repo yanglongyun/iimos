@@ -62,17 +62,23 @@ client/       桌面客户端(Electron)
                 同一版本连续两次起不来,就退回上一个好版本(坏掉的那版留成 crashed-* 分支);
                 连好版本都起不来,弹一个对话框说明。
                 agent 用的 `iimos` 命令:status / snapshot / log / diff / rollback / add / build / reload / restart / upgrade
-  app/          出厂的应用(种子)。首次打开时拷进 <数据目录>/workspace/(一个 git 仓库),之后 agent 改的都是那一份。
-    main.js       起本地服务 → 带着地址向 launcher 报到;纯 Node,不碰 Electron
-    server/       本地服务:只听 127.0.0.1,接口要令牌;对话、事件流
-      agent/        agent 循环;一个工具 shell;上下文到 70% 自动压缩;prompt.md 是它的基础提示词
-      ai/           模型请求(Responses 流式,失败自动重试)
-    ui/           界面:React + TSX,改完 `iimos reload` 由 launcher 带的 esbuild 编译,编不过就不换
-    AGENT.md      agent 自己维护的说明,写给下一次的它自己
 extension/    Chrome / Edge 插件:让 agent 控制浏览器,经原生消息连到 launcher
 site/         iimos.ai:首页、下载、形态墙、谷歌登录,和给 agent 调的接口(说明在 /agent.md)。
               一个 Cloudflare Worker + D1 + R2。
-shapes/       agentic、worktop、ramify、messages、mindmap 五个形态的源码，共用本仓库。
+shapes/       形态的唯一源码，按发布状态分目录。
+  published/    官网已发布的七个形态
+    terminal/     出厂种子，客户端直接从这里构建和打包
+    retro/        拟物终端
+    agentic/      对话列表与工具
+    messages/     Apple「信息」风格对话
+    worktop/      标签页和分屏工作台
+    ramify/       创意分支画布
+    mindmap/      思维导图
+  development/  尚未发布的形态
+    win98/        Windows 98 经典桌面
+    macos9/       Mac OS 9 Platinum 桌面
+    dungeon/      地下城原型，暂存
+    radio/        电台原型，暂存
 references/   形态开发时参考的旧源码，不是可直接换上的形态。
 ```
 

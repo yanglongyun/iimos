@@ -8,7 +8,7 @@ import * as snap from './snapshot.js';
 import * as seed from './seed.js';
 import { buildUI } from './build.js';
 
-const APP = path.resolve(import.meta.dirname, '..', 'app');
+const APP = path.resolve(import.meta.dirname, '..', '..', 'shapes', 'published', 'terminal');
 
 async function planted() {
     const workspace = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'iimos-build-')), 'workspace');

@@ -1,0 +1,18 @@
+{
+  "name": "terminal",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "description": "iimos 的应用本身。出厂只有一个对话,其余都由 agent 在对话里长出来。",
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "node ../../../client/launcher/cli-build.js .",
+    "test": "node --test test/*.test.js",
+    "start": "node main.js"
+  }
+}

@@ -63,18 +63,23 @@ client/       The desktop app (Electron)
                 last good one (the broken version stays on a crashed-* branch). If even that won't start, it says so
                 in a dialog.
                 The `iimos` CLI the agent uses: status / snapshot / log / diff / rollback / add / build / reload / restart / upgrade
-  app/          The app as shipped (the seed). Copied into <data dir>/workspace/ (a git repo) on first launch;
-                everything the agent changes happens there.
-    main.js       starts the local server → reports ready (with its URL) to the launcher; pure Node, no Electron
-    server/       local server, 127.0.0.1 only, token-protected; the conversation, the event stream
-      agent/        the agent loop; one tool, shell; context auto-compacted at 70%; prompt.md is its base prompt
-      ai/           model calls (Responses streaming, automatic retry)
-    ui/           React + TSX; after a change, `iimos reload` compiles with the esbuild the launcher ships
-    AGENT.md      notes the agent keeps for its future self
 extension/    Chrome / Edge extension: lets the agent drive the browser, connected to the launcher via native messaging
 site/         iimos.ai: home, downloads, the shapes gallery, Google sign-in, and the API agents call
               (described in /agent.md). One Cloudflare Worker + D1 + R2.
-shapes/       Source for agentic, worktop, ramify, messages, and mindmap shapes (one repository).
+shapes/       Shape sources, organized by release status.
+  published/    Seven shapes available on iimos.ai
+    terminal/     Default seed used directly by the client build and installer
+    retro/        Vintage instrument-panel terminal
+    agentic/      Chat list and tools
+    messages/     Apple Messages-style chat
+    worktop/      Tabbed, split-pane workspace
+    ramify/       Branching creative canvas
+    mindmap/      Mind map
+  development/  Shapes not yet published
+    win98/        Windows 98-style desktop
+    macos9/       Mac OS 9 Platinum desktop
+    dungeon/      Dungeon adventure prototype
+    radio/        RSS radio prototype
 references/   Source references used while building shapes; not installable shapes.
 ```
 

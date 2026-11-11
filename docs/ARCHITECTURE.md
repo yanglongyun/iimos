@@ -5,14 +5,15 @@
 
 这份文档说明仓库里每个模块是什么、彼此怎么说话、发出去的是什么。
 
-## 两块
+## 桌面端与网站
 
 | 目录 | 是什么 | 跑在哪 |
 | --- | --- | --- |
-| `client/` | 桌面客户端(Electron),唯一的产品 | 用户的电脑(macOS、Windows) |
+| `client/` | 桌面壳与 launcher(Electron + Node) | 用户的电脑(macOS、Windows) |
+| `shapes/` | 十一个形态的源码,terminal 是出厂种子 | 用户的电脑(macOS、Windows) |
 | `site/` | iimos.ai:首页、下载、形态墙、谷歌登录、给 agent 调的接口 | Cloudflare,一个 Worker + D1 + R2,都叫 iimos |
 
-两块各有自己的 `package.json`,互不依赖。它们之间唯一的约定是网站的接口,写在 `https://iimos.ai/agent.md` 里。
+桌面端由 `client/` 和 `shapes/` 组成；网站有独立的 `package.json`。桌面端与网站之间唯一的约定是网站的接口,写在 `https://iimos.ai/agent.md` 里。
 
 ## 客户端里的模块
 
@@ -41,17 +42,25 @@ client/
 
   shell/surface.js 主窗口和形态开的额外窗口;shell/main.js 还提供通知、对话框、全局快捷键这些宿主能力
 
-  app/           出厂种子 = Agent 能改的身体。纯 Node + 网页,不碰 Electron
-    main.js        应用入口:起本地服务,iimos.ready({ url }) 报到
-    server/        本地服务(127.0.0.1 + 令牌)、唯一的那个对话
-      agent/         Agent 循环、唯一的工具 shell、上下文压缩、prompt.md
-      ai/            模型请求(Responses 流式)
-    ui/            React + TSX,iimos reload 时编译。一个对话
-
   build/  scripts/   图标、签名、打包、发版
+
+shapes/       形态的唯一源码，按发布状态分目录。
+  published/    官网已发布的七个形态
+    terminal/     出厂种子，客户端直接从这里构建和打包
+    retro/        拟物终端
+    agentic/      对话列表与工具
+    messages/     Apple「信息」风格对话
+    worktop/      标签页和分屏工作台
+    ramify/       创意分支画布
+    mindmap/      思维导图
+  development/  尚未发布的形态
+    win98/        Windows 98 经典桌面
+    macos9/       Mac OS 9 Platinum 桌面
+    dungeon/      地下城原型，暂存
+    radio/        电台原型，暂存
 ```
 
-**不变层和种子分开放**是整个设计的底线:Agent 能改的东西(`app/`)和负责兜底的东西(`launcher/`)不在一起,
+**不变层和种子分开放**是整个设计的底线:Agent 能改的东西(从 `shapes/published/terminal/` 播种的 workspace)和负责兜底的东西(`client/launcher/`)不在一起,
 所以它把自己改坏了,launcher 还能把它退回去。
 
 ## 启动:core 与宿主
@@ -130,6 +139,6 @@ good 本身也起不来,就不再硬起,弹对话框告诉用户。没有救援�
 
 | 产物 | 组成 | 给谁 |
 | --- | --- | --- |
-| Mac 安装包(dmg) | client:shell + launcher + app(种子) | 用户 |
+| Mac 安装包(dmg) | client:shell + launcher + shapes/published/terminal(种子) | 用户 |
 | Windows 安装包(exe) | 同上 | 用户 |
 | iimos.ai | site | 官方部署,也可自部署 |

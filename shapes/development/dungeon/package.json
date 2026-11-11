@@ -1,0 +1,19 @@
+{
+  "name": "dungeon",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "地图、掷骰与角色状态共同驱动的地下城冒险",
+  "iimos": {
+    "contract": 1
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "node ../../../client/launcher/cli-build.js .",
+    "test": "node --test test/*.test.js",
+    "start": "node main.js",
+    "check": "node ../../../client/node_modules/typescript/bin/tsc -p tsconfig.json"
+  }
+}
